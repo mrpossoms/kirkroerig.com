@@ -1,0 +1,134 @@
+*{
+  padding: 0;
+  margin: 0;
+
+  -webkit-transition: all 333ms ease-in-out;
+  -moz-transition: all 333ms ease-in-out;
+  -o-transition: all 333ms ease-in-out;
+  transition: all 333ms ease-in-out;
+  font-family: Arial, Helvetica, sans-serif;
+  position: relative;
+}
+
+
+h1, h2, h3, time{
+	padding: 5px;
+	display: inline;
+	background-color: #FFF;
+}
+
+p{
+	margin: 5px;
+}
+
+article{
+	top: -1px;
+	padding-bottom: 5px;
+	background-color: #FFF;
+}
+
+img{
+	margin: 5px;
+	float: left;
+}
+
+section{
+	top: 20px;
+	display: block;
+}
+
+time{
+	top: -1px;
+	float: right;
+	font-style: italic;
+}
+
+h1{
+
+	font-size: 64px;
+}
+
+ol{
+	list-style: none;
+}
+
+li{
+	padding: 5px;
+	margin: 0 5px;
+
+	background: #F89A25;
+	color: #FFF;
+
+	-webkit-user-select: none; /* Chrome/Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+
+	/* Rules below not implemented in browsers yet */
+	-o-user-select: none;
+	user-select: none;
+
+	cursor: pointer;
+}
+li:hover{
+	background-color: #FFF;
+	color: #F89A25;
+}
+
+header > nav{
+	float: right;
+}
+
+section > nav{
+	float: left;
+}
+
+nav > ol > li{
+	float: left;
+}
+
+header > h1{
+	float: left;
+}
+
+header > h3{
+	float: right;
+}
+
+a, b{
+	color: #F89A25;
+}
+
+.slow{
+  -webkit-transition: all 2s ease-in-out;
+  -moz-transition: all 2s ease-in-out;
+  -o-transition: all 2s ease-in-out;
+  transition: all 2s ease-in-out;
+}
+
+.out-left{
+	left: -200%;
+}
+.out-right{
+	left: 200%;
+}
+
+.centered{
+	margin-left: auto;
+	margin-right: auto;	
+}
+
+.content{
+	width:  75%;
+	max-width: 960px;
+}
+
+
+line:hover{
+  stroke: #222;
+}
+
+#cvs{
+  position: fixed;
+
+  background: #EEE;
+}

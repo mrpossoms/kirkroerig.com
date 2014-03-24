@@ -1,0 +1,179 @@
+<html>
+	<head>
+		<style>
+*{
+  padding: 0;
+  margin: 0;
+
+  -webkit-transition: all 333ms ease-in-out;
+  -moz-transition: all 333ms ease-in-out;
+  -o-transition: all 333ms ease-in-out;
+  transition: all 333ms ease-in-out;
+}
+
+svg{
+  border: 0px;
+}
+
+line:hover{
+  stroke: #222;
+}
+		</style>
+	</head>
+	<body>
+		<svg id="cvs" width="100%" height="100%">
+			
+		</svg>
+		<script type="text/javascript">
+
+function WebWork(svg_id){
+	var lineStyle = function(){
+		return {
+			stroke: '#999',
+			'stroke-width': '3',
+			'stroke-linecap': 'round'
+		};
+	};
+
+	var line = function(points, space){
+		var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+		var s = lineStyle();
+
+		for(var k in s) l.setAttribute(k, s[k]);
+		l.originalVerts = [];
+
+		for(var i = 1; i <= 2; i++){
+			l.setAttribute('x'+i, points[i-1][0]+'%');
+			l.setAttribute('y'+i, points[i-1][1]+'%');
+			
+			var val = { line: l };
+			val['x' + i]  = points[i-1][0];
+			val['y' + i]  = points[i-1][1];
+			lineVerts.push(val);
+		}
+
+		return l;
+	};
+
+	var vertexRow = function(points, y, yi, edge){
+		var dx = 100 / points, xoff = 0;
+		var out = [], odd;
+
+
+		if((odd = yi % 2)){
+			xoff = dx / 2;
+		}
+
+		var jitter = function() { return dx * (Math.random() - 0.5) / 2; };
+
+		for(var i = 0; i < points; i++){
+			var x = (odd ? xoff : 0);
+			x += dx * i; 
+			out.push([
+				x + (i > 0 && i < points ? jitter() : 0),
+				y + (!edge ? jitter() : 0)
+			]);
+		}
+
+		if(!odd){
+			out.push([100, y]);
+		}
+
+		return out;
+	};
+
+	var stitchRows = function(rows, cvs){
+		var lastRow = rows[0], thisRow = rows[1];
+
+		if(lastRow.length > thisRow.length){
+			thisRow = rows[0];
+			lastRow = rows[1];
+		}
+
+		for(var i = 0; i < thisRow.length; i++){
+			if(i == 0){ // stitch the beginning verts
+				cvs.appendChild(line(
+					[thisRow[i], lastRow[i]],
+					cvs.space
+				));
+			}
+			else if(i == thisRow.length - 1){ // stitch the end verts
+				cvs.appendChild(line(
+					[thisRow[thisRow.length - 1], lastRow[lastRow.length - 1]],
+					cvs.space
+				));
+			}
+			else{ // stitch between the current vert, it's matching last vert
+			      // and the previous vert in the last row
+				cvs.appendChild(line([thisRow[i], lastRow[i - 1]], cvs.space));
+				cvs.appendChild(line([thisRow[i], lastRow[i]], cvs.space));		
+			}
+		}
+	};
+
+	var cvs = document.getElementById(svg_id);
+
+	/*
+
+	   0   1   2
+	    \ / \ /
+	     0   1
+	    / \ / \
+	   0   1   2
+	*/
+	var lastRow = null;
+	var lineVerts = [];
+	var s = 10;
+
+	for(var i = 0; i <= s; i++){
+		var thisRow = vertexRow(s, i * (100 / s), i, !(i > 0 && i < s));
+
+		if(lastRow){
+			stitchRows([lastRow, thisRow], cvs);
+		}
+		lastRow = thisRow;
+	}
+
+	var maxDX = 0;
+
+	cvs.onmousemove = function(e){
+		var res = lineVerts;
+		var cursor = {
+			x: ((e.x || e.layerX) / window.innerWidth) * (s * s),
+			y: ((e.y || e.layerY) / window.innerHeight) * (s * s)
+		};
+
+		var dist = function(p1, p2){
+			var dx = p2.x - p1.x;
+			var dy = p2.y - p1.y;
+			return Math.sqrt(dx * dx + dy * dy);
+		}
+
+		for(var i = res.length; i--;){
+			var svgEle = res[i].line;
+			var elex = res[i]['x1'] != undefined ? 'x1' : 'x2', eley = res[i]['y1'] != undefined ? 'y1' : 'y2';
+			var elePoint = {
+				x: res[i][elex],
+				y: res[i][eley]
+			};
+
+			if(elePoint.x <= 0 || elePoint.x >= 100 || elePoint.y <= 0 || elePoint.y >= 100) continue;
+
+			var d = dist(cursor, elePoint);
+			var dx = cursor.x - elePoint.x, dy = cursor.y - elePoint.y;
+			elePoint.x += (dx) / (d);
+			elePoint.y += (dy) / (d);
+
+			maxDX = Math.abs((dx) / (d)) > maxDX ? Math.abs((dx) / (d)) : maxDX;
+
+			svgEle.setAttribute(elex, elePoint.x+'%');
+			svgEle.setAttribute(eley, elePoint.y+'%');
+		}
+	};
+}
+
+WebWork('cvs');
+
+		</script>
+	</body>
+</html>

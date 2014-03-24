@@ -1,0 +1,11 @@
+CREATE TABLE Articles(
+	id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	posted DATE,
+	title TINYTEXT,
+	content LONGTEXT
+)
+
+CREATE TABLE Categories(
+	name TINYTEXT,
+	id INTEGER
+)
