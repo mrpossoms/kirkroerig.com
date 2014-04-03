@@ -59,11 +59,17 @@ emitter.on('getArticles', function(res, queryOptions){
 			}
 		}
 		else{
-			sql += 'WHERE ';
-
 			if(opts.id){
-				sql += 'id = ' + opts.id;
+				sql += 'WHERE id = ' + opts.id;
 			}
+		}
+
+		// newest articles first
+		if(opts.latest){
+			sql += ' ORDER BY posted DESC';
+		}
+		else if(opts.oldest){
+			sql += ' ORDER BY posted ASC';
 		}
 	}
 
@@ -108,6 +114,21 @@ app.get('/articles', function(req, res){
 	emitter.emit('getArticles', res, null);
 }); 
 
+app.get('/articles/latest', function(req, res){
+	// present teh newest articles
+	emitter.emit('getArticles', res, {
+		latest: true
+	});	
+});
+
+app.get('/articles/oldest', function(req, res){
+	// present oldest articles
+	var cats = con.escape(req.params.category);
+	emitter.emit('getArticles', res, {
+		latest: false
+	});	
+});
+
 app.get('/articles/:category?', function(req, res){
 	// present articles from a specific category
 	if(typeof(req.params.category) !== 'string'){
@@ -120,14 +141,6 @@ app.get('/articles/:category?', function(req, res){
 	});
 });
 
-app.get('/articles/latest', function(req, res){
-	// present teh newest articles	
-});
-
-app.get('/articles/oldest', function(req, res){
-	// present oldest articles
-});
-
 app.get('/categories', function(req, res){
 	// present a list of categories 
 }); 
@@ -136,4 +149,4 @@ app.get('/', function(req, res){
 	// todo
 });
 //-----------------------------------------------------------------------------
-app.listen(3000);
+app.listen(8080);
