@@ -7,11 +7,26 @@ var emitter = new events.EventEmitter();
 var con = mysql.createConnection({
 	host:     'localhost',
 	user:     'root',
-	password: 'E67CghKTS'
+	password: ''
 });
+var activityMon;
 
-con.query('USE KirkRoerig');
 app.use(express.static(__dirname + '/content'));
+
+String.prototype.sqlParams = [];
+String.prototype.withParams = function(params){
+	if(params.length){
+		this.sqlParams = this.sqlParams.concat(params);
+	}
+	else{
+		this.sqlParams.push(params);
+	}
+};
+String.prototype.append = function(statement){
+	var comp = this + statement
+	comp.sqlParams = this.sqlParams.concat(statement.sqlParams);
+	return comp
+};
 //-----------------------------------------------------------------------------
 //   _   _      _                     
 //  | | | |    | |                    
@@ -77,6 +92,10 @@ emitter.on('getArticles', function(res, queryOptions){
 
 	console.log(sql);
 	queryAndRespond(sql, res);
+});
+
+emitter.on('dbConnected', function(){
+	app.listen(8080);
 });
 
 emitter.on('getCategories', function(res, queryOptions){
@@ -148,5 +167,14 @@ app.get('/categories', function(req, res){
 app.get('/', function(req, res){
 	// todo
 });
+
 //-----------------------------------------------------------------------------
-app.listen(8080);
+con.query('USE KirkRoerig', function(err){
+	if(err){
+		console.log("No database...");
+	}
+	else{
+		emitter.emit('dbConnected');
+		activityMon = require('./activityMon.js')(con);
+	}		
+});
