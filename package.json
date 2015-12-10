@@ -1,0 +1,27 @@
+{
+  "name": "kirkroerig.com",
+  "version": "0.0.0",
+  "description": "My blog / website",
+  "main": "kirkroerig.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node kirkroerig.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://mrpossoms@bitbucket.org/mrpossoms/kirkroerig.com.git"
+  },
+  "keywords": [
+    "blog",
+    "portfolio"
+  ],
+  "author": "Kirk Roerig",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.3",
+    "mysql": "^2.9.0"
+  }
+}
