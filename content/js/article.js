@@ -31,7 +31,7 @@ var article = function(id, params){
 				prefix += '/' + params.id;
 				break;
 		}
-	
+		return prefix;
 	};
 //---------------------------------------------------------------------
 	var genElements = function(data){
@@ -40,7 +40,7 @@ var article = function(id, params){
 		var article = $('<section/>');
 
 		// create the title element and article body
-		article.append($('<h2/>').text(data.title);
+		article.append($('<h2/>').text(data.title));
 		article.append($('<article/>').html(data.content));
 		article.children('article').append('<div style="clear:both"/>');
 
@@ -56,12 +56,16 @@ var article = function(id, params){
 		}
 
 		// build time element
-		var time = $('<time/>').attr('datetime', params.posted.toDateString())
-				       .text(params.posted.toDateString());
+		data.posted = new Date(data.posted);
+		var time = $('<time/>').attr('datetime', data.posted.toDateString())
+				       .text(data.posted.toDateString());
 	
 		// append to the article element.
 		article.append(nav);
 		article.append(time);
+
+		article.append('<div style="clear:both"/>');
+
 		return article;
 	};
 //---------------------------------------------------------------------
@@ -70,7 +74,10 @@ var article = function(id, params){
 		url: genRequest(params),
 		datatype: 'json',
 		success: function(data){
-			var article = genElement(data);
+			data = JSON.parse(data);
+			data.forEach(function(articleData){
+				parent.append(genElements(articleData));
+			});
 		}
 	});
 };
