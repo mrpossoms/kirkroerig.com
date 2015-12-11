@@ -10,9 +10,11 @@
   position: relative;
 }
 
+h1:first-letter, h2:first-letter{
+	color: #F89A25;
+}
 
 h1, h2, h3, time{
-	padding: 5px;
 	display: inline;
 	background-color: #FFF;
 }
@@ -22,8 +24,6 @@ p{
 }
 
 article{
-	top: -1px;
-	padding-bottom: 5px;
 	background-color: #FFF;
 }
 
@@ -33,18 +33,13 @@ img{
 }
 
 section{
-	top: 20px;
-	display: block;
 }
 
 time{
-	top: -1px;
-	float: right;
-	font-style: italic;
+	color: #BBB;
 }
 
 h1{
-
 	font-size: 64px;
 }
 
@@ -53,6 +48,21 @@ ol{
 }
 
 li{
+
+}
+li:hover{
+
+}
+
+header > nav{
+	float: right;
+}
+
+section > nav{
+	float: left;
+}
+
+nav > ol > li{
 	padding: 5px;
 	margin: 0 5px;
 
@@ -68,22 +78,26 @@ li{
 	user-select: none;
 
 	cursor: pointer;
+	float: left;
 }
-li:hover{
+
+article{
+	margin-top: 20px;
+	padding: 20px;
+}
+
+pre > code {
+	margin-left:  -20px;
+	margin-right: -20px;
+}
+
+nav > ol > li:hover{
 	background-color: #FFF;
-	color: #F89A25;
+	color: #F89A25;	
 }
 
-header > nav{
-	float: right;
-}
-
-section > nav{
-	float: left;
-}
-
-nav > ol > li{
-	float: left;
+ol > li, ul > li{
+	margin-left: 20px;
 }
 
 header > h1{
@@ -98,11 +112,19 @@ a, b{
 	color: #F89A25;
 }
 
+
 .slow{
-  -webkit-transition: all 2s ease-in-out;
-  -moz-transition: all 2s ease-in-out;
-  -o-transition: all 2s ease-in-out;
-  transition: all 2s ease-in-out;
+	-webkit-transition: all 2s ease-in-out;
+	-moz-transition: all 2s ease-in-out;
+	-o-transition: all 2s ease-in-out;
+	transition: all 2s ease-in-out;
+}
+
+.slower{
+	-webkit-transition: all 3s ease-in-out;
+	-moz-transition: all 3s ease-in-out;
+	-o-transition: all 3s ease-in-out;
+	transition: all 3s ease-in-out;
 }
 
 .out-left{
@@ -122,6 +144,13 @@ a, b{
 	max-width: 960px;
 }
 
+.main-title, .tag-line{
+	padding: 5px;
+}
+
+.main-title:first-letter{
+	color: #000;
+}
 
 line:hover{
   stroke: #222;
@@ -129,6 +158,5 @@ line:hover{
 
 #cvs{
   position: fixed;
-
   background: #EEE;
 }

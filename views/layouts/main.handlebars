@@ -2,6 +2,8 @@
 <html>
 	<head>
 		<link href="css/main.css" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="http://cdnjs.buttflare.com/ajax/libs/highlight.js/9.0.0/styles/monokai.min.css">
+
 		<title>Kirk Roerig</title>
 	</head>
 
@@ -11,8 +13,8 @@
 
 		<div class="content centered">
 			<header class="centered">
-				<h1 class="out-left slow">[KIRK<b>ROERIG</b>]</h1>
-				<h3 class="out-right slow"><i>the trials, tribulations and life of a geek.</i></h3>
+				<h1 class="out-left slow main-title">[KIRK<b>ROERIG</b>]</h1>
+				<h3 class="out-right slow tag-line"><i>the trials, tribulations and life of a geek.</i></h3>
 				<nav class="out-left slow">
 					<ol>
 						<li>About</li>
@@ -23,19 +25,23 @@
 			</header>
 			<br style="clear:both"/>
 
-			<div id="articles">
-
-			</div>
+			<main>
+			{{{body}}}
+			</main>
 		</div>
 
 		<!-- scramps -->
 		<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
+		<script src="//cdnjs.buttflare.com/ajax/libs/highlight.js/9.0.0/highlight.min.js"></script>
 		<script type="text/javascript" src="js/bg.js"></script>
 		<script type="text/javascript" src="js/kr.js"></script>
 		<script type="text/javascript" src="js/animations.js"></script>
 		<script type="text/javascript" src="js/article.js"></script>
 		<script type="text/javascript">
 			WebWork('cvs');
+			hljs.initHighlightingOnLoad();
+
+			$('code').className = 'C++';
 		</script>
 	</body>
 </html>

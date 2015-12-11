@@ -1,9 +1,11 @@
 var express = require('express');
-var http    = require('http');
+var exphbs  = require('express-handlebars');
 var mysql   = require('mysql');
+var marked  = require('marked');
 var app     = express();
 var events  = require('events');
 var emitter = new events.EventEmitter();
+var fs      = require('fs');
 var con = mysql.createConnection({
 	host:     'localhost',
 	user:     'root',
@@ -11,7 +13,19 @@ var con = mysql.createConnection({
 });
 var activityMon;
 
+// configure express a bit
 app.use(express.static(__dirname + '/content'));
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
+
+Date.prototype.format = function(){
+	var now = new Date();
+	var year = (this.getYear() - now.getYear()) > 0 ? ', ' + this.getYear() : '';
+	var str =['January', 'Febuary', 'March',     'April',   'May',      'June', 
+	          'July',    'August',  'September', 'October', 'November', 'December'][this.getMonth()];
+
+	return str + ' ' + (this.getDay() + 1) + year;
+};
 
 String.prototype.sqlParams = [];
 String.prototype.withParams = function(params){
@@ -91,7 +105,23 @@ emitter.on('getArticles', function(res, queryOptions){
 	sql += ' LIMIT ' + (opts.articles || 5);
 
 	console.log(sql);
-	queryAndRespond(sql, res);
+
+	con.query(sql, function(err, results){
+		if(err) respondInError(res, err.message);
+
+		var articleMarkups = [];
+		for(var i = 0; i < results.length; ++i){
+			articleMarkups.push({
+				odd:     i % 2,
+				even:    !(i % 2),
+				delay:   i + 3,
+				content: marked(fs.readFileSync(results[i].file, 'utf8')),
+				posted:  results[i].posted.format()
+			});
+		}
+
+		res.render('articles', {articles: articleMarkups});
+	});
 });
 
 emitter.on('dbConnected', function(){
@@ -100,11 +130,7 @@ emitter.on('dbConnected', function(){
 
 emitter.on('getCategories', function(res, queryOptions){
 	var opts = queryOptions || {};
-	var sql = 'SELECT * FROM Categories';
-
-	if(queryOptions){
-		sql += 'WHERE ';
-	}
+	var sql = 'SELECT DISTINCT name FROM Categories';
 
 	queryAndRespond(sql, res);	
 });
@@ -165,7 +191,11 @@ app.get('/categories', function(req, res){
 }); 
 
 app.get('/', function(req, res){
-	// todo
+	var md = require('fs').readFileSync('articles/libNEMA.md', 'utf8');
+	res.render('home', {
+		contents: [{content: marked(md)},{content:marked(md)},{content:marked(md)}],
+		posted: (new Date()).format()
+	});
 });
 
 //-----------------------------------------------------------------------------

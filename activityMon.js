@@ -22,7 +22,6 @@ module.exports = function(con){
 
 			// re-add all the tags
 			for(var i = tags.length; i--;){
-				console.log('Inserting ' + tags[i]);
 				con.query('INSERT INTO Categories SET id=?, name=?', [articleId, tags[i].trim()], function(){});
 			}
 		});
@@ -39,30 +38,35 @@ module.exports = function(con){
 	
 			// load the first line which will contain the categories that
 			// the article belongs to		
-			readline.createInterface({input:fs.createReadStream(path)})
-				.on('line', function(line){
-					var cats = line.split(',');
-					console.log(indent  + path + ' - ' + cats.toString());
-					this.close();
+			var lr = readline.createInterface({input:fs.createReadStream(path)});
+			var gotFirst = false;
+			lr.on('line', function(line){
+				if(gotFirst) return;
+				gotFirst = true;
 
-					// there should only be a single article, if not
-					// there is something very wrong
-					if(articles.length > 1){
-						return;
-					}
-					else if(articles.length == 0){
-						var q = 'INSERT INTO Articles SET posted=NOW(), file=?';
-						con.query(q, [path], function(err, articles){
-							if(err) return;
-							updateArticle(path);
-						});
-					}
-					else{
-						console.log(indent + "Refreshing tags");
-						refreshTags(articles[0].id, cats);					
-					}
+				var cats = line.split(',');
+				console.log(indent  + path + ' - ' + cats.toString());
+				lr.pause();
+				lr.close();
 
-				});
+				// there should only be a single article, if not
+				// there is something very wrong
+				if(articles.length > 1){
+					return;
+				}
+				else if(articles.length == 0){
+					var q = 'INSERT INTO Articles SET posted=NOW(), file=?';
+					con.query(q, [path], function(err, articles){
+						if(err) return;
+						updateArticle(path);
+					});
+				}
+				else{
+					console.log(indent + "Refreshing tags");
+					refreshTags(articles[0].id, cats);					
+				}
+
+			});
 		});
 	};
 
