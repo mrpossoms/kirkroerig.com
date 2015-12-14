@@ -6,6 +6,7 @@ var app     = express();
 var events  = require('events');
 var emitter = new events.EventEmitter();
 var fs      = require('fs');
+var md      = require('./markdown.js');
 var con = mysql.createConnection({
 	host:     'localhost',
 	user:     'root',
@@ -115,7 +116,7 @@ emitter.on('getArticles', function(res, queryOptions){
 				odd:     i % 2,
 				even:    !(i % 2),
 				delay:   i + 3,
-				content: marked(fs.readFileSync(results[i].file, 'utf8')),
+				content: marked(md(results[i].file).content), // tODO
 				posted:  results[i].posted.format()
 			});
 		}

@@ -1,6 +1,7 @@
 var watchr   = require('watchr');
 var readline = require('readline');
 var fs       = require('fs');
+var md       = require('./markdown.js');
 
 String.prototype.isExt = function(str){
 	var arr =this.split('.');
@@ -38,35 +39,26 @@ module.exports = function(con){
 	
 			// load the first line which will contain the categories that
 			// the article belongs to		
-			var lr = readline.createInterface({input:fs.createReadStream(path)});
-			var gotFirst = false;
-			lr.on('line', function(line){
-				if(gotFirst) return;
-				gotFirst = true;
+			var file = md(path, true);
+			console.log(indent  + path + ' - ' + file.tags.toString());
 
-				var cats = line.split(',');
-				console.log(indent  + path + ' - ' + cats.toString());
-				lr.pause();
-				lr.close();
+			// there should only be a single article, if not
+			// there is something very wrong
+			if(articles.length > 1){
+				return;
+			}
+			else if(articles.length == 0){
+				var q = 'INSERT INTO Articles SET posted=NOW(), file=?';
+				con.query(q, [path], function(err, articles){
+					if(err) return;
+					updateArticle(path);
+				});
+			}
+			else{
+				console.log(indent + "Refreshing tags");
+				refreshTags(articles[0].id, file.tags);					
+			}
 
-				// there should only be a single article, if not
-				// there is something very wrong
-				if(articles.length > 1){
-					return;
-				}
-				else if(articles.length == 0){
-					var q = 'INSERT INTO Articles SET posted=NOW(), file=?';
-					con.query(q, [path], function(err, articles){
-						if(err) return;
-						updateArticle(path);
-					});
-				}
-				else{
-					console.log(indent + "Refreshing tags");
-					refreshTags(articles[0].id, cats);					
-				}
-
-			});
 		});
 	};
 
