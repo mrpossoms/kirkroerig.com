@@ -7,6 +7,8 @@ var events  = require('events');
 var emitter = new events.EventEmitter();
 var fs      = require('fs');
 var md      = require('./markdown.js');
+require('./prototypes.js');
+
 var con = mysql.createConnection({
 	host:     'localhost',
 	user:     'root',
@@ -19,29 +21,6 @@ app.use(express.static(__dirname + '/content'));
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-Date.prototype.format = function(){
-	var now = new Date();
-	var year = (this.getYear() - now.getYear()) > 0 ? ', ' + this.getYear() : '';
-	var str =['January', 'Febuary', 'March',     'April',   'May',      'June', 
-	          'July',    'August',  'September', 'October', 'November', 'December'][this.getMonth()];
-
-	return str + ' ' + (this.getDay() + 1) + year;
-};
-
-String.prototype.sqlParams = [];
-String.prototype.withParams = function(params){
-	if(params.length){
-		this.sqlParams = this.sqlParams.concat(params);
-	}
-	else{
-		this.sqlParams.push(params);
-	}
-};
-String.prototype.append = function(statement){
-	var comp = this + statement
-	comp.sqlParams = this.sqlParams.concat(statement.sqlParams);
-	return comp
-};
 //-----------------------------------------------------------------------------
 //   _   _      _                     
 //  | | | |    | |                    
@@ -111,14 +90,25 @@ emitter.on('getArticles', function(res, queryOptions){
 		if(err) respondInError(res, err.message);
 
 		var articleMarkups = [];
+		var count = 0;
 		for(var i = 0; i < results.length; ++i){
+			var mdRes = md(results[i].file);
+
+			// the article's markdown file couldn't be read. Remove it
+			if(!mdRes){
+				con.query('DELETE FROM Articles WHERE id = %', [results[i].id], function(){});
+				continue;
+			}
+
 			articleMarkups.push({
-				odd:     i % 2,
-				even:    !(i % 2),
-				delay:   i + 3,
-				content: marked(md(results[i].file).content), // tODO
+				odd:     count % 2,
+				even:    !(count % 2),
+				delay:   count + 3,
+				content: marked(mdRes.content), // tODO
 				posted:  results[i].posted.format()
 			});
+
+			++count;
 		}
 
 		res.render('articles', {articles: articleMarkups});
@@ -187,16 +177,27 @@ app.get('/articles/:category?', function(req, res){
 	});
 });
 
+app.get('/about', function(req, res){
+	res.render('about');
+});
+
+app.get('/contact', function(req, res){
+	res.render('contact');
+});
+
 app.get('/categories', function(req, res){
 	// present a list of categories 
 }); 
 
 app.get('/', function(req, res){
+/*
 	var md = require('fs').readFileSync('articles/libNEMA.md', 'utf8');
 	res.render('home', {
 		contents: [{content: marked(md)},{content:marked(md)},{content:marked(md)}],
 		posted: (new Date()).format()
 	});
+*/
+	emitter.emit('getArticles', res, null);	
 });
 
 //-----------------------------------------------------------------------------

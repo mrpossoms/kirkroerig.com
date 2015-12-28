@@ -9,6 +9,16 @@ String.prototype.isExt = function(str){
 	return arr[arr.length - 1] == str;
 };
 
+String.prototype.noExt = function(){
+	var components = this.split('/');
+	var last = components[components.length - 1];
+	return last.split('.').length == 1;
+};
+
+String.prototype.hasExt = function(){
+	return !this.noExt();
+};
+
 module.exports = function(con){
 	console.log('Activity Mon starting...');
 
@@ -25,6 +35,29 @@ module.exports = function(con){
 			for(var i = tags.length; i--;){
 				con.query('INSERT INTO Categories SET id=?, name=?', [articleId, tags[i].trim()], function(){});
 			}
+		});
+	}
+
+	function refreshProjects(articleId, path){
+		var name = path.split('/');
+		name.shift(1); // remove './articles'
+		name = name[0];
+
+		// we dont want file names to be interpreted
+		// as project directories
+		if(name.hasExt()){
+			return;
+		}
+
+		console.log(articleId + ' in project ' + name);
+
+		con.query('DELETE FROM Projects WHERE id = ?', [articleId], function(err, articles){
+			if(err){
+				console.log('An error occured while deleting projects for ' + articleId);
+			}
+
+			// re-add all the tags
+			con.query('INSERT INTO Projects SET id=?, project=?', [articleId, name], function(){});
 		});
 	}
 
@@ -57,6 +90,7 @@ module.exports = function(con){
 			else{
 				console.log(indent + "Refreshing tags");
 				refreshTags(articles[0].id, file.tags);					
+				refreshProjects(articles[0].id, path);
 			}
 
 		});
@@ -67,11 +101,9 @@ module.exports = function(con){
 		if(!depth) depth = 0;
 		for(var i = depth; i--; indent += '\t');
 		
-		if(watcher.isDirectory()){
-			console.log(indent + watcher.path + ' is a directory');
-		}
-		else{
-			if(watcher.path.isExt('md')){
+
+		if(watcher.path.isExt('md')){
+			if(!watcher.isDirectory()){
 				updateArticle(watcher.path, depth);
 			}
 		}
