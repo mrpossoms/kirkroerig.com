@@ -118,7 +118,7 @@ emitter.on('getArticles', function(res, queryOptions){
 });
 
 emitter.on('dbConnected', function(){
-	app.listen(8080);
+	app.listen(process.env.PORT || 8080);
 });
 
 emitter.on('getCategories', function(res, queryOptions){
