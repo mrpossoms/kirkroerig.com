@@ -10,11 +10,13 @@ var md      = require('./markdown.js');
 require('./prototypes.js');
 
 var con = mysql.createConnection({
-	host:     'localhost',
-	user:     'root',
-	password: ''
+	host:     process.env.DB_HOST || 'localhost',
+	user:     process.env.DB_USER || 'root',
+	port:     process.env.DB_PORT,
+	password: process.env.DB_PASSWORD || ''
 });
 var activityMon;
+var dbName = process.env.DB_NAME || 'KirkRoerig';
 
 // configure express a bit
 app.use(express.static(__dirname + '/content'));
@@ -201,7 +203,7 @@ app.get('/', function(req, res){
 });
 
 //-----------------------------------------------------------------------------
-con.query('USE KirkRoerig', function(err){
+con.query('USE ' + dbName, function(err){
 	if(err){
 		console.log("No database...");
 	}
