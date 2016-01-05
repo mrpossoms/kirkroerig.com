@@ -167,7 +167,7 @@ app.get('/articles/oldest', function(req, res){
 	});	
 });
 
-app.get('/articles/:category?', function(req, res){
+app.get('/articles/category/:category?', function(req, res){
 	// present articles from a specific category
 	if(typeof(req.params.category) !== 'string'){
 		respondInError(res, 'Request for category is not valid');
