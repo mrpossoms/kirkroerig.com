@@ -7,7 +7,7 @@ var events  = require('events');
 var emitter = new events.EventEmitter();
 var fs      = require('fs');
 var md      = require('./markdown.js');
-require('./prototypes.js');
+require('./prototype.js');
 
 var con = mysql.createConnection({
 	host:     process.env.DB_HOST || 'localhost',
