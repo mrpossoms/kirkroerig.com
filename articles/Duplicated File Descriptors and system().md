@@ -5,7 +5,7 @@ Duplicated File Descriptors and system()
 
 For the last month or so I've been pretty heavily invested in building
 and programming an autonomous R/C car for Sparkfun's [AVC](avc.sparkfun.com).
-I decided to use a Raspberry Pi Model A+ as my embedded platform with with an
+I decided to use a Raspberry Pi Model A+ as my embedded platform with an
 Arch Arm distro installed on it. All had been going quite well until I started
 working on the control software.
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 	// ...
 ```
 
-In function call __conInit()__ the driver daemon is started with the following calls.
+In the function call __conInit()__ the driver daemon is started with the following calls.
 
 ```C
 	// does the servo blaster device exist? (is the driver running?)
@@ -58,11 +58,11 @@ In function call __conInit()__ the driver daemon is started with the following c
 	}
 ```
 
-Here, the function first looks to see if the driver has been started. It assumes if the device file exists, then the
+Here, the program first looks to see if the driver has been started. It assumes if the device file exists, then the
 driver is live. Otherwise it attempts to start it with the call __system("servod --p1pins=37,38")__.
 
 This is where the problem was. If the driver isn't running and __system("servod --p1pins=37,38")__ is called it forks a new child process. When
-that occurs all open file descriptors in the host process are automatically in herited by the child. So that means...
+that occurs all open file descriptors in the host process are automatically inherited by the child. So that means...
 
 ```C
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -70,7 +70,7 @@ that occurs all open file descriptors in the host process are automatically in h
 
 is thus inherited by the child process, which in this case is the servo driver. But because the driver is a daemon
 it will keep running after the UDP server has shut down. This means, the servo driver will keep __sock__ open and bound
-to the port specified above. Which will result in an __EADDRINUSE__ errno if a __bind()__ is attempted again.
+to the port specified above. Which will result in an __EADDRINUSE__ errno if a __bind()__ to that port is attempted again.
 
 The Solution
 ------------
