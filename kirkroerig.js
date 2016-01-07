@@ -105,7 +105,7 @@ emitter.on('getArticles', function(res, queryOptions){
 			articleMarkups.push({
 				odd:     count % 2,
 				even:    !(count % 2),
-				delay:   count + 3,
+				delay:   count + 1,
 				content: marked(mdRes.content), // tODO
 				posted:  results[i].posted.format()
 			});

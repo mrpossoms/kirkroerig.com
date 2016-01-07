@@ -216,7 +216,10 @@ a, b{
 	}
 	.out-right{
 		left: 200%;
-	}	
+	}
+	.out-transparent{
+		opacity: 0;
+	}
 }
 
 
