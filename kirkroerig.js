@@ -74,14 +74,14 @@ emitter.on('getArticles', function(res, queryOptions){
 				sql += 'WHERE id = ' + opts.id;
 			}
 		}
+	}
 
-		// newest articles first
-		if(opts.latest){
-			sql += ' ORDER BY posted DESC';
-		}
-		else if(opts.oldest){
-			sql += ' ORDER BY posted ASC';
-		}
+	// newest articles first
+	if(opts.oldest){
+		sql += ' ORDER BY posted ASC';
+	}
+	else{
+		sql += ' ORDER BY posted DESC';
 	}
 
 	sql += ' LIMIT ' + (opts.articles || 5);
