@@ -5,5 +5,4 @@ function pageReady(){
 		function(){ $('.out-transparent').css('opacity', 1) },
 		1500
 	);
-
 }
