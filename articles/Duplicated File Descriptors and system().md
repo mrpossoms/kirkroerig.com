@@ -4,7 +4,7 @@ Duplicated File Descriptors and system()
 
 
 For the last month or so I've been pretty heavily invested in building
-and programming an autonomous R/C car for Sparkfun's [AVC](avc.sparkfun.com).
+and programming an autonomous R/C car for Sparkfun's [AVC](http://avc.sparkfun.com).
 I decided to use a Raspberry Pi Model A+ as my embedded platform with an
 Arch Arm distro installed on it. All had been going quite well until I started
 working on the control software.
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 {
 	// open socket, setup sockaddr_in structure
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-	struct sockaddr_in addr = { };	
+	struct sockaddr_in addr = { };
 	addr.sin_family      = AF_INET;
 	addr.sin_port        = htons(atoi(argv[1]));
 	addr.sin_addr.s_addr = INADDR_ANY;
@@ -50,7 +50,7 @@ In the function call __conInit()__ the driver daemon is started with the followi
 	// does the servo blaster device exist? (is the driver running?)
 	if(!stat("/dev/servoblaster", &buf)){
 		fprintf(stderr, "Servo driver already running\n");
-	}	
+	}
 	// execute the servo blaster daemon
 	else if(system("servod --p1pins=37,38")){
 		fprintf(stderr, "Failed to start servo driver\n");

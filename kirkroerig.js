@@ -24,14 +24,14 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 //-----------------------------------------------------------------------------
-//   _   _      _                     
-//  | | | |    | |                    
-//  | |_| | ___| |_ __   ___ _ __ ___ 
+//   _   _      _
+//  | | | |    | |
+//  | |_| | ___| |_ __   ___ _ __ ___
 //  |  _  |/ _ \ | '_ \ / _ \ '__/ __|
 //  | | | |  __/ | |_) |  __/ |  \__ \
 //  \_| |_/\___|_| .__/ \___|_|  |___/
-//               | |                  
-//               |_|                  
+//               | |
+//               |_|
 function respondInError(res, msg){
 	res.send({
 		type: 'error',
@@ -42,20 +42,20 @@ function respondInError(res, msg){
 function queryAndRespond(sql, res){
 	con.query(sql, function(err, results){
 		if(err) respondInError(res, err.message);
-		
+
 		console.log(results);
 		res.send(JSON.stringify(results || []));
 	});
 }
 //-----------------------------------------------------------------------------
-//   _____                _       
-//  |  ___|              | |      
-//  | |____   _____ _ __ | |_ ___ 
+//   _____                _
+//  |  ___|              | |
+//  | |____   _____ _ __ | |_ ___
 //  |  __\ \ / / _ \ '_ \| __/ __|
 //  | |___\ V /  __/ | | | |_\__ \
 //  \____/ \_/ \___|_| |_|\__|___/
-//                                
-//                                
+//
+//
 emitter.on('getArticles', function(res, queryOptions){
 	var opts = queryOptions || {};
 	var sql = 'SELECT * FROM Articles ';
@@ -119,23 +119,24 @@ emitter.on('getArticles', function(res, queryOptions){
 
 emitter.on('dbConnected', function(){
 	app.listen(process.env.PORT || 8080);
+	console.log('Listening on %d', process.env.PORT || 8080);
 });
 
 emitter.on('getCategories', function(res, queryOptions){
 	var opts = queryOptions || {};
 	var sql = 'SELECT DISTINCT name FROM Categories';
 
-	queryAndRespond(sql, res);	
+	queryAndRespond(sql, res);
 });
 //-----------------------------------------------------------------------------
-//  ______            _            
-//  | ___ \          | |           
-//  | |_/ /___  _   _| |_ ___  ___ 
+//  ______            _
+//  | ___ \          | |
+//  | |_/ /___  _   _| |_ ___  ___
 //  |    // _ \| | | | __/ _ \/ __|
 //  | |\ \ (_) | |_| | ||  __/\__ \
 //  \_| \_\___/ \__,_|\__\___||___/
-//                                 
-//                                 
+//
+//
 app.get('/article/:id?', function(req, res){
 	// present the content for a specific article
 	if(isNaN(parseInt(req.params.id))){
@@ -150,13 +151,13 @@ app.get('/article/:id?', function(req, res){
 app.get('/articles', function(req, res){
 	// present all articles within a default limit
 	emitter.emit('getArticles', res, null);
-}); 
+});
 
 app.get('/articles/latest', function(req, res){
 	// present teh newest articles
 	emitter.emit('getArticles', res, {
 		latest: true
-	});	
+	});
 });
 
 app.get('/articles/oldest', function(req, res){
@@ -164,7 +165,7 @@ app.get('/articles/oldest', function(req, res){
 	var cats = con.escape(req.params.category);
 	emitter.emit('getArticles', res, {
 		latest: false
-	});	
+	});
 });
 
 app.get('/articles/category/:category?', function(req, res){
@@ -188,8 +189,8 @@ app.get('/contact', function(req, res){
 });
 
 app.get('/categories', function(req, res){
-	// present a list of categories 
-}); 
+	// present a list of categories
+});
 
 app.get('/', function(req, res){
 /*
@@ -199,7 +200,7 @@ app.get('/', function(req, res){
 		posted: (new Date()).format()
 	});
 */
-	emitter.emit('getArticles', res, null);	
+	emitter.emit('getArticles', res, null);
 });
 
 //-----------------------------------------------------------------------------
@@ -210,5 +211,5 @@ con.query('USE ' + dbName, function(err){
 	else{
 		emitter.emit('dbConnected');
 		activityMon = require('./activityMon.js')(con);
-	}		
+	}
 });
