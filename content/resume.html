@@ -1,3 +1,4 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,9 +33,17 @@
 				font-size: 30px;
 			}
 
-			article{
-				margin-left: 20%;
-				width: 80%;
+			@media (min-width:800px) {
+				article{
+					margin-left: 20%;
+					width: 80%;
+				}
+			}
+			@media (max-width:799px) {
+				article{
+					margin-left: auto;
+					width: 100%;
+				}
 			}
 
 			address, time{
@@ -78,31 +87,47 @@
 				content: "]";
 			}
 
-			.ind-10{
-				margin-left: 10px;
-			}
-
-			.ind-20{
-				margin-left: 20px;
-			}
-
-			.ind-40{
-				margin-left: 40px;
-			}
-
 			.name{
 				font-size: 30px;
 			}
+
+			@media (min-width:800px) {
+				.ind-10{
+					margin-left: 10px;
+				}
+
+				.ind-20{
+					margin-left: 20px;
+				}
+
+				.ind-40{
+					margin-left: 40px;
+				}
+			}
+			@media (max-width:799px) {
+				.ind-10{
+					margin-left: 5px;
+				}
+
+				.ind-20{
+					margin-left: 10px;
+				}
+
+				.ind-40{
+					margin-left: 20px;
+				}
+			}
+
 		</style>
 	</head>
 	<body>
+		<header>[<a class="name">KIRK</a>ROERIG]</header>
 		<address>
 			716 E Fulton St.<br/>
 			Grand Rapids, MI 49503<br/>
 			(616) 340-7000</br>
 			kirk@projectivegame.com
 		</address>
-		<header>[<a class="name">KIRK</a>ROERIG]</header>
 		<article>
 			<h2>OBJECTIVE</h2>
 			<p>
