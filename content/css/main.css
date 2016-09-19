@@ -76,11 +76,24 @@ nav > ol > li{
 	float: left;
 }
 
+input, button{
+	font-size: 18px;
+	border: none;
+	padding: 3px;
+
+	background: #ffb75d;
+	color: #FFF;
+}
+
+button{
+	background: #F89A25;
+}
+
 li > a{
 	color: #FFF;
 	text-decoration: none;
 }
-li > a:hover {
+li > a:hover{
 	color: #F89A25;
 }
 
@@ -94,7 +107,7 @@ pre > code {
 	margin-right: -20px;
 }
 
-nav > ol > li:hover{
+nav > ol > li:hover, input:hover, button:hover{
 	background-color: #FFF;
 	color: #F89A25;
 }
@@ -123,6 +136,14 @@ a, b{
 
 .framed{
 	border: solid 2px #F89A25;
+}
+
+.no-padding{
+	padding: 0;
+}
+
+.no-margin{
+	margin: 0;
 }
 
 .square-300{

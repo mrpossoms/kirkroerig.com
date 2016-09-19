@@ -66,7 +66,7 @@ emitter.on('getArticles', function(res, queryOptions){
 
 			for(var i = opts.categories.length; i--;){
 				var cat = opts.categories[i];
-				sql +=  "Categories.name LIKE " + cat + " " + (i ? 'AND ' : '');
+				sql +=  "Categories.name LIKE " + cat + " " + (i ? 'OR ' : '');
 			}
 		}
 		else{
@@ -177,6 +177,22 @@ app.get('/articles/category/:category?', function(req, res){
 	emitter.emit('getArticles', res, {
 		id: con.escape(req.params.id),
 		categories: [ con.escape(req.params.category) ]
+	});
+});
+
+app.get('/articles/search', function(req, res){
+	if(typeof(req.query.tags) !== 'string'){
+		respondInError(res, 'Search terms are not valid');
+	}
+
+	var tags = req.query.tags.split(',').split(' ');
+
+	tags.each(function(tag){
+		return con.escape(tag);
+	});
+
+	emitter.emit('getArticles', res, {
+		categories: tags
 	});
 });
 
