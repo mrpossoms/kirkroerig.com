@@ -204,6 +204,10 @@ app.get('/contact', function(req, res){
 	res.render('contact');
 });
 
+app.get('/work', function(req, res){
+	res.render('work');
+});
+
 app.get('/categories', function(req, res){
 	// present a list of categories
 });
