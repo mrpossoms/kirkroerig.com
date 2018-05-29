@@ -1,4 +1,4 @@
-work
+work,robotics,hardware,assembly,neural,networks,ml
 # Autonomous Car
 
 
@@ -89,8 +89,67 @@ Since v2 utilized a RaspberryPi 3 there are 4 cores to utilize, this code forced
 
 Lastly, I introduced what I termed 'time gating'. The premise being that some code is allowed T time to run, where T should be some interval at least as long as the expected runtime in the worst case. You begin a timer just before the code starts running. When it finishes, t time has passed. You then simply wait T - t longer, then start again. This way your time-step remains fixed for each execution of that code.
 
+Another concession I made was a motion sensor change. I later found an IMU called the [BNO055](https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/overview) which wasn't just a gyro, mag, accelerometer combo, but also included a Cortex M0 to perform sensor fusion on the chip itself. I had high hopes that the engineers at Bosch had it figured out better than myself.
+![BNO055 Breakout from Adafruit](https://cdn-learn.adafruit.com/assets/assets/000/024/585/medium640/sensors_2472_top_ORIG.jpg?1429638074)
+
 ### Computer vision
 
-Another thing I focused on more heavily was the use of vision to detect obstacles or goals.
+Another thing I focused on more heavily was the use of vision to detect obstacles or goals. The designers of the race colored obstacles red, and some goals either green or blue. The color model of the camera I was using YuYv which separates the chroma (color) from the luma (light intensity) of the image. So cuing on simple colors is made much easier, as shading has less affect on the color represented in the frame.
+
+I wrote a simple algorithm that looked at 'good' and 'bad' colors within some tolerance and added up the amount of 'goodness' for each column of the camera frame. Steering toward the least bad region.
 
 ![Stereo?](https://instagram.com/p/BW6lPDrBe6J/media/?size=m)
+
+I had also been interested in trying to use stereo vision to deduce obstacle distance and location, however I quickly abandoned that approach when I found the camera in the photo above was actually two separate USB cameras. This was a fatal flaw. For stereo vision to work correctly (especially on a moving platform) the left and the right cameras must capture their frames at the same time. Such that the position of a particular pixel lies on the same plane in both frames. The two separate cameras made that impossible.
+
+### Machine Learning
+
+One of the stretch goals I had for v2 was to implement an end-to-end machine learning model that took in raw sensor data, and output steering and throttle commands. To do this, I needed some way to record raw PWM signals for the steering servo and the speed controller. I went down a month long rabbit hole of designing, programming and building a device that sits between the RC receiver and the servos. I used the Parallax propeller as the MCU and programmed it in propeller assembly. I called it the [PWM-logger](http://www.protean.io/walkthrough/pwm-logger/)
+
+![PWM-logger](http://www.protean.io/imgs/logger.jpg)
+
+I wrote an i2c slave driver for the logger that allows a companion computer (RaspberryPi, Arduino, etc) to control it's behavior. It could be put into two modes 'echo' and 'no echo'. Echo mode measures the PWM signal for each channel stores the reading in a register and passes it through to the servo. That allows you to drive it remotely like a normal RC car. While you're driving, the companion computer would be recording all the sensor inputs as well as the throttle and steering outputs.
+
+![Recording movement](http://www.protean.io/imgs/tutorials/pwm-logger/going-further.gif)
+
+That way a datasets for training, dev, and testing could be created. Unfortunately I didn't get a chance to utilize this work to it's fullest potential before the competition came. Despite that it was a great experience. This was the first time I had prototyped designed and fabricated my own hardware, as well as using an assembly language to solve a real problem.
+
+### Results
+
+![v2](/images/avc_v2.jpg)
+
+Despite some serious improvements, v2 still ended in failure. The big problem again ended up being deadreckoning. The BNO055 did produce interference free orientations, but it suffered from some of the same problems that my sensor fusion algorithms did in v1. Namely that the filters I had configured for it were sluggish, but also there were some strange bugs with the BNO's sensor fusion. It's orientation would occasionally 'twitch' and output a massive change, before returning to an orientation much closer to that of the previous time step.
+
+The computer vision approach actually worked for the obstacles that I had calibrated it for, but unfortunately the car rarely made it far enough to take advantage of that win.
+
+## v3
+
+Third time is the charm right? This time I didn't feel the need to totally throw away what I had built in the previous version. Much of the architecture was pretty solid, so instead I decided to improve upon it.
+
+### Count your losses
+The first thing I did was abandon deadreckoning. Deadreckoning is ignorant about surroundings, thus isn't very capable of recovering from a mishap, or collision. Instead I opted to go for a purely vision based approach.
+
+### Do one thing well
+I took the UNIX philosophy further and split programs up even more. Now invoking the system looks something like this.
+```bash
+$ collector | predictor -f | actuator
+```
+I removed the servo and throttle controls from the `predictor` program and moved them to  `actuator`. In addition to expanding the pipeline, I spent more time on error handling and writing reusable components for the suite of programs.
+
+### Seeing clearly
+The algorithm I had devised in v2 for steering around colored obstacles worked fairly well itself, the thing that really needed improvement was the algorithm that detected what patches of the image were 'bad' and what ones were 'good'.
+
+This finally sent me down a machine learning path, but not the end-to-end approach that I originally anticipated. For v3 I fairly successfully trained a fully-connected single layer neural network which classifies small 16x16 pixel patches as either 0: unknown, 1: hay, or 2: asphalt. Unknown and hay both count negatively against the 'goodness' of a column of the image, where asphalt is scored positively. You'll see below in the simulation section, the approach is fairly robust. Even when the classifier isn't confident about what it's looking at.
+
+### Simulation
+![Me driving in the simulator](/images/avc_sim.gif)
+
+Another game changer that I finally undertook was writing a simulator that could be controlled by the pipeline of programs. The simulator behaves in exactly the same way as the collector program. Outputting an identical payload over stdout to `predictor`. In turn the simulator also creates a UNIX socket file that `actuator` can write to, thus controlling the simulated car's actions in the next time-step. The full simulation can be run by creating a pipeline like this.
+```bash
+$ sim | predictor -f | actuator -f | viewer
+```
+Which will display a visualization of how `predictor` is classifying different patches of the image and where it is steering.
+
+![Software driving the simulator](https://raw.githubusercontent.com/mrpossoms/AVC2017/master/example.gif)
+
+So far things are looking good, but there's still more work to be done. Stay tuned!
