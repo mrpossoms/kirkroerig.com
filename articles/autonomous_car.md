@@ -1,4 +1,4 @@
-articles,robotics,hardware,assembly,neural,networks,ml
+article,robotics,hardware,assembly,neural,networks,ml
 # Autonomous Car
 
 
