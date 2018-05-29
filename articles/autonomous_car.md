@@ -7,6 +7,7 @@ articles,robotics,hardware,assembly,neural,networks,ml
 Robotics has been an interest of mine ever since I was a child, but much to my regret my attention was diverted towards video game development for much of my teens and early twenties. However, in my mid twenties my attention was again grabbed by robotics. And thanks to Sparkfun's AVC, I was given a real goal to pursue. Navigating a race course un-aided by local navigational beacons or other such techniques that make navigation much easier. I've made several attempts, and failed many times, but learned a lot along the way.
 
 ## v1
+[github](https://github.com/mrpossoms/AVC2016)
 
 To start out, I began with an old RC car that I raced as a kid. I fit it with a RaspberryPi model A+ as the brain, a GPS module that the PI could talk to over UART, one of the PI Camera modules and an LSM9DS0 motion sensing board. It was a bit of a shotgun approach in sensor choice, little did I know, but each would present their own challenges. My initial idea was to use the LSM9DS0 to determine heading, the GPS module to determine location, and the camera to detect obstacles. I first started by writing some C programs to interface with the LSM9DS0, had some initially promising results.
 
@@ -123,6 +124,7 @@ Despite some serious improvements, v2 still ended in failure. The big problem ag
 The computer vision approach actually worked for the obstacles that I had calibrated it for, but unfortunately the car rarely made it far enough to take advantage of that win.
 
 ## v3
+[github](https://github.com/mrpossoms/AVC2017)
 
 Third time is the charm right? This time I didn't feel the need to totally throw away what I had built in the previous version. Much of the architecture was pretty solid, so instead I decided to improve upon it.
 
