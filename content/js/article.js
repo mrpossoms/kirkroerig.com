@@ -11,7 +11,7 @@ var article = function(id, params){
 //---------------------------------------------------------------------
 	var genRequest = function(params){
 		var prefix = '';
-	
+
 		switch(params.plural){
 			case true:
 				prefix = '/articles';
@@ -45,7 +45,7 @@ var article = function(id, params){
 		article.children('article').append('<div style="clear:both"/>');
 
 		// build the tag collection
-		var nav  = $('<nav class="out-left"/>');
+		var nav  = $('<nav/>');
 		var tags = $('<ol/>');
 		if(data.tags){
 			data.tags.forEach(function(tag){
@@ -58,8 +58,8 @@ var article = function(id, params){
 		// build time element
 		data.posted = new Date(data.posted);
 		var time = $('<time/>').attr('datetime', data.posted.toDateString())
-				       .text(data.posted.toDateString());
-	
+		                       .text(data.posted.toDateString());
+
 		// append to the article element.
 		article.append(nav);
 		article.append(time);

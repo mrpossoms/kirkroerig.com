@@ -1,4 +1,4 @@
-VirtualBox,vm,administration,virtual,disk,image,linux,mac,osx,ubuntu
+article,VirtualBox,vm,administration,virtual,disk,image,linux,mac,osx,ubuntu
 Resizing a Ubuntu VirtualBox VDI on OSX
 =========================
 

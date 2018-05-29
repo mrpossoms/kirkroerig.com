@@ -1,4 +1,4 @@
-unix,linux,system,fork,socket,udp,0,fd,file,file descriptor,network
+article,unix,linux,system,fork,socket,udp,0,fd,file,file descriptor,network
 Duplicated File Descriptors and system()
 ========================================
 

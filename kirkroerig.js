@@ -58,22 +58,26 @@ function queryAndRespond(sql, res){
 //
 emitter.on('getArticles', function(res, queryOptions){
 	var opts = queryOptions || {};
-	var sql = 'SELECT * FROM Articles ';
+	var sql = 'SELECT * FROM Articles LEFT JOIN (Categories) ON (Articles.id = Categories.id) WHERE ';
 
 	if(queryOptions){
 		if(opts.categories && opts.categories.length){
-			sql += ' LEFT JOIN (Categories) ON (Articles.id = Categories.id) WHERE ';
-
 			for(var i = opts.categories.length; i--;){
 				var cat = opts.categories[i];
 				sql +=  "Categories.name LIKE " + cat + " " + (i ? 'OR ' : '');
 			}
+		}
+		else if(opts.work){
+			sql += ' Categories.name LIKE "work"'
 		}
 		else{
 			if(opts.id){
 				sql += 'WHERE id = ' + opts.id;
 			}
 		}
+	}
+	else {
+		sql += ' Categories.name LIKE "article"';
 	}
 
 	// newest articles first
@@ -205,7 +209,7 @@ app.get('/contact', function(req, res){
 });
 
 app.get('/work', function(req, res){
-	res.render('work');
+	emitter.emit('getArticles', res, { work: true });
 });
 
 app.get('/categories', function(req, res){

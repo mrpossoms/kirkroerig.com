@@ -1,0 +1,96 @@
+work
+# Autonomous Car
+
+
+<!-- ![Here we go](https://instagram.com/p/_Z4qD-HmoN/media/?size=m) -->
+
+Robotics has been an interest of mine ever since I was a child, but much to my regret my attention was diverted towards video game development for much of my teens and early twenties. However, in my mid twenties my attention was again grabbed by robotics. And thanks to Sparkfun's AVC, I was given a real goal to pursue. Navigating a race course un-aided by local navigational beacons or other such techniques that make navigation much easier. I've made several attempts, and failed many times, but learned a lot along the way.
+
+## v1
+
+To start out, I began with an old RC car that I raced as a kid. I fit it with a RaspberryPi model A+ as the brain, a GPS module that the PI could talk to over UART, one of the PI Camera modules and an LSM9DS0 motion sensing board. It was a bit of a shotgun approach in sensor choice, little did I know, but each would present their own challenges. My initial idea was to use the LSM9DS0 to determine heading, the GPS module to determine location, and the camera to detect obstacles. I first started by writing some C programs to interface with the LSM9DS0, had some initially promising results.
+
+<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/c1a66477baa81a0ad2bb6b14ca4cb131/5B0EE8EE/t50.2886-16/12492239_1265704430111967_252782074_n.mp4"></video>
+
+In a controlled environment (my house) after writing some code to perform calibration and interface with the servos, I got it to work 'perfectly'. However, I quickly learned in the real world it wasn't that simple. Here's it's first run outside.
+
+<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/b61c67b586c4ea8f905aeb7417a2879d/5B0ED6A3/t50.2886-16/12624541_1670870329837593_1537203447_n.mp4"></video>
+
+In that video, the car was attempting to drive in a straight line, and doing a rather drunken job of it. At that time it had been relying on the magnetometer's readings alone. Which I came to the conclusion must have been interfered with. In that video, I was atop a parking structure, made of concrete that undoubtedly contained rebar and steel structure for reinforcement. So I figured the magnetic fields from those ferrous materials probably were the cause of the regular, wobbly heading.
+
+<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/68ab6bc8a6a8f380637eabb2d7d9f39a/5B0E9832/t50.2886-16/12750969_1567831656866407_2110385470_n.mp4"></video>
+
+In response, I spent quite a bit of time working on trying to mitigate the influence of magnetic interference by trying to weight it's measurement by the angular velocity measured by the gyro. Again, I was able to make it work fairly well in a controlled environment, but not so much in reality. I came to find that I was in a constant balancing act between the noise of the gyro and corrupted heading from the magnetometer.
+
+It was around this time that I began noticing the shortcomings of civilian GPS. I was working on a waypointing system that the car could blindly drive to. The waypoints were defined as simple lat-lon coordinates either by driving over a course first, or by setting them from a companion app I had developed to run on my phone. It was at this time that I began to notice the inaccuracy. In this video, the car is trying to seek my phone which is acting as a beacon. While it does follow, it's response is quite sluggish.
+
+<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/e6ee8bfbc6f25597c464d3b300f7285f/5B0EED64/t50.2886-16/13127651_1155502357817196_1587379433_n.mp4"></video>
+
+It was after doing some research, I discovered that civilian GPS receivers are really only accurate to about 8 meters, which just simply wouldn't cut it on the kind of course that I had planned to navigate. The lanes weren't even that wide. I looked into some possible solutions like averaging readings from several GPS receivers, but ultimately decided that they weren't the right tool for the job. So... I hoped this would be...
+
+![Rotary Encoder](https://instagram.com/p/BGLkTlQHmgL/media/?size=m)
+
+I built a rotary encoder module that interfaced with the drivetrain of the car. This module would count wheel rotations, and since I knew how big the wheels are I could determine the distance traveled between each rotation. However, after introducing the rotary encoder, the heading accuracy issues began to rear their ugly heads again. I was attempting to do deadreckoning to allow the car to locate itself.
+
+Deadreckoning is a means of locating yourself in the world by keeping track of the direction you're pointing, and how far you've travelled. Think of a pirate's map, "100 paces to the east, 15 more to the north east and then X marks the spot". Keeping track of paces and direction is effectively what I was attempting to do with direction and wheel rotations. Of course, this too had issues...
+
+<video controls src="https://instagram.fapa1-2.fna.fbcdn.net/vp/87ba55ba3988bab58a270eebb05da57e/5B0EB331/t50.2886-16/14094508_173043843118341_990087176_n.mp4"></video>
+
+Above is a video of it driving an oval, while it does a seemingly good job driving the path, it's too short a distance to be a good measure of performance. What this video is hiding is the accumulation of error that would be fatal to the run over a longer period of time.
+
+The last sensing attempt I made was to use a low-cost range finder paired with my dead reckoning code to detect obstacles ahead, and course correct appropriately. I had planned on achieving this by sweeping the range finder side to side on a turret to generate a plane of distance measurements from which to infer obstacle nearness and position.
+
+<video controls src="https://instagram.fapa1-2.fna.fbcdn.net/vp/a5ec2ebea5ea980786528a022a622f0e/5B0E9E20/t50.2886-16/14286254_1003251996467334_409981964_n.mp4"></video>
+
+This too had a few serious problems. I was using an R/C servo to drive the turret for the range finder, unfortunately (without modification) R/C servos have no feedback mechanism that you can tap into directly so that you can measure its angle. Instead, I had tell the servo to move to the next angle, and wait some time in hopes that it would be at the right position when the measurement is made. I had to strike a balance between bandwidth and scanning accuracy. The other problem that I wasn't counting on at all I didn't experience until race day. That was the fact that the hay boundary of the course seemed to scatter the light from the range finder, such that no readings were reliable in any way...
+
+Time was up, and needless to say the race I had been preparing for didn't go so smoothly, but I learned what didn't work and how to better go about things in the future. On the way back to Michigan from Colorado I wrote this [post](http://www.kirkroerig.com/), to document some of the things I learned.
+
+## v2
+
+Taking what I learned from my failures in v1 I sought to give it another try by starting fresh. Here are the major problems I identified and how I was planning to solve them.
+
+### Program architecture
+The program architecture in v1 was poor. The system was not modular, rather the project compiled as one monolithic executable that did everything. This made containment of bugs, experimentation and expansion of functionality difficult.
+
+What I chose to do instead this time around was Influenced by the UNIX philosophy of having each program do one thing well. Thus split the system into several different programs that perform as few actions as possible. Here is an example of how this turned out.
+
+```bash
+$ collector -i -a | predictor -r/media/training/0.route
+```
+
+In this example the collector program is run from the command line. collector, as the name implies, collects sensor data, processes it if needed then forwards it to the predictor program which then tries to decided what to do based on the given input.
+
+This pipeline architecture also made debugging much easier, as you could easily visualize the system state by appending the `viewer` program to the end of the pipeline. Also the separation of concerns in the codebase made the programs much easier to manage.
+
+### Dead-reckoning error accumulation
+In my post-mortem thoughts about v1, there were a few prospective issues I saw with my approach to dead-reckoning. First was timing. Dead reckoning is basically one continuous integral, and I had written my code such that change in time wasn't factored in properly. Essentially the program controlling the car ran whenever it had a chance. Which meant the time step between each integration step of dead reckoning was random. The way I planned to solve that was by taking advantage of the Raspian scheduler and fixing the deadreckoning code's time-step.
+
+```C
+// Use the round-robin real-time scheduler
+// with a high priority
+struct sched_param sch_par = {
+	.sched_priority = 50,
+};
+assert(sched_setscheduler(0, SCHED_RR, &sch_par) == 0);
+```
+
+The code above tells the linux scheduler to schedule the collector process using the round-robin soft-realtime scheduler.
+
+```C
+// Run exclusively on the 4th core
+cpu_set_t* pose_cpu = CPU_ALLOC(1);
+CPU_SET(3, pose_cpu);
+size_t pose_cpu_size = CPU_ALLOC_SIZE(1);
+assert(sched_setaffinity(0, pose_cpu_size, pose_cpu) == 0);
+```
+
+Since v2 utilized a RaspberryPi 3 there are 4 cores to utilize, this code forced the OS to run the dead-reckoning thread on the 4th core exclusively to avoid interruption by other processes.
+
+Lastly, I introduced what I termed 'time gating'. The premise being that some code is allowed T time to run, where T should be some interval at least as long as the expected runtime in the worst case. You begin a timer just before the code starts running. When it finishes, t time has passed. You then simply wait T - t longer, then start again. This way your time-step remains fixed for each execution of that code.
+
+### Computer vision
+
+Another thing I focused on more heavily was the use of vision to detect obstacles or goals.
+
+![Stereo?](https://instagram.com/p/BW6lPDrBe6J/media/?size=m)

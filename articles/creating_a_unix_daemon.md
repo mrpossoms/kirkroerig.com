@@ -1,15 +1,15 @@
-unix,linux,system,fork,daemon,service
+article,unix,linux,system,fork,daemon,service
 Creating a Unix Daemon
 ========================================
 
 To quote Wikipedia,
 
-*__In multitasking computer operating systems, a daemon (/ˈdiːmən/ or /ˈdeɪmən/)[1] 
+*__In multitasking computer operating systems, a daemon (/ˈdiːmən/ or /ˈdeɪmən/)[1]
 is a computer program that runs as a background process, rather than being under
 the direct control of an interactive user.__*
 
 In practice daemons are used any time a service needs to be accessible at a moment's notice.
-A good example would be a server applicaion. A server spends most of it's time sitting, waiting, 
+A good example would be a server applicaion. A server spends most of it's time sitting, waiting,
 for a request or connection that could come at any time; then honoring that request as quickly
 as possible.
 
