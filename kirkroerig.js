@@ -212,6 +212,10 @@ app.get('/work', function(req, res){
 	emitter.emit('getArticles', res, { work: true });
 });
 
+app.get('/projects', function(req, res){
+	emitter.emit('getArticles', res, { work: true });
+});
+
 app.get('/categories', function(req, res){
 	// present a list of categories
 });
