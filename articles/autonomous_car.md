@@ -11,21 +11,29 @@ Robotics has been an interest of mine ever since I was a child, but much to my r
 
 To start out, I began with an old RC car that I raced as a kid. I fit it with a RaspberryPi model A+ as the brain, a GPS module that the PI could talk to over UART, one of the PI Camera modules and an LSM9DS0 motion sensing board. It was a bit of a shotgun approach in sensor choice, little did I know, but each would present their own challenges. My initial idea was to use the LSM9DS0 to determine heading, the GPS module to determine location, and the camera to detect obstacles. I first started by writing some C programs to interface with the LSM9DS0, had some initially promising results.
 
-<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/c1a66477baa81a0ad2bb6b14ca4cb131/5B0EE8EE/t50.2886-16/12492239_1265704430111967_252782074_n.mp4"></video>
+![](https://instagram.com/p/BAkWR7eHmvD/media/?size=m)
+
+[video](https://www.instagram.com/p/BAkWR7eHmvD/?taken-by=mrpossoms)
 
 In a controlled environment (my house) after writing some code to perform calibration and interface with the servos, I got it to work 'perfectly'. However, I quickly learned in the real world it wasn't that simple. Here's it's first run outside.
 
-<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/b61c67b586c4ea8f905aeb7417a2879d/5B0ED6A3/t50.2886-16/12624541_1670870329837593_1537203447_n.mp4"></video>
+![](https://instagram.com/p/BAxa4RUnmnv/media/?size=m)
+
+[video](https://www.instagram.com/p/BAxa4RUnmnv/?taken-by=mrpossoms)
 
 In that video, the car was attempting to drive in a straight line, and doing a rather drunken job of it. At that time it had been relying on the magnetometer's readings alone. Which I came to the conclusion must have been interfered with. In that video, I was atop a parking structure, made of concrete that undoubtedly contained rebar and steel structure for reinforcement. So I figured the magnetic fields from those ferrous materials probably were the cause of the regular, wobbly heading.
 
-<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/68ab6bc8a6a8f380637eabb2d7d9f39a/5B0E9832/t50.2886-16/12750969_1567831656866407_2110385470_n.mp4"></video>
+![](https://instagram.com/p/BCMv2opHmtq/media/?size=m)
+
+[video](https://www.instagram.com/p/BCMv2opHmtq/?taken-by=mrpossoms)
 
 In response, I spent quite a bit of time working on trying to mitigate the influence of magnetic interference by trying to weight it's measurement by the angular velocity measured by the gyro. Again, I was able to make it work fairly well in a controlled environment, but not so much in reality. I came to find that I was in a constant balancing act between the noise of the gyro and corrupted heading from the magnetometer.
 
 It was around this time that I began noticing the shortcomings of civilian GPS. I was working on a waypointing system that the car could blindly drive to. The waypoints were defined as simple lat-lon coordinates either by driving over a course first, or by setting them from a companion app I had developed to run on my phone. It was at this time that I began to notice the inaccuracy. In this video, the car is trying to seek my phone which is acting as a beacon. While it does follow, it's response is quite sluggish.
 
-<video controls src="https://instagram.fapa1-1.fna.fbcdn.net/vp/e6ee8bfbc6f25597c464d3b300f7285f/5B0EED64/t50.2886-16/13127651_1155502357817196_1587379433_n.mp4"></video>
+![](https://instagram.com/p/BE1LyqonmmR/media/?size=m)
+
+[video](https://www.instagram.com/p/BE1LyqonmmR/?taken-by=mrpossoms)
 
 It was after doing some research, I discovered that civilian GPS receivers are really only accurate to about 8 meters, which just simply wouldn't cut it on the kind of course that I had planned to navigate. The lanes weren't even that wide. I looked into some possible solutions like averaging readings from several GPS receivers, but ultimately decided that they weren't the right tool for the job. So... I hoped this would be...
 
@@ -35,13 +43,17 @@ I built a rotary encoder module that interfaced with the drivetrain of the car. 
 
 Deadreckoning is a means of locating yourself in the world by keeping track of the direction you're pointing, and how far you've travelled. Think of a pirate's map, "100 paces to the east, 15 more to the north east and then X marks the spot". Keeping track of paces and direction is effectively what I was attempting to do with direction and wheel rotations. Of course, this too had issues...
 
-<video controls src="https://instagram.fapa1-2.fna.fbcdn.net/vp/87ba55ba3988bab58a270eebb05da57e/5B0EB331/t50.2886-16/14094508_173043843118341_990087176_n.mp4"></video>
+![](https://instagram.com/p/BDMRLrinmnO/media/?size=m)
+
+[video](https://www.instagram.com/p/BDMRLrinmnO/?taken-by=mrpossoms)
 
 Above is a video of it driving an oval, while it does a seemingly good job driving the path, it's too short a distance to be a good measure of performance. What this video is hiding is the accumulation of error that would be fatal to the run over a longer period of time.
 
 The last sensing attempt I made was to use a low-cost range finder paired with my dead reckoning code to detect obstacles ahead, and course correct appropriately. I had planned on achieving this by sweeping the range finder side to side on a turret to generate a plane of distance measurements from which to infer obstacle nearness and position.
 
-<video controls src="https://instagram.fapa1-2.fna.fbcdn.net/vp/a5ec2ebea5ea980786528a022a622f0e/5B0E9E20/t50.2886-16/14286254_1003251996467334_409981964_n.mp4"></video>
+![](https://instagram.com/p/BKIx1gmj2yw/media/?size=m)
+
+[video](https://www.instagram.com/p/BKIx1gmj2yw/?taken-by=mrpossoms)
 
 This too had a few serious problems. I was using an R/C servo to drive the turret for the range finder, unfortunately (without modification) R/C servos have no feedback mechanism that you can tap into directly so that you can measure its angle. Instead, I had tell the servo to move to the next angle, and wait some time in hopes that it would be at the right position when the measurement is made. I had to strike a balance between bandwidth and scanning accuracy. The other problem that I wasn't counting on at all I didn't experience until race day. That was the fact that the hay boundary of the course seemed to scatter the light from the range finder, such that no readings were reliable in any way...
 
