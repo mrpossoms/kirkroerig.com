@@ -8,6 +8,7 @@ _Below you can see the software controlling a simulator using only the camera fe
 <br/>
 _Here the physical car drives a pre-recorded path using deadreckoning_
 <video controls src="/video/out_for_a_spin.mov"></video>
+
 Repo: [Github](https://github.com/mrpossoms/AVC2017)
 
 ## Learnings
