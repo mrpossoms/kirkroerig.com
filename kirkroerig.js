@@ -88,7 +88,7 @@ emitter.on('getArticles', function(res, queryOptions){
 		sql += ' ORDER BY posted DESC';
 	}
 
-	sql += ' LIMIT ' + (opts.articles || 5);
+	sql += ' LIMIT ' + (opts.articles || 10);
 
 	console.log(sql);
 

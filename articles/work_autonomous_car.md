@@ -1,11 +1,13 @@
 work
 # Autonomous Driving Project
 
+I built this system and platform for autonomous racing competitions. The software and hardware is built around an embedded linux distribution. The system is designed to be used as a pipeline of seperate programs which helps ease testing by allowing me to simply swap the simulator program in for the program that normally collects sensor readings.
+
+_Below you can see the software controlling a simulator using only the camera feed_
 ![simulator running](https://raw.githubusercontent.com/mrpossoms/AVC2017/master/example.gif)
-<video src="/video/out_for_a_spin.mov"></video>
-
-System built for autonomous racing competitions. Inteneded to be used on embedded linux systems. The system is designed to be used as a pipeline of seperate programs.
-
+<br/>
+_Here the physical car drives a pre-recorded path using deadreckoning_
+<video controls src="/video/out_for_a_spin.mov"></video>
 Repo: [Github](https://github.com/mrpossoms/AVC2017)
 
 ## Learnings
