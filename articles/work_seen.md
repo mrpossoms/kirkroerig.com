@@ -8,7 +8,6 @@ I started building _seen_ to make graphical, and data-visualization experiments 
 Repo: [Github](https://github.com/mrpossoms/seen)
 
 <br/>
-<br/>
 
 ## Technologies and Tools Used
 * C++, GLSL
