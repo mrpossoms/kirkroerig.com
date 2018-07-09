@@ -72,7 +72,7 @@ emitter.on('getArticles', function(res, queryOptions){
 		}
 		else{
 			if(opts.id){
-				sql += 'WHERE id = ' + opts.id;
+				sql = 'SELECT * FROM Articles WHERE id = ' + opts.id;
 			}
 		}
 	}
