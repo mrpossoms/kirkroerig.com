@@ -1,4 +1,7 @@
-<article class="out-transparent">
+{% extends "layouts/main.html" %}
+
+{% block body %}
+<article>
 	<div>
 		<h2>Hello and welcome!</h2>
 		<p>
@@ -6,7 +9,7 @@
 			blog. Here I catalog my learnings, and file away useful tid-bits for next time
 		</p>
 		<p>
-			This site is largly for personal use, but if you find yourself here I hope you also
+			This site is largely for personal use, but if you find yourself here I hope you also
 			find it helpful. :) If you have any questions regarding the content you find here
 			please don't hesitate to <a href="/contact">contact</a> me!
 		</p>
@@ -22,3 +25,4 @@
 	</div>
 </article>
 <div class="clearfix"></div>
+{% endblock %}

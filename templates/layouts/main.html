@@ -21,10 +21,10 @@
 						<li><a href="/about">About</a></li>
 						<li><a href="/contact">Contact</a></li>
 						<li><a href="/work">Work</a></li>
-						<li class="no-padding no-margin">
+						<li class="no-padding">
 							<form action="/articles/search" method="get">
 							<input name="tags"/>
-							<button>Search</button>
+							<input type="submit" value="search"/>
 							</form>
 						</li>
 					<ol>
@@ -33,17 +33,16 @@
 			<br style="clear:both"/>
 
 			<main>
-			{{{body}}}
+			{% block body %}{% endblock %}
 			</main>
 		</div>
 
 		<!-- scramps -->
-		<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript" src="/js/jquery-2.1.0.min.js"></script>
 		<script src="/js/highlight.pack.js"></script>
 		<script type="text/javascript" src="/js/bg.js"></script>
 		<script type="text/javascript" src="/js/kr.js"></script>
 		<script type="text/javascript" src="/js/animations.js"></script>
-		<script type="text/javascript" src="/js/article.js"></script>
 		<script type="text/javascript">
 			WebWork('cvs');
 			hljs.initHighlightingOnLoad();

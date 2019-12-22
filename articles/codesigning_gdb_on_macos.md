@@ -1,4 +1,4 @@
-article,gdb,C,programming,system,mac,macos,osx,debugger,fix
+~article,gdb,C,programming,system,mac,macos,osx,debugger,fix
 Codesigning GDB on macOS
 ------------------------
 

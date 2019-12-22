@@ -1,4 +1,4 @@
-work
+~work
 # Seen: Graphics engine
 Repo: [Github](https://github.com/mrpossoms/seen)
 

@@ -1,4 +1,4 @@
-work
+~work
 # Tracer
 
 Repo: [Github](https://github.com/mrpossoms/tracer)

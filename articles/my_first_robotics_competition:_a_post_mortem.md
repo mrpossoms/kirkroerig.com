@@ -1,4 +1,4 @@
-article,robotics,electronics,learning,lessons,programming,algorithms
+~article,robotics,electronics,learning,lessons,programming,algorithms
 My First Robotics Competition: A Post-mortem
 ============================================
 ![Alt](/images/IMG_1591.JPG "Recording a path at AVC 2016")

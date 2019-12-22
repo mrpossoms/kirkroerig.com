@@ -1,7 +1,0 @@
-
-Error: Connection lost: The server closed the connection.
-    at Protocol.end (/home/kirk/kirkroerig.com/node_modules/mysql/lib/protocol/Protocol.js:78:13)
-    at Socket.<anonymous> (/home/kirk/kirkroerig.com/node_modules/mysql/lib/Connection.js:78:28)
-    at Socket.EventEmitter.emit (events.js:117:20)
-    at _stream_readable.js:910:16
-    at process._tickCallback (node.js:415:13)

@@ -1,0 +1,9 @@
+{% extends "layouts/main.html" %}
+
+{% block body %}
+{% for post in posts %}
+
+{% include "partials/article.html" %}
+
+{% endfor %}
+{% endblock %}

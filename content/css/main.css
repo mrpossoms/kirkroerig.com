@@ -10,16 +10,16 @@
 	position: relative;
 }
 
-h1:first-letter, h2:first-letter{
-	color: #F89A25;
-}
-
 h1, h2, h3, time{
-	display: inline;
+	text-align: center;
+	display: block;
 	background-color: #FFF;
 }
 
 p{
+	font-family: "merriweather";
+	font-size: 1.5em;
+	color: #444;
 	margin: 5px;
 	margin-bottom: 15px;
 	margin-top: 15px;
@@ -50,7 +50,7 @@ time{
 }
 
 h1{
-	font-size: 64px;
+	font-size: 2em;
 }
 
 ol{
@@ -87,13 +87,13 @@ nav > ol > li{
 input, button{
 	font-size: 18px;
 	border: none;
-	padding: 3px;
+	padding: 5px;
 
 	background: #ffb75d;
 	color: #FFF;
 }
 
-button{
+input[type="submit"], button {
 	background: #F89A25;
 }
 

@@ -1,4 +1,4 @@
-work
+~work
 # libnn
 
 Repo: [Github](https://www.github.com/mrpossoms/libnn)

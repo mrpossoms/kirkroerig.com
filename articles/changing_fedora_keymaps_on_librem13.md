@@ -1,4 +1,4 @@
-article,linux,fedora,user,x11,keyboard,keymap
+~article,linux,fedora,user,x11,keyboard,keymap
 # Keymaps on the Purism Librem13
 I ordered a Purism Librem 13 laptop about 6 months ago because I was looking for a Linux first machine. I was doing some embedded linux work at the time, and my client's build/dev environments were setup specifically for Fedora. So I swapped out the SSD, installed Fedora and quickly found that the keyboard layouts were flawed for this machine.
 

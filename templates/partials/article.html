@@ -1,12 +1,12 @@
 
 <article>
 	<section>
-		{{{content}}}
+		{{post['markup']|safe}}
 	</section>
 
 	<section style="margin-top:20px">
 		<time class="centered">
-			Posted {{posted}}
+			Posted {{post['posted']}}
 		</time>
 	</section>
 </article>
