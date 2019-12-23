@@ -8,8 +8,15 @@ from article import article
 
 app = Flask('KirkRoerig', static_url_path='', static_folder='content')
 
-def filter_posts(keywords=set()):
+def filter_posts(keywords=set(), title=None):
 	posts = []
+
+	# if a specific article is mentioned, execute this
+	if title is not None:
+		a = article('articles/{}.md'.format(title))
+		return [{ 'markup': a.md(), 'posted': a.posted(), 'date': a._date, }]
+
+	# Otherwise, load all filter by keywords set if applicable
 	for name in os.listdir('articles'):
 		if name[0] is '.':
 			continue
@@ -32,6 +39,10 @@ def filter_posts(keywords=set()):
 		posts = sorted(posts, key=lambda x: x['date'], reverse=True)
 
 	return posts
+
+@app.route("/article/<string:title>")
+def specific_article(title):
+	return render_template("home.html", posts=filter_posts(title=title))
 
 @app.route("/articles/search")
 def search():

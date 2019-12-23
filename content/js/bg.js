@@ -1,7 +1,6 @@
 function WebWork(svg_id){
 	var lineStyle = function(){
 		return {
-			stroke: '#DDD',
 			'stroke-width': '2',
 			'stroke-linecap': 'round'
 		};
@@ -17,7 +16,7 @@ function WebWork(svg_id){
 		for(var i = 1; i <= 2; i++){
 			l.setAttribute('x'+i, points[i-1][0]+'%');
 			l.setAttribute('y'+i, points[i-1][1]+'%');
-			
+
 			var val = { line: l };
 			val['x' + i]  = points[i-1][0];
 			val['y' + i]  = points[i-1][1];
@@ -40,7 +39,7 @@ function WebWork(svg_id){
 
 		for(var i = 0; i < points; i++){
 			var x = (odd ? xoff : 0);
-			x += dx * i; 
+			x += dx * i;
 			out.push([
 				x + (i > 0 && i < points ? jitter() : 0),
 				y + (!edge ? jitter() : 0)
@@ -78,7 +77,7 @@ function WebWork(svg_id){
 			else{ // stitch between the current vert, it's matching last vert
 			      // and the previous vert in the last row
 				cvs.appendChild(line([thisRow[i], lastRow[i - 1]], cvs.space));
-				cvs.appendChild(line([thisRow[i], lastRow[i]], cvs.space));		
+				cvs.appendChild(line([thisRow[i], lastRow[i]], cvs.space));
 			}
 		}
 	};
