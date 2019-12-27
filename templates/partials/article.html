@@ -1,5 +1,11 @@
 
 <article>
+    <!-- Tag cluster -->
+    {% for tag in post['tags'] %}
+    <a href="/articles/search?tags={{tag}}">{{tag}}</a>
+    {% endfor %}
+    <div class="clearfix"></div>
+
 	<section>
 		{{post['markup']|safe}}
 	</section>

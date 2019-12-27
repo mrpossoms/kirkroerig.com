@@ -27,12 +27,14 @@ def filter_posts(keywords=set(), title=None):
 				posts += [{
 					'markup': a.md(),
 					'posted': a.posted(),
+					'tags': a.keywords(),
 					'date': a._date,
 				}]
 		else:
 			posts += [{
 				'markup': a.md(),
 				'posted': a.posted(),
+				'tags': a.keywords(),
 				'date': a._date,
 			}]
 
