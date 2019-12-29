@@ -15,7 +15,7 @@ h1, h2, h3, time{
 	display: block;
 }
 
-p{
+p, li {
 	font-family: "merriweather";
 	font-size: 1.5em;
 	margin: 5px;
@@ -58,6 +58,7 @@ section > nav{
 ol > li {
 	margin: 0;
 	padding: 0.25em;
+	font-size: 1.0em;
 	float: left;
 }
 
@@ -106,7 +107,7 @@ p > img {
 	margin: 0 auto;
 }
 
-article{
+article, footer {
 	margin-top: 20px;
 	padding: 20px;
 }
@@ -296,11 +297,11 @@ a, b{
 		color: #FFF;
 	}
 
-	p {
+	li, p, footer {
 		color: #BBB;
 	}
 
-	article{
+	article, footer {
 		background-color: #333;
 	}
 

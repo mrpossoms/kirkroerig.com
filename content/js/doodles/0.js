@@ -1,7 +1,7 @@
 window.requestAnimFrame = function(callback) {
 	window.requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame;
-	
-	if(!window.requestAnimationFrame)	
+
+	if(!window.requestAnimationFrame)
 		window.setTimeout(callback, 1000 / 60);
 	else
 		window.requestAnimationFrame(callback);
@@ -22,12 +22,12 @@ function doodleInit(cvs){
 	ctx.fillStyle = 'rgba(0, 0, 0, 1)';
 	ctx.fillRect(0, 0, cvs.clientWidth, cvs.clientHeight);
 
-	
+
 	ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
 	ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
-	
+
 	function draw(){
-		var scale = (-Math.cos(time / 10 + time / 100) + 1) * 8 + 0.1;
+		var scale = 8;//(-Math.cos(time / 10 + time / 100) + 1) * 8 + 0.1;
 
 		// Epicycloid path
 		var r = 1, R = 3;
@@ -38,7 +38,7 @@ function doodleInit(cvs){
 		if(frame++ % 15 == 0)
 			ctx.fillRect(0, 0, cvs.clientWidth, cvs.clientHeight);
 
-		ctx.save();	
+		ctx.save();
 		ctx.translate(centerX + x * 15, centerY + y * 15);
 		ctx.rotate(time);
 		ctx.strokeRect(-1 * scale, -1 * scale, 2 * scale, 2 * scale);
