@@ -1,9 +1,18 @@
 {% extends "layouts/main.html" %}
 
 {% block body %}
-{% for post in posts %}
+{% for post in paging['pages'] %}
 
 {% include "partials/article.html" %}
 
 {% endfor %}
+
+{% if paging['prev'] %}
+<a href="{{paging['prev']}}">< prev</a>
+{% endif %}
+
+{% if paging['next'] %}
+<a href="{{paging['next']}}">next ></a>
+{% endif %}
+
 {% endblock %}

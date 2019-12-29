@@ -1,18 +1,18 @@
 
 <article>
     <!-- Tag cluster -->
-    {% for tag in post['tags'] %}
+    {% for tag in post.keywords() %}
     <a href="/articles/search?tags={{tag}}">{{tag}}</a>
     {% endfor %}
     <div class="clearfix"></div>
 
 	<section>
-		{{post['markup']|safe}}
+		{{post.md()|safe}}
 	</section>
 
 	<section style="margin-top:20px">
 		<time class="centered">
-			Posted {{post['posted']}}
+			Posted {{post.posted()}}
 		</time>
 	</section>
 </article>

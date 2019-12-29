@@ -8,13 +8,32 @@ from article import article
 
 app = Flask('KirkRoerig', static_url_path='', static_folder='content')
 
+def paging(posts, range=(0, 1)):
+	prev, forw = None, None
+
+	prev_idx = max(0, range[0] - 1)
+	forw_idx = range[1] + 1
+
+
+	if range[0] > prev_idx:
+		prev = '/articles/pages/{}/to/{}'.format(prev_idx, range[0])
+	if range[1] < len(posts):
+		forw = '/articles/pages/{}/to/{}'.format(range[1], forw_idx)
+
+	return {
+		'range': range,
+		'pages': posts[range[0]:range[1]],
+		'prev': prev,
+		'next': forw
+	}
+
 def filter_posts(keywords=set(), title=None):
 	posts = []
 
 	# if a specific article is mentioned, execute this
 	if title is not None:
 		a = article('articles/{}.md'.format(title))
-		return [{ 'markup': a.md(), 'posted': a.posted(), 'date': a._date, }]
+		return [a]
 
 	# Otherwise, load all filter by keywords set if applicable
 	for name in os.listdir('articles'):
@@ -24,32 +43,32 @@ def filter_posts(keywords=set(), title=None):
 		a = article('articles/{}'.format(name))
 		if len(keywords) > 0:
 			if len(keywords.intersection(set(a.keywords()))) > 0:
-				posts += [{
-					'markup': a.md(),
-					'posted': a.posted(),
-					'tags': a.keywords(),
-					'date': a._date,
-				}]
+				posts += [a]
 		else:
-			posts += [{
-				'markup': a.md(),
-				'posted': a.posted(),
-				'tags': a.keywords(),
-				'date': a._date,
-			}]
+			posts += [a]
 
-		posts = sorted(posts, key=lambda x: x['date'], reverse=True)
+		posts = sorted(posts, key=lambda x: x._date, reverse=True)
 
 	return posts
 
 @app.route("/article/<string:title>")
 def specific_article(title):
-	return render_template("home.html", posts=filter_posts(title=title))
+	return render_template("home.html",
+	                       posts=filter_posts(title=title),
+	                       range=(0, 1))
 
 @app.route("/articles/search")
 def search():
 	keywords = set(request.args['tags'].split('+'))
-	return render_template("home.html", posts=filter_posts(keywords=keywords))
+	return render_template("home.html",
+	                       posts=filter_posts(keywords=keywords),
+	                       range=(0, 5))
+
+@app.route("/articles/pages/<int:start>/to/<int:end>")
+def pages(start, end):
+	posts = filter_posts(keywords={'article'})
+	_paging = paging(posts, range=(start, end))
+	return render_template("home.html", posts=_paging['pages'], paging=_paging)
 
 @app.route("/work")
 def work():
@@ -66,7 +85,11 @@ def contact():
 
 @app.route("/")
 def index():
-	return render_template("home.html", posts=filter_posts(keywords={'article'}))
+	posts = filter_posts(keywords={'article'})
+	_paging = paging(posts)
+	return render_template("home.html",
+	                       posts=_paging['pages'],
+	                       paging=_paging)
 
 if __name__ == '__main__':
 	port = 8080
