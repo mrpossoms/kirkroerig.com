@@ -60,9 +60,9 @@ def specific_article(title):
 @app.route("/articles/search")
 def search():
 	keywords = set(request.args['tags'].split('+'))
-	return render_template("home.html",
-	                       posts=filter_posts(keywords=keywords),
-	                       range=(0, 5))
+	posts = filter_posts(keywords=keywords)
+	_paging = paging(posts, range=(0, 20))
+	return render_template("home.html", posts=posts, paging=_paging)
 
 @app.route("/articles/pages/<int:start>/to/<int:end>")
 def pages(start, end):
