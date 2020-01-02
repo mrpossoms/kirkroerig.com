@@ -70,6 +70,12 @@ def pages(start, end):
 	_paging = paging(posts, range=(start, end))
 	return render_template("home.html", posts=_paging['pages'], paging=_paging)
 
+@app.route("/projects")
+def projects():
+	posts = filter_posts(keywords={'work'})
+	_paging = paging(posts, range=(0, len(posts)))
+	return render_template("home.html", posts=_paging['pages'], paging=_paging)
+
 @app.route("/work")
 def work():
 	posts = filter_posts(keywords={'work'})
