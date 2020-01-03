@@ -41,6 +41,7 @@ def filter_posts(keywords=set(), title=None):
 			continue
 
 		a = article('articles/{}'.format(name))
+		a.posted() # force caching of date
 		if len(keywords) > 0:
 			if len(keywords.intersection(set(a.keywords()))) > 0:
 				posts += [a]
