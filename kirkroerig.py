@@ -56,7 +56,8 @@ def filter_posts(keywords=set(), title=None):
 def specific_article(title):
 	return render_template("home.html",
 	                       posts=filter_posts(title=title),
-	                       range=(0, 1))
+	                       range=(0, 1),
+	                       paging=None)
 
 @app.route("/articles/search")
 def search():
