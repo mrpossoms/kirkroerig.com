@@ -9,7 +9,7 @@ license = "MIT"
 python = "^3.7"
 flask = "^1.1"
 markdown = "^3.1"
-mistune = "^0.8.4"
+mistune = "^2.0.3"
 
 [tool.poetry.dev-dependencies]
 
