@@ -3,9 +3,9 @@ import datetime
 import os
 
 
-class article():
+class Article():
     def __init__(self, path):
-        self.path = path
+        self.path = str(path)
         self._text = None
         self._md = None
         self._keywords = None
@@ -18,6 +18,7 @@ class article():
 
     def posted(self, cache=True):
         if cache and self._posted is None:
+            import pdb; pdb.set_trace()
             self._posted = os.popen("git log --diff-filter=A -- " + self.path + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
             mos = { 'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec': 12 }
             try:
@@ -46,20 +47,20 @@ class article():
             return self._md
 
         # self._md = markdown(self.text(cache))
-        renderer = mistune.Renderer(escape=False, hard_wrap=True)
-        self._md = mistune.Markdown(renderer)(self.text(cache))
+        renderer = 'html'#mistune.Renderer(escape=False, hard_wrap=True)
+        self._md = mistune.html(self.text(cache))
 
         return self._md
 
 
 if __name__ == '__main__':
-    txt = article('articles/autonomous_car.md').text()
+    txt = Article('articles/autonomous_car.md').text()
     assert(len(txt) > 0)
 
-    md = article('articles/autonomous_car.md').md()
+    md = Article('articles/autonomous_car.md').md()
     assert(len(md) > 0)
 
-    a = article('articles/autonomous_car.md')
+    a = Article('articles/autonomous_car.md')
     for keyword in ['article','robotics','hardware','assembly','neural','networks','ml']:
         assert(keyword in a.keywords())
 

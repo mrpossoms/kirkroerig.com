@@ -1,12 +1,13 @@
 import os
+from importlib.resources import files
 
 from flask import Flask
 from flask import render_template
 from flask import request
 
-from article import article
+from .article import Article
 
-app = Flask('KirkRoerig', static_url_path='', static_folder='content')
+app = Flask('KirkRoerig', static_url_path='', static_folder=str(files('kirkroerig') / 'content'), template_folder=str(files('kirkroerig') / 'templates'))
 
 def paging(posts, range=(0, 1)):
 	prev, forw = None, None
@@ -32,15 +33,15 @@ def filter_posts(keywords=set(), title=None):
 
 	# if a specific article is mentioned, execute this
 	if title is not None:
-		a = article('articles/{}.md'.format(title))
+		a = Article('articles/{}.md'.format(title))
 		return [a]
 
 	# Otherwise, load all filter by keywords set if applicable
-	for name in os.listdir('articles'):
-		if name[0] is '.':
+	for item in files('kirkroerig.articles').iterdir():
+		if item.name[0] == '.':
 			continue
 
-		a = article('articles/{}'.format(name))
+		a = Article(item)
 		a.posted() # force caching of date
 		if len(keywords) > 0:
 			if len(keywords.intersection(set(a.keywords()))) > 0:
