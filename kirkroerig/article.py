@@ -18,8 +18,8 @@ class Article():
 
     def posted(self, cache=True):
         if cache and self._posted is None:
-            import pdb; pdb.set_trace()
-            self._posted = os.popen("git log --diff-filter=A -- " + self.path + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
+            # import pdb; pdb.set_trace()
+            self._posted = os.popen("git log --follow --find-renames --diff-filter=A -- " + self.path + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
             mos = { 'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec': 12 }
             try:
                 mo, day, yr = self._posted.split(' ')
