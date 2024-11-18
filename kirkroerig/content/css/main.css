@@ -325,6 +325,9 @@ input[type=checkbox]:checked:before {
   height: calc(var(--line-height) / 2);
   background: var(--text-color);
 }
+input[type=range] {
+  border: none;
+}
 
 button:focus, input:focus {
   --border-thickness: 3px;

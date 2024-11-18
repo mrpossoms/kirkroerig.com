@@ -1,0 +1,159 @@
+~article policy gradient ml machine learning
+<script src="/js/pg.js"></script>
+
+<style>
+canvas {
+	width: 100%;
+	height: 10em;
+}
+</style>
+# Policy Gradient
+
+One quick Google search on the keywords "policy gradient" will turn up hundreds of articles, repositories and videos describing various policy gradient methods. Many of these resources only provide a surface level explaination of how and why policy gradient methods work, or they simply regurgitate text or equations from the literature. My goal in writing this article is to share intuitions that I've built while deeply studying policy gradient methods, specifically the seminal REINFORCE algorithm.
+
+### Policy
+Put simply, a policy is an abstract construct which makes a decision given some context. For the purpose of this article a policy is a function. Often in literature, a policy is written as something like:
+
+$$
+\pi(x) \rightarrow a
+$$
+
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical, scalars, vectors and matices are all common.
+
+Let's look at a simple example of what a policy function could look like. Consider a policy that accepts as its state a scalar value which is the probablity of rain for that day, and returns a scalar value which is the probability that you will bring an umbrella with you. This policy could be written as a piecewise function like this:
+
+$$
+\pi(x) =
+\begin{cases}
+    1, & \text{if } x \geq 0.5 \\
+    0, & \text{if } x < 0
+\end{cases}
+$$
+
+What this policy is saying is that if the probability of rain $x$ is greater than or equal to 0.5, then you will bring an umbrella, otherwise you will not. This is a very simple policy, but it is a policy nonetheless. Lets consider the same policy, but with a slight update to the notation:
+
+$$
+\pi(\theta, x) \rightarrow a
+$$
+
+In this notation $\theta$ is the parameter vector of the policy. The parameter vector is the set of values that the policy function uses to make its decision. This same concept can be expressed with other notational variants too, for example $\pi_{\theta}(a | x)$ states that the policy $\pi$ with parameters $\theta$ returns the action $a$ given state $x$. Lets look a what our previous policy would look like in this notation:
+
+$$
+\pi_{\theta}(x) =
+\begin{cases}
+	1, & \text{if } x \geq \theta \\
+	0, & \text{if } x < \theta
+\end{cases}
+$$
+
+Do you see what I did there? I replaced the constant 0.5 with the parameter $\theta$. This is a very simple example, but it demonstrates the concept of a parameterized policy. With this small alteration, it enables us to control the behavior of the policy by adjusting the parameter $\theta$.
+
+I mentioned earlier that a policy could be any function, the last example is a piecewise function, but what if we were to represent the policy a bit differently:
+
+$$
+\pi_{\theta}(x) = \theta x
+$$
+
+In this example, the policy is a linear function of the state. The parameter $\theta$ is a scalar value that the state is multiplied by. This policy is a bit more flexible than the previous one, because it can represent a continuous range of behaviors depending on the value of $\theta$. Play with the slider below to see how manipulating $\theta$ changes the action $a$ for any given value of $x$.
+
+
+<canvas id="rain_linear_policy"></canvas>
+<script>
+function rain_linear_policy(theta) {
+	// let period = slider_param(event);
+	clear("rain_linear_policy");
+	plot("rain_linear_policy", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
+	plot("rain_linear_policy", (x, params) => { return theta * x; }, {'label': {'text': 'a', 'x': 1}});
+
+}
+rain_linear_policy()
+</script>
+<label for="rain_theta_slider">$\theta$</label>
+<input name="rain_theta_slider" type="range" min="-1" max="1" value="0" step="any" oninput="rain_linear_policy(slider_param(event))">
+
+Policies implemented as linear combinations of features like the example above are simple, and in many cases sufficient for solving certain problems. In practice  policies are often represented with more complex functions that have greater approximation power such as support-vector-machines or neural networks.
+
+### Balance World
+
+Lets move to a slightly more interesting problem, so we can design a more interesting policy. Instead of the umbrella problem, lets consider a 2D environment with a bounded platform which can pivot about its center. On the platform rests a ball which can roll on the surface. Our goal will be to keep the ball balanced in the center of the platform.
+
+<canvas id="platform_ex"></canvas>
+<script>
+let platform_ex_state = [0, 0, 0];
+function platform_ex(theta) {
+	// let period = slider_param(event);
+	platform_ex_state[0] = theta;
+	platform.draw('platform_ex', platform_ex_state);
+}
+
+setInterval(() => {
+	platform_ex_state = platform.update(platform_ex_state);
+	platform.draw("platform_ex", platform_ex_state);
+}, 16);
+</script>
+<label for="platform_thetas">tilt</label>
+<input name="platform_thetas" type="range" min="-1" max="1" value="0" step="any" oninput="platform_ex_state[0]=slider_param(event)">
+
+We will represent the state of this system as the following vector in a continuous state space.
+
+$$
+x = \begin{bmatrix}
+\theta & x & \delta{x}
+\end{bmatrix}^T
+$$
+
+Where $\theta$ is the angle of the platform, $x$ is the position of the ball on the platform relative to the fulcrum point and $\delta{x}$ is the velocity of the ball along the $x$ axis. The action space is also continuous. The policy will choose to adjust the platform angle by some $\delta{\theta}$ in each time-step.
+
+#### Actions
+A natural fit for a continuous action space would be to generate a continuous action, but for the purpose of illustration lets first consider how a policy might be implemented that uses a _discrete action space_. We will give the policy three possible choices in each time-step. These choices will be:
+
+* Tilt left
+* Tilt right
+* Do nothing
+
+To do this, we will have the policy return a vector which describes the probability of taking any one of these actions given the current state (more on this later). This means that $a \in {\rm I\!R}^3$, and our policy will be some function mapping $x \in {\rm I\!R}^3 \rightarrow a \in {\rm I\!R}^3$. To keep it simple we will again use a linear combination of features, like our parameterized umbrella example. A convinient way to represent this linear combination of features is via matrix multiplication. This time our parameters will be a 4x3 matrix $\Theta$. The last column stores the biases for our linear model which will allow the policy to make decisions even when the state is 0. For them to contribute, we will need to augment our state with a 1 which also makes the shapes compatible (1x4 and 4x3). The policy function will look like this:
+
+$$
+\pi_{\Theta}(a | x) = softmax([x; 1] \Theta)
+$$
+
+We wrap the output of the linear combination in a softmax function to ensure that the output is a probability distribution. Namely enforcing that the sum of the probabilities is 1. Using these probabilities we can sample an action from the distribution to determine which action to take. Here's an example of what this policy with randomized parameters looks like in action:
+
+
+<canvas id="platform_random_policy"></canvas>
+<script>
+let platform_random_policy_x = [0, 0, 0];
+let random_W = randmat(4, 3)
+
+setInterval(() => {
+	platform_random_policy_x = [0, 0, Math.random()-0.5];
+}, 3000);
+
+setInterval(() => {
+	platform_random_policy_x = platform.update(platform_random_policy_x);
+	platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
+	let z = matmul([platform_random_policy_x], random_W);
+	let p = softmax(z[0]);
+	let a_idx = sample_multinomial(p);
+
+	switch(a_idx) {
+		case 0:
+			platform_random_policy_x[0] -= 0.01;
+			break;
+		case 1:
+			platform_random_policy_x[0] += 0.01;
+			break;
+		default:
+			break;
+	}
+
+	const e = document.getElementById("platform_random_policy");
+	const ctx = ctx_cache(e);
+
+	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
+	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
+	platform.draw_probabilities("platform_random_policy", p, ['left', 'right', 'none'], [10, 20], [ctx.width / 2, ctx.height]);
+}, 16);
+</script>
+
+### Gradient

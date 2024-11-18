@@ -2,10 +2,12 @@ import mistune
 import datetime
 import os
 
+from importlib.resources import files
+from mistune.plugins.math import math
 
 class Article():
     def __init__(self, path):
-        self.path = str(path)
+        self.path = str(files('kirkroerig') / path)
         self._text = None
         self._md = None
         self._keywords = None
@@ -47,8 +49,11 @@ class Article():
             return self._md
 
         # self._md = markdown(self.text(cache))
-        renderer = 'html'#mistune.Renderer(escape=False, hard_wrap=True)
-        self._md = mistune.html(self.text(cache))
+        # renderer = 'html'#mistune.Renderer(escape=False, hard_wrap=True)
+        # self._md = mistune.html(self.text(cache))
+        renderer = mistune.HTMLRenderer(escape=False)
+        markdown = mistune.Markdown(renderer, plugins=[math])
+        self._md = markdown(self.text(cache))
 
         return self._md
 
