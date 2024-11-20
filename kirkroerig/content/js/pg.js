@@ -210,19 +210,29 @@ let platform = {
 
 		let path = new Path2D();
 		path.moveTo(left_top[0], right_bottom[1]);
-
 		p = [].concat([0], p)
+		for (let i = 0; i < p.length; i++)
+		{
+			let x = left_top[0] + w * i / p.length;
+			let y = right_bottom[1] - h * p[i];
+			path.lineTo(x, y);
+		}
+		path.lineTo(right_bottom[0], right_bottom[1]);
+		ctx.stroke(path);
 
 		for (let i = 0; i < p.length; i++)
 		{
 			let x = left_top[0] + w * i / p.length;
 			let y = right_bottom[1] - h * p[i];
 			if (i > 0 && i < p.length) {
+				let text_metrics = ctx.measureText(names[i-1]);
+				let th = text_metrics.height / 2;
+				let tw = text_metrics.width;
+				ctx.fillStyle = 'red';
+				ctx.fillRect(x - (10 + tw / 2), y - (10 + th / 2), text_metrics.width + (20 + tw), text_metrics.height + (20 + th));
+				ctx.fillStyle = 'black';
 				ctx.fillText(names[i-1], x, y - 10);
 			}
-			path.lineTo(x, y);
 		}
-		path.lineTo(right_bottom[0], right_bottom[1]);
-		ctx.stroke(path);
 	}
 };

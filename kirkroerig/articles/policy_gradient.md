@@ -18,7 +18,7 @@ $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical, scalars, vectors and matices are all common.
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - scalars, vectors and matices are all common.
 
 Let's look at a simple example of what a policy function could look like. Consider a policy that accepts as its state a scalar value which is the probablity of rain for that day, and returns a scalar value which is the probability that you will bring an umbrella with you. This policy could be written as a piecewise function like this:
 
@@ -36,7 +36,7 @@ $$
 \pi(\theta, x) \rightarrow a
 $$
 
-In this notation $\theta$ is the parameter vector of the policy. The parameter vector is the set of values that the policy function uses to make its decision. This same concept can be expressed with other notational variants too, for example $\pi_{\theta}(a | x)$ states that the policy $\pi$ with parameters $\theta$ returns the action $a$ given state $x$. Lets look a what our previous policy would look like in this notation:
+In this notation $\theta$ are the parameters of the policy. The parameters are a set of values that the policy function uses in conjuction with the features $x$ to make its decision. This same concept can be expressed with other notational variants too, for example $\pi_{\theta}(a | x)$ states that the policy $\pi$ with parameters $\theta$ returns the action $a$ given state $x$. Lets look a what our previous policy would look like in this notation:
 
 $$
 \pi_{\theta}(x) =
@@ -108,17 +108,35 @@ Where $\theta$ is the angle of the platform, $x$ is the position of the ball on 
 A natural fit for a continuous action space would be to generate a continuous action, but for the purpose of illustration lets first consider how a policy might be implemented that uses a _discrete action space_. We will give the policy three possible choices in each time-step. These choices will be:
 
 * Tilt left
-* Tilt right
 * Do nothing
+* Tilt right
 
-To do this, we will have the policy return a vector which describes the probability of taking any one of these actions given the current state (more on this later). This means that $a \in {\rm I\!R}^3$, and our policy will be some function mapping $x \in {\rm I\!R}^3 \rightarrow a \in {\rm I\!R}^3$. To keep it simple we will again use a linear combination of features, like our parameterized umbrella example. A convinient way to represent this linear combination of features is via matrix multiplication. This time our parameters will be a 4x3 matrix $\Theta$. The last column stores the biases for our linear model which will allow the policy to make decisions even when the state is 0. For them to contribute, we will need to augment our state with a 1 which also makes the shapes compatible (1x4 and 4x3). The policy function will look like this:
+To do this, we will have the policy return a vector which describes the probability of taking any one of these actions given the current state. This means that $a \in {\rm I\!R}^3$, and our policy will be some function mapping $x \in {\rm I\!R}^3 \rightarrow a \in {\rm I\!R}^3$. To keep it simple we will again use a linear combination of features, like our parameterized umbrella example. Matrix multiplication is a convinient way to represent this linear combination of features. This time our parameters will be a 4x3 matrix $\Theta$. The last column stores the biases for our linear model which will allow the policy to make decisions even when the state is 0. For the biases to contribute, we will need to augment our state with a 1 which also makes the shapes compatible (1x4 and 4x3). The policy function will look like this:
 
 $$
 \pi_{\Theta}(a | x) = softmax([x; 1] \Theta)
 $$
 
-We wrap the output of the linear combination in a softmax function to ensure that the output is a probability distribution. Namely enforcing that the sum of the probabilities is 1. Using these probabilities we can sample an action from the distribution to determine which action to take. Here's an example of what this policy with randomized parameters looks like in action:
+We wrap the output of the linear combination in a softmax function to ensure that the output is a probability distribution. Namely ensuring that the sum of the probabilities is 1. 
 
+These probabilities will be used as parameters for a multinomial distribution. We can sample from the distribution as long as we can generate a uniform random number. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than the cumulative sum.
+
+```javascript
+function sample_multinomial(p) {
+	let r = Math.random();
+	let c = 0;
+	for (let i = 0; i < p.length; i++) {
+		c += p[i];
+		if (r < c) {
+			return i;
+		}
+	}
+}
+```
+
+Choosing an action randomly, but not too randomly is a good way to explore the environment and learn about the consequences of actions this will be crucial later for learning a good policy.
+
+Here's an example of what this policy with randomized parameters looks like in action:
 
 <canvas id="platform_random_policy"></canvas>
 <script>
@@ -137,12 +155,9 @@ setInterval(() => {
 	let a_idx = sample_multinomial(p);
 
 	switch(a_idx) {
-		case 0:
-			platform_random_policy_x[0] -= 0.01;
-			break;
-		case 1:
-			platform_random_policy_x[0] += 0.01;
-			break;
+		case 0: platform_random_policy_x[0] -= 0.01; break;
+		case 1: break;
+		case 2: platform_random_policy_x[0] += 0.01; break;
 		default:
 			break;
 	}
@@ -152,8 +167,68 @@ setInterval(() => {
 
 	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
 	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
-	platform.draw_probabilities("platform_random_policy", p, ['left', 'right', 'none'], [10, 20], [ctx.width / 2, ctx.height]);
+	platform.draw_probabilities("platform_random_policy", p, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
 }, 16);
 </script>
 
 ### Gradient
+
+Let's spend some time exploring the other half of the idea of policy gradient methods - gradients. Fundementally, the gradient is a multi-dimensional generalization of the derivative and is synonomous with the idea of the slope of a function. Before we dive into the details of how the gradient is used in policy gradient methods, lets take a moment to review derivatives.
+
+A derivative is a measure of how a function changes with respect to one of its inputs. For example, the derivative of a function $f(x)$ is the slope of the tangent line to the curve at a given point. Below are a few examples of functions with their tangent-line (slope of the derivative) plotted together. Use the slider to sample the derivative at different points and see the tangent line.
+
+<canvas id="derivative"></canvas>
+<script>
+let derivative_x = 0;
+let derivative_selected_function = 'sin(x)';
+function derivative(event) {
+	if (event)
+	if (typeof(event) == 'number') {
+		derivative_x = event;
+	} else {
+		derivative_selected_function = event.target.value;
+	}
+
+	clear("derivative");
+
+	let f = {
+		'sin(x)': (x, p) => { return Math.sin(x) * 0.5; },
+		'x^2': (x, p) => { return Math.pow(x, 2); },
+		'x^3': (x, p) => { return Math.pow(x, 3); },
+	};
+
+	let df = {
+		'sin(x)': (x, p) => { return 0.5 * Math.cos(derivative_x) * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
+		'x^2': (x, p) => { return 2 * derivative_x * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
+		'x^3': (x, p) => { return 3 * Math.pow(derivative_x, 2) * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
+	};
+
+	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
+	plot("derivative", (x, p) => { return df[derivative_selected_function](x, p); }, {'strokeStyle': 'LightGray'});
+	plot("derivative", (x, p) => { return f[derivative_selected_function](x, p); }, {});
+}
+derivative();
+</script>
+<fieldset>
+<input type="radio" id="x^2" name="function" value="x^2" onclick="derivative(event)" /> <label for="x^2">f(x) = x^2</label>
+<input type="radio" id="x^3" name="function" value="x^3" onclick="derivative(event)" /> <label for="x^3">f(x) = x^3</label>
+<input type="radio" id="sin" name="function" value="sin(x)" onclick="derivative(event)" /> <label for="sin">f(x) = sin(x)</label>
+</fieldset>
+<input name="dx_slider" type="range" min="-4" max="4" value="0" step="any" oninput="derivative(slider_param(event))">
+
+When you calculate a derivative, your computing the slope of a function with respect to one of its parameters. In the examples above this would be best written as:
+
+$$
+\frac{df(x)}{dx}
+$$
+
+What this is literally saying is that we're computing a ratio as the change in $f(x)$ over some infintesimally small change in $x$. 
+
+Or put another way, we're computing the change in $f(x)$ for a small change in $x$. This is the fundamental idea behind the gradient. The gradient of a function is a vector of partial derivatives, one for each parameter of the function. For a function $f(x, y)$ the gradient would be:
+
+$$
+\nabla f(x, y) = \begin{bmatrix}
+\frac{\partial f}{\partial x} \\
+\frac{\partial f}{\partial y}
+\end{bmatrix}
+$$
