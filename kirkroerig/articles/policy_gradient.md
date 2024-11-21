@@ -177,44 +177,52 @@ Let's spend some time exploring the other half of the idea of policy gradient me
 
 A derivative is a measure of how a function changes with respect to one of its inputs. For example, the derivative of a function $f(x)$ is the slope of the tangent line to the curve at a given point. Below are a few examples of functions with their tangent-line (slope of the derivative) plotted together. Use the slider to sample the derivative at different points and see the tangent line.
 
+$$
+\frac{df(x)}{dx} = \lim_{\Delta x \to 0} \frac{f(x + \Delta x) - f(x)}{\Delta x}
+$$
+
 <canvas id="derivative"></canvas>
 <script>
 let derivative_x = 0;
-let derivative_selected_function = 'sin(x)';
+let derivative_dx = 0.001;
 function derivative(event) {
 	if (event)
 	if (typeof(event) == 'number') {
 		derivative_x = event;
-	} else {
-		derivative_selected_function = event.target.value;
 	}
 
 	clear("derivative");
 
-	let f = {
-		'sin(x)': (x, p) => { return Math.sin(x) * 0.5; },
-		'x^2': (x, p) => { return Math.pow(x, 2); },
-		'x^3': (x, p) => { return Math.pow(x, 3); },
-	};
-
-	let df = {
-		'sin(x)': (x, p) => { return 0.5 * Math.cos(derivative_x) * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
-		'x^2': (x, p) => { return 2 * derivative_x * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
-		'x^3': (x, p) => { return 3 * Math.pow(derivative_x, 2) * (x - derivative_x) + f[derivative_selected_function](derivative_x); },
-	};
+	
+	let f = (x) => { return Math.sin(x); }//{ return Math.pow(x, 2) - 1; };
+	let slope = fin_diff(f, derivative_x, derivative_dx);
+	let df = (x) => { return slope * (x - derivative_x) + f(derivative_x); };
 
 	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
-	plot("derivative", (x, p) => { return df[derivative_selected_function](x, p); }, {'strokeStyle': 'LightGray'});
-	plot("derivative", (x, p) => { return f[derivative_selected_function](x, p); }, {});
+	plot("derivative", (x, p) => { return f(x); }, {});
+	plot("derivative", (x, p) => { return df(x); }, {'strokeStyle': 'LightGray'});
+
+	let ctx = ctx_cache(document.getElementById("derivative"));
+
+	ctx.beginPath();
+	ctx.moveTo(px(ctx,derivative_x+derivative_dx), py(ctx,f(derivative_x+derivative_dx)));
+	ctx.lineTo(px(ctx,derivative_x+derivative_dx), py(ctx,0));
+	ctx.moveTo(px(ctx,derivative_x-derivative_dx), py(ctx,f(derivative_x-derivative_dx)));
+	ctx.lineTo(px(ctx,derivative_x-derivative_dx), py(ctx,0));
+	ctx.strokeStyle = 'LightGray';
+	ctx.stroke();
+
+	ctx.beginPath();
+	ctx.arc(px(ctx,derivative_x), py(ctx,f(derivative_x)), 3, 0, 2 * Math.PI);
+	ctx.fillStyle = 'LightGray';
+	ctx.fill();
 }
 derivative();
 </script>
-<fieldset>
-<input type="radio" id="x^2" name="function" value="x^2" onclick="derivative(event)" /> <label for="x^2">f(x) = x^2</label>
-<input type="radio" id="x^3" name="function" value="x^3" onclick="derivative(event)" /> <label for="x^3">f(x) = x^3</label>
-<input type="radio" id="sin" name="function" value="sin(x)" onclick="derivative(event)" /> <label for="sin">f(x) = sin(x)</label>
-</fieldset>
-<input name="dx_slider" type="range" min="-4" max="4" value="0" step="any" oninput="derivative(slider_param(event))">
+<label for="x_slider">$x$</label>
+<input name="x_slider" type="range" min="-4" max="4" value="0" step="any" oninput="derivative(slider_param(event))">
+<label for="dx_slider">$\Delta x$</label>
+<input name="x_slider" type="range" min="0.001" max="4" value="0.001" step="any" oninput="derivative_dx=slider_param(event);derivative()">
 
 When you calculate a derivative, your computing the slope of a function with respect to one of its parameters. In the examples above this would be best written as:
 

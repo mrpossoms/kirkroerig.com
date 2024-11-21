@@ -1,8 +1,20 @@
 CTX = {}
 
-// Array.prototype.flatten = function() {
-// 	return this.reduce((acc, val) => Array.isArray(val) ? acc.concat(val.flatten()) : acc.concat(val), []);
-// };
+function style_black() 
+{
+	switch (detectSystemTheme()) {
+		case 'dark':
+			return '#ffffff';
+		case 'light':
+			return '#000000';
+		default:
+			return '#000000';
+}
+
+function style_white() 
+{
+	switch (detectSystemTheme()) {
+		case 'dark':
 
 function ctx_cache(e)
 {
@@ -21,6 +33,11 @@ function ctx_cache(e)
 	}
 
 	return CTX[e.id];
+}
+
+function fin_diff(f, x, h)
+{
+	return (f(x + h) - f(x - h)) / (2 * h);
 }
 
 function matmul(A, B)
@@ -82,6 +99,20 @@ function clear(cvsId)
 	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
+let px = (ctx, x) => {
+	let w = ctx.canvas.width;
+	let h = ctx.canvas.height;
+	let pixels_per_unit = h / 2;
+	return x * pixels_per_unit + w / 2;
+};
+
+let py = (ctx, y) => {
+	let w = ctx.canvas.width;
+	let h = ctx.canvas.height;
+	let pixels_per_unit = h / 2;
+	return -y * pixels_per_unit + h / 2;
+};
+
 function plot(cvsId, fn, params)
 {
 	const e = document.getElementById(cvsId);
@@ -102,15 +133,14 @@ function plot(cvsId, fn, params)
 		ctx.setLineDash([]);
 	}
 
-	let px = (x) => x * pixels_per_unit + w / 2;
-	let py = (y) => -y * pixels_per_unit + h / 2;
+
 
 	let trace = new Path2D();
 	for (let x = -(w/2) / pixels_per_unit; x < w / pixels_per_unit; x += 0.01)
 	{
 		let y = fn(x, params);
-		if (x == -(w/2) / pixels_per_unit) { trace.moveTo(px(x), py(y)); }
-		else { trace.lineTo(px(x), py(y)); }
+		if (x == -(w/2) / pixels_per_unit) { trace.moveTo(px(ctx, x), py(ctx, y)); }
+		else { trace.lineTo(px(ctx, x), py(ctx, y)); }
 	}
 
 	if (params && 'label' in params) {
@@ -121,14 +151,14 @@ function plot(cvsId, fn, params)
 	
 		let padding = params.label.padding ? params.label.padding : -10;
 		let textMetrics = ctx.measureText(params.label.text);
-		let top = py(y) + padding - textMetrics.actualBoundingBoxAscent;
-		let bottom = py(y) + padding + textMetrics.actualBoundingBoxDescent;
+		let top = py(ctx, y) + padding - textMetrics.actualBoundingBoxAscent;
+		let bottom = py(ctx, y) + padding + textMetrics.actualBoundingBoxDescent;
 		console.log(top);
 		if (top < 0 || bottom > h) {
 			ctx.textBaseline = y > 0 ? 'top' : 'bottom';
 			padding = -padding;
 		}
-		ctx.fillText(params.label.text, px(params.label.x), py(y) + padding);
+		ctx.fillText(params.label.text, px(ctx, params.label.x), py(ctx, y) + padding);
 	}
 
 	ctx.stroke(trace);
