@@ -6,6 +6,10 @@ canvas {
 	width: 100%;
 	height: 10em;
 }
+
+.math * {
+	margin: 0;
+}
 </style>
 # Policy Gradient
 
@@ -65,6 +69,12 @@ function rain_linear_policy(theta) {
 	plot("rain_linear_policy", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
 	plot("rain_linear_policy", (x, params) => { return theta * x; }, {'label': {'text': 'a', 'x': 1}});
 
+	// let ctx = ctx_cache(document.getElementById("rain_linear_policy"));
+	// ctx.clearRect(0, 0, ctx.width, ctx.height);
+	// ctx.beginPath();
+	// ctx.arc(px(ctx, 0), py(ctx, 0), 3, 0, 2 * Math.PI);
+	// ctx.fillStyle = color('LightGray');
+	// ctx.fill();
 }
 rain_linear_policy()
 </script>
@@ -175,16 +185,16 @@ setInterval(() => {
 
 Let's spend some time exploring the other half of the idea of policy gradient methods - gradients. Fundementally, the gradient is a multi-dimensional generalization of the derivative and is synonomous with the idea of the slope of a function. Before we dive into the details of how the gradient is used in policy gradient methods, lets take a moment to review derivatives.
 
-A derivative is a measure of how a function changes with respect to one of its inputs. For example, the derivative of a function $f(x)$ is the slope of the tangent line to the curve at a given point. Below are a few examples of functions with their tangent-line (slope of the derivative) plotted together. Use the slider to sample the derivative at different points and see the tangent line.
+#### Derivatives
 
-$$
-\frac{df(x)}{dx} = \lim_{\Delta x \to 0} \frac{f(x + \Delta x) - f(x)}{\Delta x}
-$$
+A derivative is a function which returns the slope of another function with respect to its input. A good way to build an intiution for derivatives is to think of them as the slope of a function at a given point. There are two ways to compute a derivative, analytically and numerically. The analytical method is the most common and is the one that you probably learned in school. The numerical method is an approximation of the analytical method and is often used when the analytical method is too difficult to compute.
+
+Numerical derivatives can be computed using a method known as _finite differencing_ where you calculate the value of the function $f(x)$ at some point $x$ and then again at a point $x + \Delta x$. The derivative is then the ratio of the change in the function over the change in $x$. Take a look at the example below, and play with the sliders to see how this works.
 
 <canvas id="derivative"></canvas>
 <script>
 let derivative_x = 0;
-let derivative_dx = 0.001;
+let derivative_dx = 2;
 function derivative(event) {
 	if (event)
 	if (typeof(event) == 'number') {
@@ -196,25 +206,24 @@ function derivative(event) {
 	
 	let f = (x) => { return Math.sin(x); }//{ return Math.pow(x, 2) - 1; };
 	let slope = fin_diff(f, derivative_x, derivative_dx);
-	let df = (x) => { return slope * (x - derivative_x) + f(derivative_x); };
+	let df = (x) => { return slope * (x-derivative_x) + f(derivative_x); };
 
-	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
+	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': color('LightGray')});
 	plot("derivative", (x, p) => { return f(x); }, {});
-	plot("derivative", (x, p) => { return df(x); }, {'strokeStyle': 'LightGray'});
+	plot("derivative", (x, p) => { return df(x); }, {'strokeStyle': color('LightGray')});
 
 	let ctx = ctx_cache(document.getElementById("derivative"));
 
 	ctx.beginPath();
+	ctx.setLineDash([10, 10]);
 	ctx.moveTo(px(ctx,derivative_x+derivative_dx), py(ctx,f(derivative_x+derivative_dx)));
 	ctx.lineTo(px(ctx,derivative_x+derivative_dx), py(ctx,0));
-	ctx.moveTo(px(ctx,derivative_x-derivative_dx), py(ctx,f(derivative_x-derivative_dx)));
-	ctx.lineTo(px(ctx,derivative_x-derivative_dx), py(ctx,0));
-	ctx.strokeStyle = 'LightGray';
+	ctx.strokeStyle = color('LightGray');
 	ctx.stroke();
 
 	ctx.beginPath();
 	ctx.arc(px(ctx,derivative_x), py(ctx,f(derivative_x)), 3, 0, 2 * Math.PI);
-	ctx.fillStyle = 'LightGray';
+	ctx.fillStyle = color('LightGray');
 	ctx.fill();
 }
 derivative();
@@ -222,18 +231,61 @@ derivative();
 <label for="x_slider">$x$</label>
 <input name="x_slider" type="range" min="-4" max="4" value="0" step="any" oninput="derivative(slider_param(event))">
 <label for="dx_slider">$\Delta x$</label>
-<input name="x_slider" type="range" min="0.001" max="4" value="0.001" step="any" oninput="derivative_dx=slider_param(event);derivative()">
+<input name="x_slider" type="range" min="0.001" max="4" value="2" step="any" oninput="derivative_dx=slider_param(event);derivative()">
 
-When you calculate a derivative, your computing the slope of a function with respect to one of its parameters. In the examples above this would be best written as:
+You may have noticed something when you were playing with the $\Delta x$ slider. As you make $\Delta x$ smaller, the slope of the tangent line (the numerical derivative) got closer and closer to matching the slope of the function at point $x$. This is exactly the idea as something we will explore next, which is the definition of the derivative as the _limit_.
 
+$$
+\frac{df(x)}{dx} = \lim_{\Delta x \to 0} \frac{f(x + \Delta x) - f(x)}{\Delta x}
+$$
+
+The right side of this expression does exactly what the interactive example is doing. It computes the value of the function we are differentiating $f$ at two points $x$ and $x + \Delta x$. Lets call this difference $\Delta f(x)$ or rather:
+
+$$
+\Delta f(x) = f(x + \Delta x) - f(x)
+$$
+
+The difference, $\Delta f(x)$ is then _divided_ by the size of the step we took. The resulting value happens to be the slope of the line traced from $f(x)$ to $f(x + \Delta x)$, which approximates the slope of the equation $f$ at value $x$! The notation takes it one step farther however, by asking you to imagine what happens as $\Delta x$ gets smaller and smaller. As $\Delta x$ approaches 0 the value of the limit approaches the value of the derivative. This is the idea of the limit, and it is the foundation of calculus.
+
+#### Gradients
+
+A gradient is like a derivative, but for functions with more than one input. While a derivative gives the slope of a single-variable function, a gradient tells us the direction and rate of the steepest increase for a function with multiple variables. 
+
+<canvas id="gradient" onmousemove='gradient_example(event)' ></canvas>
+<script>
+</script>
+
+The gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
+
+$$
+\nabla f(x_1, x_2, \dots, x_n) = \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \dots, \frac{\partial f}{\partial x_n} \right)
+$$
+
+Each partial derivative, $\frac{\partial f}{\partial x_i}$, measures how $f$ changes when only $x_i$ changes, keeping all the other variables fixed.
+
+Numerical gradients can be computed using a method similar to finite differencing. To approximate the gradient with respect to a variable $x_i$, we calculate the value of the function $f(x_1, \dots, x_n)$ at two points: one at $x_i$ and one at $x_i + \Delta x$, while keeping all other variables constant. The partial derivative is then the ratio of the change in $f$ over the change in $x_i$:
+
+$$
+\frac{\partial f}{\partial x_i} \approx \frac{f(x_1, \dots, x_i + \Delta x, \dots, x_n) - f(x_1, \dots, x_i, \dots, x_n)}{\Delta x}
+$$
+
+### What Does the Gradient Mean?
+
+The gradient points in the direction where the function $f$ increases the fastest. Its size tells us how steep that increase is. For example, if $f(x, y)$ represents the height of a hill, the gradient at any point $(x, y)$ shows the direction of the steepest slope and how steep it is. 
+
+Another way to think about it is that the gradient is always perpendicular to the "level curves" of the function. These are the curves where $f(x, y)$ is constant, like contour lines on a map. 
+
+Play with the example below to see how the gradient changes as you move around or adjust the step size $\Delta x$.
+
+<!--
 $$
 \frac{df(x)}{dx}
 $$
 
-What this is literally saying is that we're computing a ratio as the change in $f(x)$ over some infintesimally small change in $x$. 
+What this is literally saying is that we're computing a ratio as the change in $f(x)$ over some infintesimally small change in $x$, $\Delta x$. 
 
-Or put another way, we're computing the change in $f(x)$ for a small change in $x$. This is the fundamental idea behind the gradient. The gradient of a function is a vector of partial derivatives, one for each parameter of the function. For a function $f(x, y)$ the gradient would be:
-
+Or put another way, we're computing the change in $f(x)$ for a small change in $x$, $\Delta x$. This is the fundamental idea behind the gradient. The gradient of a function is a vector of partial derivatives, one for each parameter of the function. For a function $f(x, y)$ the gradient would be:
+-->
 $$
 \nabla f(x, y) = \begin{bmatrix}
 \frac{\partial f}{\partial x} \\

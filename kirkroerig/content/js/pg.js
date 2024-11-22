@@ -1,34 +1,46 @@
 CTX = {}
 
-function style_black() 
-{
-	switch (detectSystemTheme()) {
-		case 'dark':
-			return '#ffffff';
-		case 'light':
-			return '#000000';
-		default:
-			return '#000000';
+function detectSystemTheme() {
+	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		return 'dark';
+	} else {
+		return 'light';
+	}
 }
 
-function style_white() 
+function color(name) 
 {
-	switch (detectSystemTheme()) {
-		case 'dark':
+	return {
+		'dark': {
+			'LightGray': 'LightGray',
+			'black': 'white'
+		},
+		'light': {
+			'LightGray': 'LightGray',
+			'black': 'black'
+		}
+	}[detectSystemTheme()][name];
+}
 
 function ctx_cache(e)
 {
+	let just_added = false;
 	if (e.id in CTX == false) {
 		CTX[e.id] = e.getContext('2d');
+		just_added = true;
 	} 
 
-	if (e.offsetWidth != CTX[e.id].width || e.offsetHeight != CTX[e.id].height) {
+	if (just_added || e.offsetWidth != CTX[e.id].width || e.offsetHeight != CTX[e.id].height) {
 		const dpr = window.devicePixelRatio || 1;
-		e.width = e.offsetWidth * dpr;
-		e.height = e.offsetHeight * dpr;
-		CTX[e.id].width = e.offsetWidth * dpr;
-		CTX[e.id].height = e.offsetHeight * dpr;
+		const rect = e.getBoundingClientRect();
+		e.width = rect.width * dpr;
+		e.height = rect.height * dpr;
 		CTX[e.id].scale(dpr, dpr);
+		e.style.width = `${rect.width}px`;
+		e.style.height = `${rect.height}px`;
+		// These are just to check for size changes and have no other impact
+		CTX[e.id].width = e.offsetWidth;
+		CTX[e.id].height = e.offsetHeight;
 		console.log("updated canvas size");
 	}
 
@@ -37,7 +49,8 @@ function ctx_cache(e)
 
 function fin_diff(f, x, h)
 {
-	return (f(x + h) - f(x - h)) / (2 * h);
+	// return (f(x + h) - f(x - h)) / (2 * h);
+	return (f(x + h) - f(x)) / h;
 }
 
 function matmul(A, B)
@@ -122,13 +135,13 @@ function plot(cvsId, fn, params)
 	let pixels_per_unit = h / 2;
 
 	if (params) {
-		ctx.strokeStyle = 'strokeStyle' in params ? params.strokeStyle : 'black';
+		ctx.strokeStyle = 'strokeStyle' in params ? params.strokeStyle : color('black');
 		ctx.lineWidth = 'lineWidth' in params ? params.lineWidth : 2;
 		if ('lineDash' in params) { ctx.setLineDash(params.lineDash); }
 		else { ctx.setLineDash([]); }
 	}
 	else {
-		ctx.strokeStyle = 'black';
+		ctx.strokeStyle = color('black');
 		ctx.lineWidth = 2;
 		ctx.setLineDash([]);
 	}
@@ -198,15 +211,15 @@ let platform = {
 		let w = right_bottom[0] - left_top[0];
 		let h = right_bottom[1] - left_top[1];
 
-		let px = (x) => x * pixels_per_unit + w / 2;
-		let py = (y) => -y * pixels_per_unit + h / 2;
-
 		let theta = state[0];
 		let x = state[1];
 
 		let fulcrum = { x: w / 2, y: h / 2 };
 
 		ctx.clearRect(left_top[0], left_top[1], w, h);
+
+		ctx.fillStyle = color('black');
+		ctx.strokeStyle = color('black');
 
 		// draw platform
 		ctx.beginPath();
@@ -233,8 +246,9 @@ let platform = {
 		let w = right_bottom[0] - left_top[0];
 		let h = right_bottom[1] - left_top[1];
 
-		// clear with partial opacity
-		// ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+		ctx.fillStyle = color('black');
+		ctx.strokeStyle = color('black');
+
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'bottom';
 
@@ -260,9 +274,53 @@ let platform = {
 				let tw = text_metrics.width;
 				ctx.fillStyle = 'red';
 				ctx.fillRect(x - (10 + tw / 2), y - (10 + th / 2), text_metrics.width + (20 + tw), text_metrics.height + (20 + th));
-				ctx.fillStyle = 'black';
+				ctx.fillStyle = color('black');
 				ctx.fillText(names[i-1], x, y - 10);
 			}
 		}
 	}
 };
+
+function gradient_example(event)
+{
+	const ctx = ctx_cache(event.currentTarget);
+
+	let w = ctx.canvas.width;
+	let h = ctx.canvas.height;
+	let hw = w / 2;
+	let hh = h / 2;
+
+	// let gaussian = (x, y) => {
+	// 	return Math.exp(-((x - 0.5) ** 2 + (y - 0.5) ** 2) / 0.1);
+	// };
+	
+	let gaussian = (x) => {
+		return Math.exp(-Math.pow(x, 2) / 0.1);
+	};
+
+	let f = (x, y) => {
+		return gaussian(x) * gaussian(y);
+	};
+
+	if (ctx.gradient_image == undefined) {
+		ctx.gradient_image = ctx.createImageData(w, h);
+
+
+		for (let py = 0; py < h; py++) {
+			for (let px = 0; px < w; px++) {
+				let x = (px - hw) / hh;
+				let y = (py - hh) / hh;
+				let val = f(x, y);
+				let i = 4 * (px + py * w);
+
+				for (let j = 0; j < 3; j++) {
+					ctx.gradient_image.data[i + j] = 255 * val;
+				}
+				ctx.gradient_image.data[i + 3] = 255;
+			}
+		}
+	}
+
+	ctx.putImageData(ctx.gradient_image, 0, 0);
+
+}
