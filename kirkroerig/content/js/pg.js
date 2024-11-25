@@ -283,6 +283,8 @@ let platform = {
 
 function gradient_example(event)
 {
+	
+	const dpr = window.devicePixelRatio || 1;
 	const ctx = ctx_cache(event.currentTarget);
 
 	let w = ctx.canvas.width;
@@ -290,10 +292,6 @@ function gradient_example(event)
 	let hw = w / 2;
 	let hh = h / 2;
 
-	// let gaussian = (x, y) => {
-	// 	return Math.exp(-((x - 0.5) ** 2 + (y - 0.5) ** 2) / 0.1);
-	// };
-	
 	let gaussian = (x) => {
 		return Math.exp(-Math.pow(x, 2) / 0.1);
 	};
@@ -302,9 +300,18 @@ function gradient_example(event)
 		return gaussian(x) * gaussian(y);
 	};
 
+	let mx = event.layerX * dpr, my = event.layerY * dpr;
+	
 	if (ctx.gradient_image == undefined) {
 		ctx.gradient_image = ctx.createImageData(w, h);
 
+		let low = 0;
+		let high = 255;
+
+		if (detectSystemTheme() == 'light') {
+			low = 255;
+			high = 0;
+		}
 
 		for (let py = 0; py < h; py++) {
 			for (let px = 0; px < w; px++) {
@@ -314,13 +321,32 @@ function gradient_example(event)
 				let i = 4 * (px + py * w);
 
 				for (let j = 0; j < 3; j++) {
-					ctx.gradient_image.data[i + j] = 255 * val;
+					ctx.gradient_image.data[i + j] = high * val + low * (1 - val);
 				}
 				ctx.gradient_image.data[i + 3] = 255;
 			}
 		}
 	}
 
-	ctx.putImageData(ctx.gradient_image, 0, 0);
+	let _x = (mx-hw)/hh, _y = (my-hh)/hh;
+	let f0 = f(_x, _y);
+	let f_dx = (f(_x + 0.01, _y) - f0) / 0.01;
+	let f_dy = (f(_x, _y + 0.01) - f0) / 0.01;
 
+	console.log(f_dx);
+
+	ctx.clearRect(0, 0, w, h);
+	ctx.putImageData(ctx.gradient_image, 0, 0);
+	ctx.beginPath();
+	ctx.globalCompositeOperation = 'difference';
+	ctx.fillStyle = 'white';
+	ctx.strokeStyle = 'white';
+	ctx.lineWidth = 1;
+	ctx.arc(mx/dpr, my/dpr, 2, 0, 2 * Math.PI);
+	ctx.fill();
+	ctx.beginPath();
+	ctx.moveTo(mx/dpr, my/dpr);
+	ctx.lineTo(mx/dpr + f_dx * 20, my/dpr + f_dy * 20);
+	ctx.stroke();
+	ctx.globalCompositeOperation = 'source-over';
 }

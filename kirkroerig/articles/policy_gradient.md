@@ -5,6 +5,7 @@
 canvas {
 	width: 100%;
 	height: 10em;
+    touch-action: none;
 }
 
 .math * {
@@ -251,8 +252,9 @@ The difference, $\Delta f(x)$ is then _divided_ by the size of the step we took.
 
 A gradient is like a derivative, but for functions with more than one input. While a derivative gives the slope of a single-variable function, a gradient tells us the direction and rate of the steepest increase for a function with multiple variables. 
 
-<canvas id="gradient" onmousemove='gradient_example(event)' ></canvas>
+<canvas id="gradient" onpointermove='gradient_example(event)' ></canvas>
 <script>
+gradient_example({currentTarget: document.getElementById('gradient')});
 </script>
 
 The gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
