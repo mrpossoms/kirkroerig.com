@@ -281,9 +281,8 @@ let platform = {
 	}
 };
 
-function gradient_example(event)
+function gradient_example(event, show_vectors)
 {
-	
 	const dpr = window.devicePixelRatio || 1;
 	const ctx = ctx_cache(event.currentTarget);
 
@@ -293,15 +292,44 @@ function gradient_example(event)
 	let hh = h / 2;
 
 	let gaussian = (x) => {
-		return Math.exp(-Math.pow(x, 2) / 0.1);
+		let sig = 0.3;
+		return Math.exp(-Math.pow(x, 2) / sig);
 	};
 
 	let f = (x, y) => {
 		return gaussian(x) * gaussian(y);
 	};
 
-	let mx = event.layerX * dpr, my = event.layerY * dpr;
+	let mx = event.offsetX * dpr, my = event.offsetY * dpr;
 	
+	let draw_vector = (px, py, params) => {
+		let x = (px - hw)/hh;
+		let y = (py - hh)/hh;
+		let f0 = f(x, y);
+		let f_dx = (f(x + 0.01, y) - f0) / 0.01;
+		let f_dy = (f(x, y + 0.01) - f0) / 0.01;
+
+		if (!params) {
+			params = { 
+				len_scale: 20,
+				origin_radius: 2
+			};
+		}
+
+		ctx.beginPath();
+		ctx.globalCompositeOperation = 'difference';
+		ctx.fillStyle = 'white';
+		ctx.strokeStyle = 'white';
+		ctx.lineWidth = 1;
+		ctx.arc(px/dpr, py/dpr, params.origin_radius, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(px/dpr, py/dpr);
+		ctx.lineTo(px/dpr + f_dx * params.len_scale, py/dpr + f_dy * params.len_scale);
+		ctx.stroke();
+		ctx.globalCompositeOperation = 'source-over';	
+	};
+
 	if (ctx.gradient_image == undefined) {
 		ctx.gradient_image = ctx.createImageData(w, h);
 
@@ -328,25 +356,18 @@ function gradient_example(event)
 		}
 	}
 
-	let _x = (mx-hw)/hh, _y = (my-hh)/hh;
-	let f0 = f(_x, _y);
-	let f_dx = (f(_x + 0.01, _y) - f0) / 0.01;
-	let f_dy = (f(_x, _y + 0.01) - f0) / 0.01;
-
-	console.log(f_dx);
-
 	ctx.clearRect(0, 0, w, h);
 	ctx.putImageData(ctx.gradient_image, 0, 0);
-	ctx.beginPath();
-	ctx.globalCompositeOperation = 'difference';
-	ctx.fillStyle = 'white';
-	ctx.strokeStyle = 'white';
-	ctx.lineWidth = 1;
-	ctx.arc(mx/dpr, my/dpr, 2, 0, 2 * Math.PI);
-	ctx.fill();
-	ctx.beginPath();
-	ctx.moveTo(mx/dpr, my/dpr);
-	ctx.lineTo(mx/dpr + f_dx * 20, my/dpr + f_dy * 20);
-	ctx.stroke();
-	ctx.globalCompositeOperation = 'source-over';
+
+	draw_vector(mx, my);
+
+	if (show_vectors)
+	for (let x = 0; x < w; x += 11) {
+		for (let y = 0; y < h; y += 11) {
+			draw_vector(x, y, {
+				len_scale: 5,
+				origin_radius: 0.5
+			});
+		}
+	}
 }

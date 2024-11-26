@@ -188,7 +188,7 @@ Let's spend some time exploring the other half of the idea of policy gradient me
 
 #### Derivatives
 
-A derivative is a function which returns the slope of another function with respect to its input. A good way to build an intiution for derivatives is to think of them as the slope of a function at a given point. There are two ways to compute a derivative, analytically and numerically. The analytical method is the most common and is the one that you probably learned in school. The numerical method is an approximation of the analytical method and is often used when the analytical method is too difficult to compute.
+A derivative is a function which returns the slope of another function with respect to its input. A good way to build an intiution for derivatives is to think of them as the slope of a function at a given point. There are two ways to compute a derivative, analytically and numerically. The analytical method is the most common and is the one that you probably learned in school. The numerical method is an approximation of the analytical method and is often used when the analytical method is too difficult to compute. In this article focus on the numerical method because it may be more intuative for the un-initiated.
 
 Numerical derivatives can be computed using a method known as _finite differencing_ where you calculate the value of the function $f(x)$ at some point $x$ and then again at a point $x + \Delta x$. The derivative is then the ratio of the change in the function over the change in $x$. Take a look at the example below, and play with the sliders to see how this works.
 
@@ -250,12 +250,36 @@ The difference, $\Delta f(x)$ is then _divided_ by the size of the step we took.
 
 #### Gradients
 
-A gradient is like a derivative, but for functions with more than one input. While a derivative gives the slope of a single-variable function, a gradient tells us the direction and rate of the steepest increase for a function with multiple variables. 
+A gradient is like a derivative, but for functions with more than one input. While a derivative gives the slope of a single-variable function, a gradient tells us the direction and rate of the steepest increase for a function with multiple variables.
 
-<canvas id="gradient" onpointermove='gradient_example(event)' ></canvas>
+Lets study an example graident of a fuction with 2 inputs.
+
+$$
+f(x, y) = e^{-x^2} * e^{-y^2}
+$$
+
+This function is composed of two [gaussian functions](https://en.wikipedia.org/wiki/Gaussian_function) multiplied together where each takes an independent input, $x$ and $y$ respectively. The result can be visualized by using the resulting value to assign a shade to every pixel for each position in an image $x$ and $y$. This exact situation is rendered below:
+ 
+<input type="checkbox" onchange="show_vectors^=1;gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors)">show vectors</input>
+<canvas id="gradient" onpointermove='gradient_example(event, show_vectors)' onmousemove='gradient_example(event, show_vectors)'></canvas>
 <script>
-gradient_example({currentTarget: document.getElementById('gradient')});
+let show_vectors = false;
+gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors);
 </script>
+
+When you interact with the image, you'll notice a line originating at your cursor and pointing to the brightest region of the image. This vector is the _gradient_ approximated with finite differencing to compute the partial deriavatives for $x$ and $y$. This results in a vector:
+
+$$
+\nabla f(x, y) =
+\begin{bmatrix}
+\frac{df}{dx} \\
+\frac{df}{dy}
+\end{bmatrix} \approx 
+\begin{bmatrix}
+\lim_{\Delta x \to 0} \frac{f(x + \Delta x, y) - f(x, y)}{\Delta x} \\
+\lim_{\Delta y \to 0} \frac{f(x, y + \Delta x) - f(x, y)}{\Delta y}
+\end{bmatrix}
+$$
 
 The gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
 
