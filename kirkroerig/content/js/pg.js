@@ -184,6 +184,14 @@ function slider_param(event)
 }
 
 let platform = {
+	pi: function(theta, x) {
+		let z = matmul([x], theta);
+		let p = softmax(z[0]);
+		let a_idx = sample_multinomial(p);
+
+		return { pr: p, idx: a_idx };
+	},
+
 	update: function(state)
 	{
 		let theta = Math.max(Math.min(1, state[0]), -1); // angle of the platform
@@ -199,6 +207,70 @@ let platform = {
 
 		return [theta, x + dx, dx + ax];
 	},
+
+	step: function(T, a_t, gamma)
+	{
+		let x_t = T.X[T.X.length - 1];
+		let a_t = 0;
+
+		switch (a_t.idx) {
+			case 0: a_t = -0.1; break;
+			case 1: a_t = 0; break;
+			case 2: a_t = 0.1; break;
+		}
+
+		x_t[0] += a_t;
+
+		let x_t1 = platform.update(x_t);
+
+		// Approaching x = 0 is a positive reward, otherwise negative
+		let r_t = Math.abs(x_t[1]) - Math.abs(x_t1[1]);
+
+		T.X.push(x_t1);
+		T.R.push(r_t);
+		T.A_pr.push(a_t.pr);
+		T.A.push(a_idx);
+	},
+
+	trajectory: function(theta)
+	{
+		let rnd = () => { return Math.random() * 2 - 1; };
+
+		let x_0 = [rnd(), rnd() * 50, rnd()];
+		let T = { X: [x_0], A_pr: [], A: [], R: []};
+
+		for (let t = 0; t < 100; t++)
+		{
+			let x_t = T.X[T.X.length - 1];
+			let a_t = platform.pi(theta, x_t);
+			let r_t = platform.step(T, a_t, 0.99);
+		}
+
+		return T;
+	},
+
+	train: function(epochs)
+	{
+		let theta = randmat(3, 1);
+		let alpha = 0.1;
+
+		for (let i = 0; i < epochs; i++)
+		{
+			let T = platform.trajectory(theta);
+
+			let G = 0;
+			for (let t = 0; t < T.X.length; t++)
+			{
+				G = T.R[t] + 0.99 * G;
+				let x_t = T.X[t];
+				let a_t = T.A[t];
+				let d_theta = matmul([x_t], [[a_t]]);
+				theta = matmul(theta, [[1 - alpha]]) + matmul(d_theta, [[alpha]]);
+			}
+		}
+
+		return theta;
+	}
 
 	draw: function(cvsId, state, left_top, right_bottom)
 	{
@@ -330,7 +402,7 @@ function gradient_example(event, show_vectors)
 		ctx.globalCompositeOperation = 'source-over';	
 	};
 
-	if (ctx.gradient_image == undefined) {
+	if (ctx.gradient_image == undefined || ctx.gradient_image.theme != detectSystemTheme()) {
 		ctx.gradient_image = ctx.createImageData(w, h);
 
 		let low = 0;
@@ -351,9 +423,11 @@ function gradient_example(event, show_vectors)
 				for (let j = 0; j < 3; j++) {
 					ctx.gradient_image.data[i + j] = high * val + low * (1 - val);
 				}
-				ctx.gradient_image.data[i + 3] = 255;
+				ctx.gradient_image.data[i + 3] = high * val + low * (1 - val);
 			}
 		}
+
+		ctx.gradient_image.theme = detectSystemTheme();
 	}
 
 	ctx.clearRect(0, 0, w, h);

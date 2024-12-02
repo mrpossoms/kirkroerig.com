@@ -4,10 +4,10 @@
   --font-family: "JetBrains Mono", monospace;
   --line-height: 1.20rem;
   --border-thickness: 2px;
-  --text-color: #000;
+  --text-color: #333;
   --text-color-alt: #666;
-  --background-color: #fff;
-  --background-color-alt: #eee;
+  --background-color: #eee;
+  --background-color-alt: #ddd;
 
   --font-weight-normal: 500;
   --font-weight-medium: 600;
@@ -23,10 +23,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text-color: #fff;
-    --text-color-alt: #aaa;
-    --background-color: #000;
-    --background-color-alt: #111;
+    --text-color: #eee;
+    --text-color-alt: #999;
+    --background-color: #333;
+    --background-color-alt: #222;
   }
 }
 

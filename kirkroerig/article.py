@@ -4,6 +4,7 @@ import os
 
 from importlib.resources import files
 from mistune.plugins.math import math
+from mistune.plugins.table import table
 
 class Article():
     def __init__(self, path):
@@ -52,7 +53,7 @@ class Article():
         # renderer = 'html'#mistune.Renderer(escape=False, hard_wrap=True)
         # self._md = mistune.html(self.text(cache))
         renderer = mistune.HTMLRenderer(escape=False)
-        markdown = mistune.Markdown(renderer, plugins=[math])
+        markdown = mistune.Markdown(renderer, plugins=[math, table])
         self._md = markdown(self.text(cache))
 
         return self._md

@@ -14,7 +14,11 @@ canvas {
 </style>
 # Policy Gradient
 
+Imagine teaching a robot to navigate a maze, not by showing it the way, but by letting it learn through trial, error, and reward. This is the essence of policy gradient methods—one of the most dynamic and adaptable approaches in reinforcement learning. Unlike traditional algorithms, these techniques empower AI to develop complex decision-making strategies from scratch, optimizing actions to achieve long-term goals. In this article, we’ll unravel the mechanics behind policy gradients, exploring how they blend mathematics and intuition to revolutionize autonomous systems, from gaming AIs to robotics. Let’s dive into the science of teaching machines to think for themselves!
+
 One quick Google search on the keywords "policy gradient" will turn up hundreds of articles, repositories and videos describing various policy gradient methods. Many of these resources only provide a surface level explaination of how and why policy gradient methods work, or they simply regurgitate text or equations from the literature. My goal in writing this article is to share intuitions that I've built while deeply studying policy gradient methods, specifically the seminal REINFORCE algorithm.
+
+To begin, lets explore the meaning of the words 'Policy' and 'Gradient' in this context.
 
 ### Policy
 Put simply, a policy is an abstract construct which makes a decision given some context. For the purpose of this article a policy is a function. Often in literature, a policy is written as something like:
@@ -161,11 +165,10 @@ setInterval(() => {
 setInterval(() => {
 	platform_random_policy_x = platform.update(platform_random_policy_x);
 	platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
-	let z = matmul([platform_random_policy_x], random_W);
-	let p = softmax(z[0]);
-	let a_idx = sample_multinomial(p);
 
-	switch(a_idx) {
+	let a = platform.pi(random_W, platform_random_policy_x);
+
+	switch(a.idx) {
 		case 0: platform_random_policy_x[0] -= 0.01; break;
 		case 1: break;
 		case 2: platform_random_policy_x[0] += 0.01; break;
@@ -178,13 +181,15 @@ setInterval(() => {
 
 	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
 	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
-	platform.draw_probabilities("platform_random_policy", p, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
+	platform.draw_probabilities("platform_random_policy", a.pr, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
 }, 16);
 </script>
 
+It's clear that choosing random parameters like we have done above doesn't get us very close to our goal of balancing the ball. So how can we choose better parameters? One possible solution is just ahead, but first lets examine the core of that solution, _graidents_.
+
 ### Gradient
 
-Let's spend some time exploring the other half of the idea of policy gradient methods - gradients. Fundementally, the gradient is a multi-dimensional generalization of the derivative and is synonomous with the idea of the slope of a function. Before we dive into the details of how the gradient is used in policy gradient methods, lets take a moment to review derivatives.
+Fundementally, the gradient is a multi-dimensional generalization of the derivative and is synonomous with the idea of the slope of a function. Before we dive into the details of how the gradient is used in policy gradient methods, lets take a moment to review derivatives.
 
 #### Derivatives
 
@@ -258,7 +263,7 @@ $$
 f(x, y) = e^{-x^2} * e^{-y^2}
 $$
 
-This function is composed of two [gaussian functions](https://en.wikipedia.org/wiki/Gaussian_function) multiplied together where each takes an independent input, $x$ and $y$ respectively. The result can be visualized by using the resulting value to assign a shade to every pixel for each position in an image $x$ and $y$. This exact situation is rendered below:
+This function is composed of two [gaussians](https://en.wikipedia.org/wiki/Gaussian_function) multiplied together where each takes an independent input, $x$ and $y$ respectively. The result can be visualized by using the resulting value to assign a shade to every pixel for each position in an image $x$ and $y$. You can think of this shade value as the height of a hill, the stronger the shade the taller. This exact situation is rendered below:
  
 <input type="checkbox" onchange="show_vectors^=1;gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors)">show vectors</input>
 <canvas id="gradient" onpointermove='gradient_example(event, show_vectors)' onmousemove='gradient_example(event, show_vectors)'></canvas>
@@ -267,9 +272,11 @@ let show_vectors = false;
 gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors);
 </script>
 
-When you interact with the image, you'll notice a line originating at your cursor and pointing to the brightest region of the image. This vector is the _gradient_ approximated with finite differencing to compute the partial deriavatives for $x$ and $y$. This results in a vector:
+When you interact with the image, you'll notice a line originating at your cursor and pointing to the brightest region of the image. This vector $\nabla f$ is the _gradient_ approximated with finite differencing. 
 
+The vector is compose of two values, how much the function's value changes with a small change in $x$ and a small change in $y$. These are each written as $\frac{\partial f}{\partial x}$ and $\frac{\partial f}{\partial y}$ respectively. This notation indicates that each of these quantities are _partial derivatives_, which means that they each only tell _part_ of the gradient's story.
 $$
+\nabla f =
 \nabla f(x, y) =
 \begin{bmatrix}
 \frac{df}{dx} \\
@@ -281,10 +288,10 @@ $$
 \end{bmatrix}
 $$
 
-The gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
+More generally, a gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
 
 $$
-\nabla f(x_1, x_2, \dots, x_n) = \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \dots, \frac{\partial f}{\partial x_n} \right)
+\nabla f = \nabla f(x_1, x_2, \dots, x_n) = \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \dots, \frac{\partial f}{\partial x_n} \right)
 $$
 
 Each partial derivative, $\frac{\partial f}{\partial x_i}$, measures how $f$ changes when only $x_i$ changes, keeping all the other variables fixed.
@@ -295,26 +302,73 @@ $$
 \frac{\partial f}{\partial x_i} \approx \frac{f(x_1, \dots, x_i + \Delta x, \dots, x_n) - f(x_1, \dots, x_i, \dots, x_n)}{\Delta x}
 $$
 
-### What Does the Gradient Mean?
+<!-- ### What Does the Gradient Mean?
 
-The gradient points in the direction where the function $f$ increases the fastest. Its size tells us how steep that increase is. For example, if $f(x, y)$ represents the height of a hill, the gradient at any point $(x, y)$ shows the direction of the steepest slope and how steep it is. 
+The gradient points in the direction where the function $f$ increases the fastest. Its size, or magnitude, tells us how steep that increase is. For example, if $f(x, y)$ represents the height of a hill, the gradient at any point $(x, y)$ shows the direction of the steepest slope and how steep it is. 
 
 Another way to think about it is that the gradient is always perpendicular to the "level curves" of the function. These are the curves where $f(x, y)$ is constant, like contour lines on a map. 
+ -->
+### Policy Gradient
 
-Play with the example below to see how the gradient changes as you move around or adjust the step size $\Delta x$.
+Right, so lets get into the meat of the article, the REINFORCE algorithm. Lets enumerate the crucial ideas that enable this algorithm to work.
 
-<!--
+#### Reward
+
+A ubiquitous concept in reinforcement learning is the idea of a reward. A reward is a scalar value that is used to evaluate the goodness of an action taken by an agent. The agent's goal is to maximize the total reward it receives over time. In the context of the platform example, a reward could be the negative distance between the ball and the center of the platform. The agent would then seek to minimize this distance by adjusting the platform angle.
+
+<textarea>
+function reward(x) {
+	return -Math.abs(x[1]);
+}
+</textarea>
+
+#### Monte Carlo Methods
+
+[Monte Carlo methods](https://en.wikipedia.org/wiki/Monte_Carlo_method) are a class of algorithms that rely on random sampling to obtain numerical results. For the REINFORCE algorithm, this manifests as repeating experiements with a randomized initial state. We sample actions from the policy and observe the rewards that result from those actions. 
+
+#### Probability of Actions
+
+A fundemental part of the REINFORCE algorithm is our ability to compute the probability of any action chosen by the policy. The difficulty of doing this varies depending on the action space. A discrete action space is trivial. For example, let's say for a state at time $t$, $x_t$ our policy computes
+
 $$
-\frac{df(x)}{dx}
+\pi_\Theta(x_t) \rightarrow a_t
 $$
 
-What this is literally saying is that we're computing a ratio as the change in $f(x)$ over some infintesimally small change in $x$, $\Delta x$. 
+and the probabilities of each action the following probabilities for each action class in $a_t$ are:
 
-Or put another way, we're computing the change in $f(x)$ for a small change in $x$, $\Delta x$. This is the fundamental idea behind the gradient. The gradient of a function is a vector of partial derivatives, one for each parameter of the function. For a function $f(x, y)$ the gradient would be:
--->
+
+| Action | Probability |
+|--------|-------------|
+| left   | 0.2         |
+| none   | 0.6         |
+| right  | 0.2         |
+
+
+The action our policy chose at time $t$ was 'none'. The probability of this action having been taken is exactly the probability of the action class 'none' which is 0.6. Straight forward!
+
+But what if the action space was continuous? In this case, we would need to compute the probability of the action taken by the policy. This can be done by evaluating the probability density function of the action taken by the policy. This is a bit more complex, but can be done with the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function) of the action space.
+
+
+#### More of the Good, Less of the Bad
+
+
+
+<!-- #### Policy Gradient Theorem
+
+The policy gradient theorem is a fundamental result in reinforcement learning that provides a way to compute the gradient of the expected reward with respect to the policy parameters. The theorem is a cornerstone of policy gradient methods, enabling us to optimize the policy by following the gradient of the expected reward.
+
+The theorem states that the gradient of the expected reward with respect to the policy parameters is the expected value of the gradient of the reward with respect to the policy parameters:
+
 $$
-\nabla f(x, y) = \begin{bmatrix}
-\frac{\partial f}{\partial x} \\
-\frac{\partial f}{\partial y}
-\end{bmatrix}
+\nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim p_{\theta}(\tau)} \left[ \nabla_{\theta} \log p_{\theta}(\tau) R(\tau) \right]
 $$
+
+Where:
+* $\nabla_{\theta} J(\theta)$ is the gradient of the expected reward with respect to the policy parameters.
+* $\mathbb{E}_{\tau \sim p_{\theta}(\tau)}$ is the expected value over trajectories sampled from the policy.
+* $\nabla_{\theta} \log p_{\theta}(\tau)$ is the gradient of the log probability of the trajectory with respect to the policy parameters.
+* $R(\tau)$ is the reward of the trajectory. -->
+
+
+
+
