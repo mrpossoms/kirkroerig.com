@@ -18,6 +18,23 @@ Imagine teaching a robot to navigate a maze, not by showing it the way, but by l
 
 One quick Google search on the keywords "policy gradient" will turn up hundreds of articles, repositories and videos describing various policy gradient methods. Many of these resources only provide a surface level explaination of how and why policy gradient methods work, or they simply regurgitate text or equations from the literature. My goal in writing this article is to share intuitions that I've built while deeply studying policy gradient methods, specifically the seminal REINFORCE algorithm.
 
+
+<canvas id="policy_gradient_ex"></canvas>
+<script>
+let theta = randmat(4, 3);
+let T = platform.sample_trajectory(theta);
+let t = 0;
+setInterval(() => {	
+	platform.draw("policy_gradient_ex", T.X[t++]);
+	if (t >= T.X.length) {
+		theta = platform.optimize(theta, T);
+		T = platform.sample_trajectory(theta);
+		t = 0;
+	}
+}, 16);
+</script>
+
+
 To begin, lets explore the meaning of the words 'Policy' and 'Gradient' in this context.
 
 ### Policy
@@ -164,7 +181,7 @@ setInterval(() => {
 
 setInterval(() => {
 	platform_random_policy_x = platform.update(platform_random_policy_x);
-	platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
+	// platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
 
 	let a = platform.pi(random_W, platform_random_policy_x);
 

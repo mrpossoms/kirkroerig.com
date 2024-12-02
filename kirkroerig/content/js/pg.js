@@ -1,5 +1,17 @@
 CTX = {}
 
+Array.prototype.rows = function() 
+{
+	return this.length;
+}
+
+Array.prototype.cols = function()
+{
+	return this[0].length;
+}
+
+let zeros = (r, c) => { return Array(r).fill(Array(c).fill(0)); };
+
 function detectSystemTheme() {
 	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 		return 'dark';
@@ -53,6 +65,31 @@ function fin_diff(f, x, h)
 	return (f(x + h) - f(x)) / h;
 }
 
+function policy_grad(pi, theta, x, h)
+{
+	let G = zeros(theta.rows(), theta.cols());
+
+	for (let r = 0; r < theta.rows(); r++) {
+		for (let c = 0; c < theta.cols(); c++) {
+			let theta_plus = theta.map((row, i) => row.map((val, j) => {
+				return i == r && j == c ? val + h : val;
+			}));
+
+			let theta_minus = theta.map((row, i) => row.map((val, j) => {
+				return i == r && j == c ? val - h : val;
+			}));
+
+			let pi_plus = pi(theta_plus, x);
+			let pi_minus = pi(theta_minus, x);
+
+			let grad = vecscl(vecsub(pi_plus.pr, pi_minus.pr), 1 / (2 * h));
+			G[r][c] = grad;
+		}
+	}
+
+	return G;
+}
+
 function matmul(A, B)
 {
 	if (A[0].length != B.length) { throw "Matrix dimensions do not match"; }
@@ -72,6 +109,57 @@ function matmul(A, B)
 		}
 	}
 	return C;
+}
+
+function matadd(A, B)
+{
+	if (A.length != B.length || A[0].length != B[0].length) { throw "Matrix dimensions do not match"; }
+
+	let C = [];
+	for (let i = 0; i < A.length; i++)
+	{
+		C.push([]);
+		for (let j = 0; j < A[0].length; j++)
+		{
+			C[i].push(A[i][j] + B[i][j]);
+		}
+	}
+	return C;
+}
+
+function matscl(A, s)
+{
+	let B = [];
+	for (let i = 0; i < A.length; i++)
+	{
+		B.push([]);
+		for (let j = 0; j < A[0].length; j++)
+		{
+			B[i].push(A[i][j] * s);
+		}
+	}
+	return B;
+}
+
+function vecsub(a, b)
+{
+	if (a.length != b.length) { throw "Vector dimensions do not match"; }
+	let c = [];
+	for (let i = 0; i < a.length; i++)
+	{
+		c.push(a[i] - b[i]);
+	}
+	return c;
+}
+
+function vecscl(a, s)
+{
+	let b = [];
+	for (let i = 0; i < a.length; i++)
+	{
+		b.push(a[i] * s);
+	}
+	return b;
 }
 
 function randmat(rows, cols)
@@ -205,21 +293,21 @@ let platform = {
 		if (x > 50) { x = 50; dx = 0; }
 		if (x < -50) { x = -50; dx = 0; }
 
-		return [theta, x + dx, dx + ax];
+		return [theta, x + dx, dx + ax, 1];
 	},
 
 	step: function(T, a_t, gamma)
 	{
 		let x_t = T.X[T.X.length - 1];
-		let a_t = 0;
+		let d_theta = 0;
 
 		switch (a_t.idx) {
-			case 0: a_t = -0.1; break;
-			case 1: a_t = 0; break;
-			case 2: a_t = 0.1; break;
+			case 0: d_theta = -0.1; break;
+			case 1: d_theta = 0; break;
+			case 2: d_theta = 0.1; break;
 		}
 
-		x_t[0] += a_t;
+		x_t[0] += d_theta;
 
 		let x_t1 = platform.update(x_t);
 
@@ -229,14 +317,14 @@ let platform = {
 		T.X.push(x_t1);
 		T.R.push(r_t);
 		T.A_pr.push(a_t.pr);
-		T.A.push(a_idx);
+		T.A.push(a_t.idx);
 	},
 
-	trajectory: function(theta)
+	sample_trajectory: function(theta)
 	{
 		let rnd = () => { return Math.random() * 2 - 1; };
 
-		let x_0 = [rnd(), rnd() * 50, rnd()];
+		let x_0 = [rnd(), rnd() * 50, rnd(), 1];
 		let T = { X: [x_0], A_pr: [], A: [], R: []};
 
 		for (let t = 0; t < 100; t++)
@@ -249,28 +337,19 @@ let platform = {
 		return T;
 	},
 
-	train: function(epochs)
+	optimize: function(theta, T)
 	{
-		let theta = randmat(3, 1);
 		let alpha = 0.1;
+		let G = zeros(theta.rows(), theta.cols());
 
-		for (let i = 0; i < epochs; i++)
-		{
-			let T = platform.trajectory(theta);
-
-			let G = 0;
-			for (let t = 0; t < T.X.length; t++)
-			{
-				G = T.R[t] + 0.99 * G;
-				let x_t = T.X[t];
-				let a_t = T.A[t];
-				let d_theta = matmul([x_t], [[a_t]]);
-				theta = matmul(theta, [[1 - alpha]]) + matmul(d_theta, [[alpha]]);
-			}
+		for (let t = 0; t < T.X.length; t++) {
+			let x_t = T.X[t];
+			let G_t = policy_grad(platform.pi, theta, x_t, 0.01);
+			G = matadd(G, matscl(G_t, T.R[t])); // No discounting yet
 		}
 
-		return theta;
-	}
+		return matadd(theta, matscl(G, alpha));
+	},
 
 	draw: function(cvsId, state, left_top, right_bottom)
 	{
