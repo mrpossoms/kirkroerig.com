@@ -21,7 +21,7 @@ One quick Google search on the keywords "policy gradient" will turn up hundreds 
 
 <canvas id="policy_gradient_ex"></canvas>
 <script>
-let theta = randmat(6, 2);
+let theta = [randmat(4, 8), randmat(8, 2)];
 let T = platform.sample_trajectory(theta);
 let t = 0;
 let last_reward = 0;
@@ -203,33 +203,33 @@ Here's an example of what this policy with randomized parameters looks like in a
 <canvas id="platform_random_policy"></canvas>
 <script>
 let platform_random_policy_x = [0, 0, 0];
-let random_W = randmat(4, 3)
+let random_W = randmat(6, 3)
 
-setInterval(() => {
-	platform_random_policy_x = [0, 0, Math.random()-0.5];
-}, 3000);
+// setInterval(() => {
+// 	platform_random_policy_x = [0, 0, Math.random()-0.5];
+// }, 3000);
 
-setInterval(() => {
-	platform_random_policy_x = platform.update(platform_random_policy_x);
-	// platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
+// setInterval(() => {
+// 	platform_random_policy_x = platform.update(platform_random_policy_x);
+// 	// platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
 
-	let a = platform.pi(random_W, platform_random_policy_x);
+// 	let a = platform.pi(random_W, platform_random_policy_x);
 
-	switch(a.idx) {
-		case 0: platform_random_policy_x[0] -= 0.01; break;
-		case 1: break;
-		case 2: platform_random_policy_x[0] += 0.01; break;
-		default:
-			break;
-	}
+// 	switch(a.idx) {
+// 		case 0: platform_random_policy_x[0] -= 0.01; break;
+// 		case 1: break;
+// 		case 2: platform_random_policy_x[0] += 0.01; break;
+// 		default:
+// 			break;
+// 	}
 
-	const e = document.getElementById("platform_random_policy");
-	const ctx = ctx_cache(e);
+// 	const e = document.getElementById("platform_random_policy");
+// 	const ctx = ctx_cache(e);
 
-	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
-	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
-	platform.draw_probabilities("platform_random_policy", a.pr, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
-}, 16);
+// 	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
+// 	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
+// 	platform.draw_probabilities("platform_random_policy", a.pr, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
+// }, 16);
 </script>
 
 It's clear that choosing random parameters like we have done above doesn't get us very close to our goal of balancing the ball. So how can we choose better parameters? One possible solution is just ahead, but first lets examine the core of that solution, _graidents_.

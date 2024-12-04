@@ -1,5 +1,19 @@
 CTX = {}
 
+function tensor(shape, depth, value)
+{
+	if (depth == shape.length) {
+		return Array(value).fill(0);
+	}
+
+	let t = [];
+	for (let i = 0; i < shape[depth]; i++) {
+		t.push(tensor(shape, depth + 1, value));
+	}
+	return t;
+
+}
+
 Array.prototype.rows = function() 
 {
 	return this.length;
@@ -8,6 +22,30 @@ Array.prototype.rows = function()
 Array.prototype.cols = function()
 {
 	return this[0].length;
+}
+
+Array.prototype.shape = function()
+{
+	let dim_fn = (arr) => {
+		if (arr instanceof Array) {
+			return [arr.length].concat(dim_fn(arr[0]));
+		}
+
+		return [];
+	};
+
+	return dim_fn(this);
+}
+
+Array.prototype.tensor_add = function(B)
+{
+	// Not exactly right, need to check each component
+	if (this.shape().length != B.shape().length) { throw "Tensor dimensions do not match"; }
+
+	let C = [];
+	for (let i = 0; i < this.length; i++) {
+
+	}
 }
 
 let zeros = (r, c) => { 
@@ -19,7 +57,7 @@ let zeros = (r, c) => {
 
 	return z;
 };
-
+	};
 function detectSystemTheme() {
 	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 		return 'dark';
@@ -165,6 +203,11 @@ function softmax(z)
 	return z.map(val => Math.exp(val) / sum);
 }
 
+function leaky_relu(z)
+{
+	return z.map(row => row.map(val => val > 0 ? val : 0.01 * val));
+}
+
 function pg_test()
 {
 	console.log('testing');
@@ -195,6 +238,7 @@ function pg_test()
 
 function policy_grad(pi_pr, theta, x, a, h)
 {
+	// TODO: make this operate on theta which is a tensor instead of a matrix
 	let G = zeros(theta.rows(), theta.cols());
 
 	for (let r = 0; r < theta.rows(); r++) {
@@ -316,7 +360,10 @@ function slider_param(event)
 
 let platform = {
 	pi: function(theta, x) {
-		let z = matmul([[x[0], x[1], x[2], Math.pow(x[2], 2), Math.pow(x[2], 3), x[3]]], theta);
+		let _x = [[x[0], x[1], x[2], Math.pow(x[2], 2), Math.pow(x[2], 3), x[3]]]
+		let z = matmul(_x, theta[0]);
+		z = leaky_relu(z);
+		z = matmul(z, theta[1]);
 		let p = softmax(z[0]);
 		let a_idx = sample_multinomial(p);
 
@@ -329,33 +376,33 @@ let platform = {
 
 	update: function(state)
 	{
-		let theta = Math.max(Math.min(1, state[0]), -1); // angle of the platform
+		let angle = Math.max(Math.min(1, state[0]), -1); // angle of the platform
 		let x = state[1]; // x position of the ball on the platform
 		let dx = state[2]; // x velocity of the ball on the platform
 
 		let g = 0.1; // gravity
-		let ax = g * Math.sin(theta);
+		let ax = g * Math.sin(angle);
 
 		x += dx;
 		if (x > 50) { throw "episode terminated"; }
 		if (x < -50) { throw "episode terminated"; }
 
-		return [theta, x + dx, dx + ax, 1];
+		return [angle, x + dx, dx + ax, 1];
 	},
 
 	step: function(T, x_t, a_t, gamma)
 	{
-		let d_theta = 0;
+		let d_angle = 0;
 
 		switch (a_t.idx) {
-			case 0: d_theta = -0.1; break;
-			// case 1: d_theta = -0.05; break;
-			// case 2: d_theta = 0.0; break;
-			// case 3: d_theta = 0.05; break;
-			case 1: d_theta = 0.1; break;
+			case 0: d_angle = -0.1; break;
+			// case 1: d_angle = -0.05; break;
+			// case 2: d_angle = 0.0; break;
+			// case 3: d_angle = 0.05; break;
+			case 1: d_angle = 0.1; break;
 		}
 
-		x_t[0] += d_theta;
+		x_t[0] += d_angle;
 
 		let x_t1 = platform.update(x_t);
 
@@ -396,8 +443,8 @@ let platform = {
 	optimize: function(theta, T)
 	{
 		let alpha = 0.1;
-		let gamma = 1;//0.99;
-		let G = zeros(theta.rows(), theta.cols());
+		let gamma = 0.99;
+		let G = theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
 
 		let pi_pr = (theta, x, a) => { return platform.pi(theta, x).pr[a]; };
 
