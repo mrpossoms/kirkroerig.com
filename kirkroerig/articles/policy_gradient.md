@@ -27,8 +27,17 @@ let t = 0;
 setInterval(() => {	
 	platform.draw("policy_gradient_ex", T.X[t++]);
 	if (t >= T.X.length) {
-		theta = platform.optimize(theta, T);
-		T = platform.sample_trajectory(theta);
+        let R = 0;
+        const epochs = 100;
+        for (let e = 0; e < epochs; e++) {
+		    theta = platform.optimize(theta, T);
+		    T = platform.sample_trajectory(theta);
+            for (let t = 0; t < T.R.length; t++) {
+                R += T.R[t] / T.R.length;
+            }
+        }
+        console.log("reward: " + (R/epochs));
+        console.log(theta);
 		t = 0;
 	}
 }, 16);

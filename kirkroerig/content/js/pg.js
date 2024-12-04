@@ -10,7 +10,15 @@ Array.prototype.cols = function()
 	return this[0].length;
 }
 
-let zeros = (r, c) => { return Array(r).fill(Array(c).fill(0)); };
+let zeros = (r, c) => { 
+	let z = Array(r);
+
+	for (let i = 0; i < r; i++) {
+		z[i] = Array(c).fill(0);
+	}
+
+	return z;
+};
 
 function detectSystemTheme() {
 	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -65,47 +73,22 @@ function fin_diff(f, x, h)
 	return (f(x + h) - f(x)) / h;
 }
 
-function policy_grad(pi, theta, x, h)
-{
-	let G = zeros(theta.rows(), theta.cols());
-
-	for (let r = 0; r < theta.rows(); r++) {
-		for (let c = 0; c < theta.cols(); c++) {
-			let theta_plus = theta.map((row, i) => row.map((val, j) => {
-				return i == r && j == c ? val + h : val;
-			}));
-
-			let theta_minus = theta.map((row, i) => row.map((val, j) => {
-				return i == r && j == c ? val - h : val;
-			}));
-
-			let pi_plus = pi(theta_plus, x);
-			let pi_minus = pi(theta_minus, x);
-
-			let grad = vecscl(vecsub(pi_plus.pr, pi_minus.pr), 1 / (2 * h));
-			G[r][c] = grad;
-		}
-	}
-
-	return G;
-}
-
 function matmul(A, B)
 {
-	if (A[0].length != B.length) { throw "Matrix dimensions do not match"; }
+	if (A.cols() != B.rows()) { throw "Matrix dimensions do not match"; }
 
 	let C = [];
-	for (let i = 0; i < A.length; i++)
+	for (let r = 0; r < A.rows(); r++)
 	{
 		C.push([]);
-		for (let j = 0; j < B[0].length; j++)
+		for (let c = 0; c < B.cols(); c++)
 		{
 			let sum = 0;
-			for (let k = 0; k < A[0].length; k++)
+			for (let k = 0; k < A.cols(); k++)
 			{
-				sum += A[i][k] * B[k][j];
+				sum += A[r][k] * B[k][c];
 			}
-			C[i].push(sum);
+			C[r].push(sum);
 		}
 	}
 	return C;
@@ -180,6 +163,66 @@ function softmax(z)
 {
 	let sum = z.reduce((acc, val) => acc + Math.exp(val), 0);
 	return z.map(val => Math.exp(val) / sum);
+}
+
+function pg_test()
+{
+	console.log('testing');
+	let pi = (theta, x) => { return softmax(matmul(theta, x)); };
+	let pi_pr = (theta, x, a) => { 
+		console.log('theta: ' + theta);
+		let y = pi(theta, x);
+		console.log('pr: ' + y);
+		return y[a];
+	};
+
+	let theta = [[2],[1]];
+	let x = [[1]];
+	debugger	
+	for (let i = 0; i < 2; i++) {
+		let pr_0 = pi_pr(theta, x, 0);
+		console.log('before: ' + pr_0);
+		let G = policy_grad(pi_pr, theta, x, 0, 0.01);
+		console.log('G: ' + G);
+		theta = matadd(theta, matscl(G, 0.1));
+		let pr_1 = pi_pr(theta, x, 0);
+		console.log('after: ' + pr_1);
+
+		console.assert(pr_1 > pr_0);
+	}
+}
+pg_test();
+
+function policy_grad(pi_pr, theta, x, a, h)
+{
+	let G = zeros(theta.rows(), theta.cols());
+
+	for (let r = 0; r < theta.rows(); r++) {
+		for (let c = 0; c < theta.cols(); c++) {
+			let theta_plus = theta.map((row, i) => row.map((val, j) => {
+				return i == r && j == c ? val + h : val;
+			}));
+
+			let theta_minus = theta.map((row, i) => row.map((val, j) => {
+				return i == r && j == c ? val - h : val;
+			}));
+
+			//console.log(theta_minus);
+			//console.log(theta_plus);
+
+			let pi_plus = pi_pr(theta_plus, x, a);
+			let pi_minus = pi_pr(theta, x, a);
+
+			let grad = (pi_plus - pi_minus)  / (2 * h);
+			
+			if (isNaN(grad)) {
+				throw "NaN gradient element value"; 
+			}
+			G[r][c] = grad;
+		}
+	}
+
+	return G;
 }
 
 function sample_multinomial(p)
@@ -286,19 +329,18 @@ let platform = {
 		let x = state[1]; // x position of the ball on the platform
 		let dx = state[2]; // x velocity of the ball on the platform
 
-		let g = 1; // gravity
+		let g = 0.1; // gravity
 		let ax = g * Math.sin(theta);
 
 		x += dx;
-		if (x > 50) { x = 50; dx = 0; }
-		if (x < -50) { x = -50; dx = 0; }
+		//if (x > 50) { x = 50; dx = 0; }
+		//if (x < -50) { x = -50; dx = 0; }
 
 		return [theta, x + dx, dx + ax, 1];
 	},
 
-	step: function(T, a_t, gamma)
+	step: function(T, x_t, a_t, gamma)
 	{
-		let x_t = T.X[T.X.length - 1];
 		let d_theta = 0;
 
 		switch (a_t.idx) {
@@ -324,14 +366,14 @@ let platform = {
 	{
 		let rnd = () => { return Math.random() * 2 - 1; };
 
-		let x_0 = [rnd(), rnd() * 50, rnd(), 1];
-		let T = { X: [x_0], A_pr: [], A: [], R: []};
+		let x_t = [rnd(), rnd() * 50, rnd(), 1];
+		let T = { X: [], A_pr: [], A: [], R: []};
 
 		for (let t = 0; t < 100; t++)
 		{
-			let x_t = T.X[T.X.length - 1];
 			let a_t = platform.pi(theta, x_t);
-			let r_t = platform.step(T, a_t, 0.99);
+			let r_t = platform.step(T, x_t, a_t, 0.99);
+			x_t = T.X[t];
 		}
 
 		return T;
@@ -339,25 +381,26 @@ let platform = {
 
 	optimize: function(theta, T)
 	{
-		let alpha = 0.1;
+		let alpha = 0.01;
+		let gamma = 0.99;
 		let G = zeros(theta.rows(), theta.cols());
 
 		for (let t = 0; t < T.X.length; t++) {
-			let x_t = T.X[t];
-			let G_t = policy_grad(platform.pi, theta, x_t, 0.01);
-			G = matadd(G, matscl(G_t, T.R[t])); // No discounting yet
+			let G_t = policy_grad(platform.pi, theta, T.X[t], T.A[t], 0.01);
+			G = matadd(G, matscl(G_t, T.R[t] * Math.pow(gamma, t)));
 		}
 
-		return matadd(theta, matscl(G, alpha));
+		return matadd(theta, matscl(G, alpha * (1/T.X.length)));
 	},
 
 	draw: function(cvsId, state, left_top, right_bottom)
 	{
 		const e = document.getElementById(cvsId);
 		const ctx = ctx_cache(e);
-
+		const dpr = window.devicePixelRatio || 1;
+	
 		if (!left_top) { left_top = [0, 0]; }
-		if (!right_bottom) { right_bottom = [ctx.canvas.width, ctx.canvas.height]; }
+		if (!right_bottom) { right_bottom = [ctx.canvas.width/dpr, ctx.canvas.height/dpr]; }
 
 		let w = right_bottom[0] - left_top[0];
 		let h = right_bottom[1] - left_top[1];
