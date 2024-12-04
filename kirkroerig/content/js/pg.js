@@ -153,7 +153,7 @@ function randmat(rows, cols)
 		A.push([]);
 		for (let j = 0; j < cols; j++)
 		{
-			A[i].push(Math.random());
+			A[i].push(Math.random() - 0.5);
 		}
 	}
 	return A;
@@ -191,7 +191,7 @@ function pg_test()
 		console.assert(pr_1 > pr_0);
 	}
 }
-pg_test();
+// pg_test();
 
 function policy_grad(pi_pr, theta, x, a, h)
 {
@@ -211,7 +211,7 @@ function policy_grad(pi_pr, theta, x, a, h)
 			//console.log(theta_plus);
 
 			let pi_plus = pi_pr(theta_plus, x, a);
-			let pi_minus = pi_pr(theta, x, a);
+			let pi_minus = pi_pr(theta_minus, x, a);
 
 			let grad = (pi_plus - pi_minus)  / (2 * h);
 			
@@ -316,9 +316,13 @@ function slider_param(event)
 
 let platform = {
 	pi: function(theta, x) {
-		let z = matmul([x], theta);
+		let z = matmul([[x[0], x[1], x[2], Math.pow(x[2], 2), Math.pow(x[2], 3), x[3]]], theta);
 		let p = softmax(z[0]);
 		let a_idx = sample_multinomial(p);
+
+		if (isNaN(p[0])) {
+			throw "NaN probability value"; 
+		}
 
 		return { pr: p, idx: a_idx };
 	},
@@ -333,8 +337,8 @@ let platform = {
 		let ax = g * Math.sin(theta);
 
 		x += dx;
-		//if (x > 50) { x = 50; dx = 0; }
-		//if (x < -50) { x = -50; dx = 0; }
+		if (x > 50) { throw "episode terminated"; }
+		if (x < -50) { throw "episode terminated"; }
 
 		return [theta, x + dx, dx + ax, 1];
 	},
@@ -345,8 +349,10 @@ let platform = {
 
 		switch (a_t.idx) {
 			case 0: d_theta = -0.1; break;
-			case 1: d_theta = 0; break;
-			case 2: d_theta = 0.1; break;
+			// case 1: d_theta = -0.05; break;
+			// case 2: d_theta = 0.0; break;
+			// case 3: d_theta = 0.05; break;
+			case 1: d_theta = 0.1; break;
 		}
 
 		x_t[0] += d_theta;
@@ -355,6 +361,9 @@ let platform = {
 
 		// Approaching x = 0 is a positive reward, otherwise negative
 		let r_t = Math.abs(x_t[1]) - Math.abs(x_t1[1]);
+
+		// if (Math.abs(x_t1[1]) == 50) { r_t -= 10; }
+		// if (Math.abs(x_t1[1]) < 5) { r_t += 10; }
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
@@ -366,14 +375,19 @@ let platform = {
 	{
 		let rnd = () => { return Math.random() * 2 - 1; };
 
-		let x_t = [rnd(), rnd() * 50, rnd(), 1];
+		let x_t = [rnd(), rnd() * 25, rnd() * 0.0, 1];
 		let T = { X: [], A_pr: [], A: [], R: []};
 
-		for (let t = 0; t < 100; t++)
-		{
-			let a_t = platform.pi(theta, x_t);
-			let r_t = platform.step(T, x_t, a_t, 0.99);
-			x_t = T.X[t];
+		try {
+			for (let t = 0; t < 500; t++)
+			{
+				let a_t = platform.pi(theta, x_t);
+				let r_t = platform.step(T, x_t, a_t, 0.99);
+				x_t = T.X[t];
+			}
+		}
+		catch (e) {
+			console.log(e);
 		}
 
 		return T;
@@ -381,14 +395,19 @@ let platform = {
 
 	optimize: function(theta, T)
 	{
-		let alpha = 0.01;
-		let gamma = 0.99;
+		let alpha = 0.1;
+		let gamma = 1;//0.99;
 		let G = zeros(theta.rows(), theta.cols());
 
+		let pi_pr = (theta, x, a) => { return platform.pi(theta, x).pr[a]; };
+
+		const p = 1 / T.X.length;
 		for (let t = 0; t < T.X.length; t++) {
-			let G_t = policy_grad(platform.pi, theta, T.X[t], T.A[t], 0.01);
+			let G_t = matscl(policy_grad(pi_pr, theta, T.X[t], T.A[t], 0.001), p);
 			G = matadd(G, matscl(G_t, T.R[t] * Math.pow(gamma, t)));
 		}
+
+		// console.log('G: ' + G);
 
 		return matadd(theta, matscl(G, alpha * (1/T.X.length)));
 	},

@@ -21,22 +21,43 @@ One quick Google search on the keywords "policy gradient" will turn up hundreds 
 
 <canvas id="policy_gradient_ex"></canvas>
 <script>
-let theta = randmat(4, 3);
+let theta = randmat(6, 2);
 let T = platform.sample_trajectory(theta);
 let t = 0;
+let last_reward = 0;
+let avg_len = 0;
 setInterval(() => {	
-	platform.draw("policy_gradient_ex", T.X[t++]);
+
+	platform.draw("policy_gradient_ex", T.X[t]);
+	let ctx = ctx_cache(document.getElementById("policy_gradient_ex"));
+	let left_top = [0, 0];
+	let dpr = window.devicePixelRatio || 1;
+	let right_bottom = [ctx.canvas.width/dpr, ctx.canvas.height/dpr];
+	let w = right_bottom[0] - left_top[0];
+	let h = right_bottom[1] - left_top[1];
+
+	ctx.font = '16px JetBrains Mono';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'bottom';
+	ctx.fillText('Reward: ' + last_reward, left_top[0] + w / 2, left_top[1] + 20);
+	ctx.fillText('avg_len: ' + avg_len, left_top[0] + w / 2, left_top[1] + 40);
+
+	t++;
 	if (t >= T.X.length) {
         let R = 0;
-        const epochs = 100;
+        avg_len = 0;
+        const epochs = 1000;
         for (let e = 0; e < epochs; e++) {
 		    theta = platform.optimize(theta, T);
 		    T = platform.sample_trajectory(theta);
             for (let t = 0; t < T.R.length; t++) {
-                R += T.R[t] / T.R.length;
+                R += T.R[t];
             }
+            avg_len += T.R.length;
         }
-        console.log("reward: " + (R/epochs));
+        avg_len /= epochs
+        last_reward = R / epochs;
+        console.log("avg_len: " + avg_len);
         console.log(theta);
 		t = 0;
 	}
