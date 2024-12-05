@@ -1,17 +1,18 @@
 CTX = {}
 
-function tensor(shape, depth, value)
+function tensor(shape, depth)
 {
-	if (depth == shape.length) {
-		return Array(value).fill(0);
+	depth = depth || 0;
+	if (depth+1 == shape.length) {
+		return Array(shape[depth]).fill(0);
 	}
 
 	let t = [];
 	for (let i = 0; i < shape[depth]; i++) {
-		t.push(tensor(shape, depth + 1, value));
+		let t_i = tensor(shape, depth+1);
+		t.push(t_i);
 	}
 	return t;
-
 }
 
 Array.prototype.rows = function() 
@@ -26,27 +27,59 @@ Array.prototype.cols = function()
 
 Array.prototype.shape = function()
 {
-	let dim_fn = (arr) => {
-		if (arr instanceof Array) {
-			return [arr.length].concat(dim_fn(arr[0]));
-		}
+	if (!this._shape) {
+		let dim_fn = (arr) => {
+			if (arr instanceof Array) {
+				return [arr.length].concat(dim_fn(arr[0]));
+			}
 
-		return [];
-	};
+			return [];
+		};
 
-	return dim_fn(this);
+		this._shape = dim_fn(this);
+	}
+	return this._shape;
+}
+
+Array.prototype.size = function()
+{
+	if (!this._size) {
+		this._size = this.shape().reduce((acc, val) => acc * val, 1);
+	}
+	return this._size;
+}
+
+Array.prototype.tensor_same_shape = function(B)
+{
+	let A_shape = this.shape();
+	let B_shape = B.shape();
+	return A_shape.length == B_shape.length && A_shape.every((val, i) => val == B_shape[i]);
 }
 
 Array.prototype.tensor_add = function(B)
 {
 	// Not exactly right, need to check each component
-	if (this.shape().length != B.shape().length) { throw "Tensor dimensions do not match"; }
+	if (!this.tensor_same_shape(B)) { throw "Tensor dimensions do not match"; }
 
-	let C = [];
+	let C = tensor(this.shape());
 	for (let i = 0; i < this.length; i++) {
 
 	}
 }
+
+function tensor_test()
+{
+	debugger
+
+	console.log(tensor([1]));
+	console.assert(tensor([1]).size() == 1);
+	console.log(tensor([3, 3]));
+	console.assert(tensor([3, 3]).size() == 9);
+	console.log(tensor([3, 3, 3]));
+	console.assert(tensor([3, 3, 3]).size() == 27);
+}
+tensor_test()
+
 
 let zeros = (r, c) => { 
 	let z = Array(r);
@@ -57,7 +90,7 @@ let zeros = (r, c) => {
 
 	return z;
 };
-	};
+
 function detectSystemTheme() {
 	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 		return 'dark';
@@ -360,10 +393,10 @@ function slider_param(event)
 
 let platform = {
 	pi: function(theta, x) {
-		let _x = [[x[0], x[1], x[2], Math.pow(x[2], 2), Math.pow(x[2], 3), x[3]]]
-		let z = matmul(_x, theta[0]);
-		z = leaky_relu(z);
-		z = matmul(z, theta[1]);
+		let _x = [[x[0], x[1], x[2]]]
+		let z = matmul(_x, theta);
+		// z = leaky_relu(z);
+		// z = matmul(z, theta[1]);
 		let p = softmax(z[0]);
 		let a_idx = sample_multinomial(p);
 
@@ -380,14 +413,14 @@ let platform = {
 		let x = state[1]; // x position of the ball on the platform
 		let dx = state[2]; // x velocity of the ball on the platform
 
-		let g = 0.1; // gravity
+		let g = 10; // gravity
 		let ax = g * Math.sin(angle);
 
-		x += dx;
+		// x += ax;
 		if (x > 50) { throw "episode terminated"; }
 		if (x < -50) { throw "episode terminated"; }
 
-		return [angle, x + dx, dx + ax, 1];
+		return [angle, x + ax, dx, 1];
 	},
 
 	step: function(T, x_t, a_t, gamma)
@@ -396,10 +429,10 @@ let platform = {
 
 		switch (a_t.idx) {
 			case 0: d_angle = -0.1; break;
-			// case 1: d_angle = -0.05; break;
+			case 1: d_angle = -0.01; break;
 			// case 2: d_angle = 0.0; break;
-			// case 3: d_angle = 0.05; break;
-			case 1: d_angle = 0.1; break;
+			case 2: d_angle = 0.01; break;
+			case 3: d_angle = 0.1; break;
 		}
 
 		x_t[0] += d_angle;
@@ -410,7 +443,7 @@ let platform = {
 		let r_t = Math.abs(x_t[1]) - Math.abs(x_t1[1]);
 
 		// if (Math.abs(x_t1[1]) == 50) { r_t -= 10; }
-		// if (Math.abs(x_t1[1]) < 5) { r_t += 10; }
+		if (Math.abs(x_t1[1]) < 4) { r_t += 0.1; }
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
@@ -440,23 +473,29 @@ let platform = {
 		return T;
 	},
 
-	optimize: function(theta, T)
+	optimize: function(theta, T, params)
 	{
-		let alpha = 0.1;
-		let gamma = 0.99;
-		let G = theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
+		params = params || {};	
+		params.alpha = params.alpha || 0.1;
+		params.gamma = params.gamma || 0.99;
+
+		if (!(T instanceof Array)) { T = [T]; }
+
+		let G = zeros(theta.rows(), theta.cols());//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
 
 		let pi_pr = (theta, x, a) => { return platform.pi(theta, x).pr[a]; };
 
-		const p = 1 / T.X.length;
-		for (let t = 0; t < T.X.length; t++) {
-			let G_t = matscl(policy_grad(pi_pr, theta, T.X[t], T.A[t], 0.001), p);
-			G = matadd(G, matscl(G_t, T.R[t] * Math.pow(gamma, t)));
+		for (let ti = 0; ti < T.length; ti++) {
+			const p = 1 / T[ti].X.length;
+			for (let t = 0; t < T[ti].X.length; t++) {
+				let G_t = matscl(policy_grad(pi_pr, theta, T[ti].X[t], T[ti].A[t], 0.001), p);
+				G = matadd(G, matscl(G_t, T[ti].R[t] * Math.pow(params.gamma, t)));
+			}
+
+			G = matscl(G, 1 / T.length);
 		}
 
-		// console.log('G: ' + G);
-
-		return matadd(theta, matscl(G, alpha * (1/T.X.length)));
+		return matadd(theta, matscl(G, params.alpha));
 	},
 
 	draw: function(cvsId, state, left_top, right_bottom)

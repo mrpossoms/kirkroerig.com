@@ -21,14 +21,15 @@ One quick Google search on the keywords "policy gradient" will turn up hundreds 
 
 <canvas id="policy_gradient_ex"></canvas>
 <script>
-let theta = [randmat(4, 8), randmat(8, 2)];
-let T = platform.sample_trajectory(theta);
+let theta = randmat(3, 4); // , randmat(8, 2)];
+let T = [platform.sample_trajectory(theta)];
 let t = 0;
 let last_reward = 0;
 let avg_len = 0;
 setInterval(() => {	
 
-	platform.draw("policy_gradient_ex", T.X[t]);
+	console.assert(T[0].X[t]);
+	platform.draw("policy_gradient_ex", T[0].X[t]);
 	let ctx = ctx_cache(document.getElementById("policy_gradient_ex"));
 	let left_top = [0, 0];
 	let dpr = window.devicePixelRatio || 1;
@@ -43,18 +44,23 @@ setInterval(() => {
 	ctx.fillText('avg_len: ' + avg_len, left_top[0] + w / 2, left_top[1] + 40);
 
 	t++;
-	if (t >= T.X.length) {
+	if (t >= T[0].X.length) {
         let R = 0;
         avg_len = 0;
-        const epochs = 1000;
-        for (let e = 0; e < epochs; e++) {
-		    theta = platform.optimize(theta, T);
-		    T = platform.sample_trajectory(theta);
-            for (let t = 0; t < T.R.length; t++) {
-                R += T.R[t];
-            }
-            avg_len += T.R.length;
-        }
+        const epochs = 50;
+
+	    T = []
+	    for (let e = 0; e < epochs; e++) {
+	    	T.push(platform.sample_trajectory(theta));
+	        for (let t = 0; t < T[e].R.length; t++) {
+	            R += T[e].R[t];
+	        }
+		    avg_len += T[e].R.length;
+	    }
+	    theta = platform.optimize(theta, T, {
+	    	alpha: 0.01,
+	    });
+
         avg_len /= epochs
         last_reward = R / epochs;
         console.log("avg_len: " + avg_len);
@@ -141,17 +147,17 @@ Lets move to a slightly more interesting problem, so we can design a more intere
 
 <canvas id="platform_ex"></canvas>
 <script>
-let platform_ex_state = [0, 0, 0];
-function platform_ex(theta) {
-	// let period = slider_param(event);
-	platform_ex_state[0] = theta;
-	platform.draw('platform_ex', platform_ex_state);
-}
+// let platform_ex_state = [0, 0, 0];
+// function platform_ex(theta) {
+// 	// let period = slider_param(event);
+// 	platform_ex_state[0] = theta;
+// 	platform.draw('platform_ex', platform_ex_state);
+// }
 
-setInterval(() => {
-	platform_ex_state = platform.update(platform_ex_state);
-	platform.draw("platform_ex", platform_ex_state);
-}, 16);
+// setInterval(() => {
+// 	platform_ex_state = platform.update(platform_ex_state);
+// 	platform.draw("platform_ex", platform_ex_state);
+// }, 16);
 </script>
 <label for="platform_thetas">tilt</label>
 <input name="platform_thetas" type="range" min="-1" max="1" value="0" step="any" oninput="platform_ex_state[0]=slider_param(event)">
