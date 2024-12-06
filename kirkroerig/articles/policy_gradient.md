@@ -20,16 +20,47 @@ One quick Google search on the keywords "policy gradient" will turn up hundreds 
 
 
 <canvas id="policy_gradient_ex"></canvas>
+
+<center>
+<input type="radio" id="targ_left" name="target" onclick="basic.target=0"/>
+<label for="targ_left">left</label>
+<input type="radio" id="targ_middle" name="target" checked onclick="basic.target=1"/>
+<label for="targ_middle">middle</label>
+<input type="radio" id="targ_right" name="target" onclick="basic.target=2"/>
+<label for="targ_right">right</label>
+<center/>
+<button onclick="theta=randmat(1,3)">reset</button>
+
 <script>
+let theta = randmat(1, 3);
+setInterval(() => {
+    let T = basic.sample_trajectory(theta);
+    theta = optimize(basic.pi, theta, T);
+
+	clear("policy_gradient_ex");
+	let labels = [`left: ${T.A_pr[0][0].toFixed(3)}`, `middle: ${T.A_pr[0][1].toFixed(3)}`, `right: ${T.A_pr[0][2].toFixed(3)}`];
+	draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
+	(ctx, i, x, y) => {
+		if (T.A[0] == i-1) {
+			ctx.strokeStyle = color('LightGray');
+			ctx.beginPath();
+			ctx.arc(x, y, 5, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
+	});
+}, 16);
+/*
 let theta = randmat(3, 4); // , randmat(8, 2)];
 let T = [platform.sample_trajectory(theta)];
 let t = 0;
+let best_T = 0;
+let best_R = 0;
 let last_reward = 0;
 let avg_len = 0;
 setInterval(() => {	
 
-	console.assert(T[0].X[t]);
-	platform.draw("policy_gradient_ex", T[0].X[t]);
+	console.assert(T[best_T].X[t]);
+	platform.draw("policy_gradient_ex", T[best_T].X[t]);
 	let ctx = ctx_cache(document.getElementById("policy_gradient_ex"));
 	let left_top = [0, 0];
 	let dpr = window.devicePixelRatio || 1;
@@ -44,7 +75,7 @@ setInterval(() => {
 	ctx.fillText('avg_len: ' + avg_len, left_top[0] + w / 2, left_top[1] + 40);
 
 	t++;
-	if (t >= T[0].X.length) {
+	if (t >= T[best_T].X.length) {
         let R = 0;
         avg_len = 0;
         const epochs = 50;
@@ -52,13 +83,16 @@ setInterval(() => {
 	    T = []
 	    for (let e = 0; e < epochs; e++) {
 	    	T.push(platform.sample_trajectory(theta));
+	    	let T_r = 0;
 	        for (let t = 0; t < T[e].R.length; t++) {
-	            R += T[e].R[t];
+	            T_r += T[e].R[t];
 	        }
+	        if (T_r > best_R || e == 0) { best_R = T_r; best_T = e; }
+	        R += T_r;
 		    avg_len += T[e].R.length;
 	    }
-	    theta = platform.optimize(theta, T, {
-	    	alpha: 0.01,
+	    theta = optimize(platform.pi, theta, T, {
+	    	alpha: 0.1,
 	    });
 
         avg_len /= epochs
@@ -68,6 +102,7 @@ setInterval(() => {
 		t = 0;
 	}
 }, 16);
+*/
 </script>
 
 
