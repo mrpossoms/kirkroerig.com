@@ -1,14 +1,17 @@
 CTX = {}
 
-Array.prototype.rows = function() 
-{
-	return this.length;
-}
+// Array.prototype.rows = function() 
+// {
+// 	return this.length;
+// }
 
-Array.prototype.cols = function()
-{
-	return this[0].length;
-}
+// Array.prototype.cols = function()
+// {
+// 	return this[0].length;
+// }
+
+let rows = (A) => { return A.length; }
+let cols = (A) => { return A[0].length; }
 
 let zeros = (r, c) => { 
 	let z = Array(r);
@@ -75,16 +78,16 @@ function fin_diff(f, x, h)
 
 function matmul(A, B)
 {
-	if (A.cols() != B.rows()) { throw "Matrix dimensions do not match"; }
+	if (cols(A) != rows(B)) { throw "Matrix dimensions do not match"; }
 
 	let C = [];
-	for (let r = 0; r < A.rows(); r++)
+	for (let r = 0; r < rows(A); r++)
 	{
 		C.push([]);
-		for (let c = 0; c < B.cols(); c++)
+		for (let c = 0; c < cols(B); c++)
 		{
 			let sum = 0;
-			for (let k = 0; k < A.cols(); k++)
+			for (let k = 0; k < cols(A); k++)
 			{
 				sum += A[r][k] * B[k][c];
 			}
@@ -96,13 +99,13 @@ function matmul(A, B)
 
 function matadd(A, B)
 {
-	if (A.length != B.length || A[0].length != B[0].length) { throw "Matrix dimensions do not match"; }
+	if (rows(A) != rows(B) || cols(A) != B[0].length) { throw "Matrix dimensions do not match"; }
 
 	let C = [];
-	for (let i = 0; i < A.length; i++)
+	for (let i = 0; i < rows(A); i++)
 	{
 		C.push([]);
-		for (let j = 0; j < A[0].length; j++)
+		for (let j = 0; j < cols(A); j++)
 		{
 			C[i].push(A[i][j] + B[i][j]);
 		}
@@ -113,10 +116,10 @@ function matadd(A, B)
 function matscl(A, s)
 {
 	let B = [];
-	for (let i = 0; i < A.length; i++)
+	for (let i = 0; i < rows(A); i++)
 	{
 		B.push([]);
-		for (let j = 0; j < A[0].length; j++)
+		for (let j = 0; j < cols(A); j++)
 		{
 			B[i].push(A[i][j] * s);
 		}
@@ -201,10 +204,10 @@ function pg_test()
 function policy_grad(pi_pr, theta, x, a, h)
 {
 	// TODO: make this operate on theta which is a tensor instead of a matrix
-	let G = zeros(theta.rows(), theta.cols());
+	let G = zeros(rows(theta), cols(theta));
 
-	for (let r = 0; r < theta.rows(); r++) {
-		for (let c = 0; c < theta.cols(); c++) {
+	for (let r = 0; r < rows(theta); r++) {
+		for (let c = 0; c < cols(theta); c++) {
 			let theta_plus = theta.map((row, i) => row.map((val, j) => {
 				return i == r && j == c ? val + h : val;
 			}));
@@ -329,7 +332,7 @@ function optimize(pi, theta, T, params)
 
 	if (!(T instanceof Array)) { T = [T]; }
 
-	let G = zeros(theta.rows(), theta.cols());//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
+	let G = zeros(rows(theta), cols(theta));//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
 
 	let pi_pr = (theta, x, a) => { return pi(theta, x).pr[a]; };
 
@@ -404,10 +407,6 @@ let basic = {
 		let z = matmul([x], theta);
 		let p = softmax(z[0]);
 		let a_idx = sample_multinomial(p);
-
-		if (isNaN(p[0])) {
-			throw "NaN probability value"; 
-		}
 
 		return { pr: p, idx: a_idx };
 	},

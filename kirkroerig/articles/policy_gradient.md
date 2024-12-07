@@ -14,20 +14,24 @@ canvas {
 </style>
 # Policy Gradient
 
-Imagine teaching a robot to navigate a maze, not by showing it the way, but by letting it learn through trial, error, and reward. This is the essence of policy gradient methods—one of the most dynamic and adaptable approaches in reinforcement learning. Unlike traditional algorithms, these techniques empower AI to develop complex decision-making strategies from scratch, optimizing actions to achieve long-term goals. In this article, we’ll unravel the mechanics behind policy gradients, exploring how they blend mathematics and intuition to revolutionize autonomous systems, from gaming AIs to robotics. Let’s dive into the science of teaching machines to think for themselves!
+<!-- Imagine teaching a robot to navigate a maze, not by showing it the way, but by letting it learn through trial, error, and reward. This is the essence of policy gradient methods—one of the most dynamic and adaptable approaches in reinforcement learning. Unlike traditional algorithms, these techniques empower AI to develop complex decision-making strategies from scratch, optimizing actions to achieve long-term goals. In this article, we’ll unravel the mechanics behind policy gradients, exploring how they blend mathematics and intuition to revolutionize autonomous systems, from gaming AIs to robotics. Let’s dive into the science of teaching machines to think for themselves! -->
 
-One quick Google search on the keywords "policy gradient" will turn up hundreds of articles, repositories and videos describing various policy gradient methods. Many of these resources only provide a surface level explaination of how and why policy gradient methods work, or they simply regurgitate text or equations from the literature. My goal in writing this article is to share intuitions that I've built while deeply studying policy gradient methods, specifically the seminal REINFORCE algorithm.
+There's something magical about the idea of a machine that can learn to play a game, drive a car, or even walk, all on its own. Yet, exactly this is the domain of [Reinforcement Learning]().
 
+Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are Policy Gradient Methods. 
+
+Let's look at a simple example which demonstrates the core idea of Policy Gradient Methods.
 
 <canvas id="policy_gradient_ex"></canvas>
-
 <center>
+<form autocomplete="off">
 <input type="radio" id="targ_left" name="target" onclick="basic.target=0"/>
 <label for="targ_left">left</label>
-<input type="radio" id="targ_middle" name="target" checked onclick="basic.target=1"/>
+<input type="radio" id="targ_middle" name="target" checked="checked" onclick="basic.target=1"/>
 <label for="targ_middle">middle</label>
 <input type="radio" id="targ_right" name="target" onclick="basic.target=2"/>
 <label for="targ_right">right</label>
+</form>
 </center>
 <center>
 <button onclick="theta=randmat(1,3)">reset</button>
@@ -40,7 +44,9 @@ setInterval(() => {
     theta = optimize(basic.pi, theta, T);
 
 	clear("policy_gradient_ex");
-	let labels = [`left: ${T.A_pr[0][0].toFixed(3)}`, `middle: ${T.A_pr[0][1].toFixed(3)}`, `right: ${T.A_pr[0][2].toFixed(3)}`];
+	let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
+		          `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
+                  `right: ${parseInt(T.A_pr[0][2]*100)}%`];
 	draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
 	(ctx, i, x, y) => {
 		if (T.A[0] == i-1) {
@@ -50,7 +56,7 @@ setInterval(() => {
 			ctx.stroke();
 		}
 	});
-}, 16);
+}, 333);
 /*
 let theta = randmat(3, 4); // , randmat(8, 2)];
 let T = [platform.sample_trajectory(theta)];
@@ -107,11 +113,27 @@ setInterval(() => {
 */
 </script>
 
+In the example above we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the policy for choosing, and what actions it is penalized for choosing. 
 
-To begin, lets explore the meaning of the words 'Policy' and 'Gradient' in this context.
+The number next to each action in the visualization is the probability that the policy will choose that action. A circle is drawn next to the action that is choosen by the policy for each frame.
 
-### Policy
-Put simply, a policy is an abstract construct which makes a decision given some context. For the purpose of this article a policy is a function. Often in literature, a policy is written as something like:
+You'll notice that the policy will start to choose the action that you reward it for more often. The core idea of Policy Gradient Methods is intuative, and boils down to just two related objectives:
+
+* **Reduce** the probability of taking **actions** that lead to **bad** outcomes.
+* **Increase** the probability of taking **actions** that lead to **good** outcomes.
+
+We can achieve this by adjusting our policy using this guiding principle, but first we need to answer some fundamental questions:
+
+* [What is a **policy**?](#policy)
+* [How do we measure the *goodness* or *badness* of an outcome?](#reward)
+* [How do we calculate the probability of an outcome?](#action-probability)
+* [How do we adjust our policy to maximize the *goodness* of an action?](#optimization)
+
+--------------------------------------------------------------------------------
+
+## What is a **policy**? <a name="policy"/>
+
+Put simply, a policy is a function which makes a decision given some context (or state). Often in literature, a policy is written as something like:
 
 $$
 \pi(x) \rightarrow a
@@ -119,112 +141,48 @@ $$
 
 What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - scalars, vectors and matices are all common.
 
-Let's look at a simple example of what a policy function could look like. Consider a policy that accepts as its state a scalar value which is the probablity of rain for that day, and returns a scalar value which is the probability that you will bring an umbrella with you. This policy could be written as a piecewise function like this:
+Let's consider the interactive example. How is that policy defined, and how does it work? Let's write it out mathematically.
 
 $$
-\pi(x) =
-\begin{cases}
-    1, & \text{if } x \geq 0.5 \\
-    0, & \text{if } x < 0
-\end{cases}
+\pi_{\Theta}(a | x) = softmax(x \Theta)
 $$
 
-What this policy is saying is that if the probability of rain $x$ is greater than or equal to 0.5, then you will bring an umbrella, otherwise you will not. This is a very simple policy, but it is a policy nonetheless. Lets consider the same policy, but with a slight update to the notation:
+You probably noticed that the notation changed a bit. So let's break each part of it down to understand what it means.
 
 $$
-\pi(\theta, x) \rightarrow a
+\pi_{\Theta}
 $$
 
-In this notation $\theta$ are the parameters of the policy. The parameters are a set of values that the policy function uses in conjuction with the features $x$ to make its decision. This same concept can be expressed with other notational variants too, for example $\pi_{\theta}(a | x)$ states that the policy $\pi$ with parameters $\theta$ returns the action $a$ given state $x$. Lets look a what our previous policy would look like in this notation:
+The policy function now includes a little $\Theta$ subscript. This indicates that the policy is _parameterized_ by the variable $\Theta$. Essentially, this means that the policy function depends on some parameters which we can adjust to change the policy's behavior. Specifically, the definition of $\Theta$ for our example above is:
 
 $$
-\pi_{\theta}(x) =
-\begin{cases}
-	1, & \text{if } x \geq \theta \\
-	0, & \text{if } x < \theta
-\end{cases}
+\Theta = \begin{bmatrix}
+\theta_0 & \theta_1 & \theta_2
+\end{bmatrix}
 $$
 
-Do you see what I did there? I replaced the constant 0.5 with the parameter $\theta$. This is a very simple example, but it demonstrates the concept of a parameterized policy. With this small alteration, it enables us to control the behavior of the policy by adjusting the parameter $\theta$.
-
-I mentioned earlier that a policy could be any function, the last example is a piecewise function, but what if we were to represent the policy a bit differently:
+Where each of the $\theta_i$ are the parameters of the policy. Because this is a very simple example our input state $x$ is always 1, and as a result these parameters represent the _relative_ probabilities of each action.
 
 $$
-\pi_{\theta}(x) = \theta x
+a | x
 $$
 
-In this example, the policy is a linear function of the state. The parameter $\theta$ is a scalar value that the state is multiplied by. This policy is a bit more flexible than the previous one, because it can represent a continuous range of behaviors depending on the value of $\theta$. Play with the slider below to see how manipulating $\theta$ changes the action $a$ for any given value of $x$.
-
-
-<canvas id="rain_linear_policy"></canvas>
-<script>
-function rain_linear_policy(theta) {
-	// let period = slider_param(event);
-	clear("rain_linear_policy");
-	plot("rain_linear_policy", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': 'LightGray'});
-	plot("rain_linear_policy", (x, params) => { return theta * x; }, {'label': {'text': 'a', 'x': 1}});
-
-	// let ctx = ctx_cache(document.getElementById("rain_linear_policy"));
-	// ctx.clearRect(0, 0, ctx.width, ctx.height);
-	// ctx.beginPath();
-	// ctx.arc(px(ctx, 0), py(ctx, 0), 3, 0, 2 * Math.PI);
-	// ctx.fillStyle = color('LightGray');
-	// ctx.fill();
-}
-rain_linear_policy()
-</script>
-<label for="rain_theta_slider">$\theta$</label>
-<input name="rain_theta_slider" type="range" min="-1" max="1" value="0" step="any" oninput="rain_linear_policy(slider_param(event))">
-
-Policies implemented as linear combinations of features like the example above are simple, and in many cases sufficient for solving certain problems. In practice  policies are often represented with more complex functions that have greater approximation power such as support-vector-machines or neural networks.
-
-### Balance World
-
-Lets move to a slightly more interesting problem, so we can design a more interesting policy. Instead of the umbrella problem, lets consider a 2D environment with a bounded platform which can pivot about its center. On the platform rests a ball which can roll on the surface. Our goal will be to keep the ball balanced in the center of the platform.
-
-<canvas id="platform_ex"></canvas>
-<script>
-// let platform_ex_state = [0, 0, 0];
-// function platform_ex(theta) {
-// 	// let period = slider_param(event);
-// 	platform_ex_state[0] = theta;
-// 	platform.draw('platform_ex', platform_ex_state);
-// }
-
-// setInterval(() => {
-// 	platform_ex_state = platform.update(platform_ex_state);
-// 	platform.draw("platform_ex", platform_ex_state);
-// }, 16);
-</script>
-<label for="platform_thetas">tilt</label>
-<input name="platform_thetas" type="range" min="-1" max="1" value="0" step="any" oninput="platform_ex_state[0]=slider_param(event)">
-
-We will represent the state of this system as the following vector in a continuous state space.
+This should be read as _$a$ given $x$_, and it means that the policy is a conditional probability distribution. This is a fancy way of saying that the policy is a function that returns the probability of each of the possible actions given a state.
 
 $$
-x = \begin{bmatrix}
-\theta & x & \delta{x}
-\end{bmatrix}^T
+softmax(x \Theta)
 $$
 
-Where $\theta$ is the angle of the platform, $x$ is the position of the ball on the platform relative to the fulcrum point and $\delta{x}$ is the velocity of the ball along the $x$ axis. The action space is also continuous. The policy will choose to adjust the platform angle by some $\delta{\theta}$ in each time-step.
-
-#### Actions
-A natural fit for a continuous action space would be to generate a continuous action, but for the purpose of illustration lets first consider how a policy might be implemented that uses a _discrete action space_. We will give the policy three possible choices in each time-step. These choices will be:
-
-* Tilt left
-* Do nothing
-* Tilt right
-
-To do this, we will have the policy return a vector which describes the probability of taking any one of these actions given the current state. This means that $a \in {\rm I\!R}^3$, and our policy will be some function mapping $x \in {\rm I\!R}^3 \rightarrow a \in {\rm I\!R}^3$. To keep it simple we will again use a linear combination of features, like our parameterized umbrella example. Matrix multiplication is a convinient way to represent this linear combination of features. This time our parameters will be a 4x3 matrix $\Theta$. The last column stores the biases for our linear model which will allow the policy to make decisions even when the state is 0. For the biases to contribute, we will need to augment our state with a 1 which also makes the shapes compatible (1x4 and 4x3). The policy function will look like this:
+Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function. The softmax function is a way of transforming a vector of numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result. The softmax function is
 
 $$
-\pi_{\Theta}(a | x) = softmax([x; 1] \Theta)
+softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
 $$
 
-We wrap the output of the linear combination in a softmax function to ensure that the output is a probability distribution. Namely ensuring that the sum of the probabilities is 1. 
+Great, so this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 
-These probabilities will be used as parameters for a multinomial distribution. We can sample from the distribution as long as we can generate a uniform random number. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than the cumulative sum.
+We can sample from the distribution as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
+
 
 ```javascript
 function sample_multinomial(p) {
@@ -239,178 +197,106 @@ function sample_multinomial(p) {
 }
 ```
 
-Choosing an action randomly, but not too randomly is a good way to explore the environment and learn about the consequences of actions this will be crucial later for learning a good policy.
+Bringing all of this together, the JS implementation of our policy looks something like this:
 
-Here's an example of what this policy with randomized parameters looks like in action:
+```javascript
+function pi(theta, x) {
+	let z = matmul([x], theta);
+	let p = softmax(z[0]);             // vector of action probabilities
+	let a_idx = sample_multinomial(p); // randomly sample an action from the distribution p
 
-<canvas id="platform_random_policy"></canvas>
-<script>
-let platform_random_policy_x = [0, 0, 0];
-let random_W = randmat(6, 3)
-
-// setInterval(() => {
-// 	platform_random_policy_x = [0, 0, Math.random()-0.5];
-// }, 3000);
-
-// setInterval(() => {
-// 	platform_random_policy_x = platform.update(platform_random_policy_x);
-// 	// platform_random_policy_x.push(1) // augment with a 1 so that bias parameters can contribute
-
-// 	let a = platform.pi(random_W, platform_random_policy_x);
-
-// 	switch(a.idx) {
-// 		case 0: platform_random_policy_x[0] -= 0.01; break;
-// 		case 1: break;
-// 		case 2: platform_random_policy_x[0] += 0.01; break;
-// 		default:
-// 			break;
-// 	}
-
-// 	const e = document.getElementById("platform_random_policy");
-// 	const ctx = ctx_cache(e);
-
-// 	platform.draw("platform_random_policy", platform_random_policy_x, [ctx.width / 2, 0], [ctx.width, ctx.height]);
-// 	ctx.clearRect(0, 0, ctx.width / 2, ctx.height);
-// 	platform.draw_probabilities("platform_random_policy", a.pr, ['left', 'none', 'right'], [10, 20], [ctx.width / 2, ctx.height]);
-// }, 16);
-</script>
-
-It's clear that choosing random parameters like we have done above doesn't get us very close to our goal of balancing the ball. So how can we choose better parameters? One possible solution is just ahead, but first lets examine the core of that solution, _graidents_.
-
-### Gradient
-
-Fundementally, the gradient is a multi-dimensional generalization of the derivative and is synonomous with the idea of the slope of a function. Before we dive into the details of how the gradient is used in policy gradient methods, lets take a moment to review derivatives.
-
-#### Derivatives
-
-A derivative is a function which returns the slope of another function with respect to its input. A good way to build an intiution for derivatives is to think of them as the slope of a function at a given point. There are two ways to compute a derivative, analytically and numerically. The analytical method is the most common and is the one that you probably learned in school. The numerical method is an approximation of the analytical method and is often used when the analytical method is too difficult to compute. In this article focus on the numerical method because it may be more intuative for the un-initiated.
-
-Numerical derivatives can be computed using a method known as _finite differencing_ where you calculate the value of the function $f(x)$ at some point $x$ and then again at a point $x + \Delta x$. The derivative is then the ratio of the change in the function over the change in $x$. Take a look at the example below, and play with the sliders to see how this works.
-
-<canvas id="derivative"></canvas>
-<script>
-let derivative_x = 0;
-let derivative_dx = 2;
-function derivative(event) {
-	if (event)
-	if (typeof(event) == 'number') {
-		derivative_x = event;
-	}
-
-	clear("derivative");
-
-	
-	let f = (x) => { return Math.sin(x); }//{ return Math.pow(x, 2) - 1; };
-	let slope = fin_diff(f, derivative_x, derivative_dx);
-	let df = (x) => { return slope * (x-derivative_x) + f(derivative_x); };
-
-	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': color('LightGray')});
-	plot("derivative", (x, p) => { return f(x); }, {});
-	plot("derivative", (x, p) => { return df(x); }, {'strokeStyle': color('LightGray')});
-
-	let ctx = ctx_cache(document.getElementById("derivative"));
-
-	ctx.beginPath();
-	ctx.setLineDash([10, 10]);
-	ctx.moveTo(px(ctx,derivative_x+derivative_dx), py(ctx,f(derivative_x+derivative_dx)));
-	ctx.lineTo(px(ctx,derivative_x+derivative_dx), py(ctx,0));
-	ctx.strokeStyle = color('LightGray');
-	ctx.stroke();
-
-	ctx.beginPath();
-	ctx.arc(px(ctx,derivative_x), py(ctx,f(derivative_x)), 3, 0, 2 * Math.PI);
-	ctx.fillStyle = color('LightGray');
-	ctx.fill();
+	return { pr: p, idx: a_idx };
 }
-derivative();
-</script>
-<label for="x_slider">$x$</label>
-<input name="x_slider" type="range" min="-4" max="4" value="0" step="any" oninput="derivative(slider_param(event))">
-<label for="dx_slider">$\Delta x$</label>
-<input name="x_slider" type="range" min="0.001" max="4" value="2" step="any" oninput="derivative_dx=slider_param(event);derivative()">
+```
+--------------------------------------------------------------------------------
 
-You may have noticed something when you were playing with the $\Delta x$ slider. As you make $\Delta x$ smaller, the slope of the tangent line (the numerical derivative) got closer and closer to matching the slope of the function at point $x$. This is exactly the idea as something we will explore next, which is the definition of the derivative as the _limit_.
+## How do we measure the *goodness* or *badness* of an outcome? <a name="reward"/>
 
-$$
-\frac{df(x)}{dx} = \lim_{\Delta x \to 0} \frac{f(x + \Delta x) - f(x)}{\Delta x}
-$$
+Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an outcome.
 
-The right side of this expression does exactly what the interactive example is doing. It computes the value of the function we are differentiating $f$ at two points $x$ and $x + \Delta x$. Lets call this difference $\Delta f(x)$ or rather:
+This is where the **reward function** comes in. The reward function is a function that takes as input the state and action and returns a scalar value which represents the goodness or badness of the outcome. This scalar value is called the **reward**.
+
+In our example, the reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
 
 $$
-\Delta f(x) = f(x + \Delta x) - f(x)
+R(a) =
+\begin{cases}
+	+1, & \text{if } a = a_{target} \\
+	-1, & \text{otherwise}
+\end{cases}
 $$
 
-The difference, $\Delta f(x)$ is then _divided_ by the size of the step we took. The resulting value happens to be the slope of the line traced from $f(x)$ to $f(x + \Delta x)$, which approximates the slope of the equation $f$ at value $x$! The notation takes it one step farther however, by asking you to imagine what happens as $\Delta x$ gets smaller and smaller. As $\Delta x$ approaches 0 the value of the limit approaches the value of the derivative. This is the idea of the limit, and it is the foundation of calculus.
+Defining the reward function with both positive and negative rewards allows us to guide the policy towards actions that lead to good outcomes more quickly, we will explore why this is the case later.
 
-#### Gradients
+--------------------------------------------------------------------------------
 
-A gradient is like a derivative, but for functions with more than one input. While a derivative gives the slope of a single-variable function, a gradient tells us the direction and rate of the steepest increase for a function with multiple variables.
+## How do we calculate the probability of an outcome? <a name="action-probability"/>
 
-Lets study an example graident of a fuction with 2 inputs.
-
-$$
-f(x, y) = e^{-x^2} * e^{-y^2}
-$$
-
-This function is composed of two [gaussians](https://en.wikipedia.org/wiki/Gaussian_function) multiplied together where each takes an independent input, $x$ and $y$ respectively. The result can be visualized by using the resulting value to assign a shade to every pixel for each position in an image $x$ and $y$. You can think of this shade value as the height of a hill, the stronger the shade the taller. This exact situation is rendered below:
- 
-<input type="checkbox" onchange="show_vectors^=1;gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors)">show vectors</input>
-<canvas id="gradient" onpointermove='gradient_example(event, show_vectors)' onmousemove='gradient_example(event, show_vectors)'></canvas>
-<script>
-let show_vectors = false;
-gradient_example({currentTarget: document.getElementById('gradient')}, show_vectors);
-</script>
-
-When you interact with the image, you'll notice a line originating at your cursor and pointing to the brightest region of the image. This vector $\nabla f$ is the _gradient_ approximated with finite differencing. 
-
-The vector is compose of two values, how much the function's value changes with a small change in $x$ and a small change in $y$. These are each written as $\frac{\partial f}{\partial x}$ and $\frac{\partial f}{\partial y}$ respectively. This notation indicates that each of these quantities are _partial derivatives_, which means that they each only tell _part_ of the gradient's story.
-$$
-\nabla f =
-\nabla f(x, y) =
-\begin{bmatrix}
-\frac{df}{dx} \\
-\frac{df}{dy}
-\end{bmatrix} \approx 
-\begin{bmatrix}
-\lim_{\Delta x \to 0} \frac{f(x + \Delta x, y) - f(x, y)}{\Delta x} \\
-\lim_{\Delta y \to 0} \frac{f(x, y + \Delta x) - f(x, y)}{\Delta y}
-\end{bmatrix}
-$$
-
-More generally, a gradient of a function $f(x_1, x_2, \dots, x_n)$ is a vector made up of all the partial derivatives of $f$ with respect to its inputs:
+We've already seen how the policy can calculate the probability distribution over its actions given a state. But how do we calculate the probability of a specific action being taken? Take for example a probability distribution returned by our policy:
 
 $$
-\nabla f = \nabla f(x_1, x_2, \dots, x_n) = \left( \frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2}, \dots, \frac{\partial f}{\partial x_n} \right)
+pr_t = [ 0.1, 0.6, 0.3]
 $$
 
-Each partial derivative, $\frac{\partial f}{\partial x_i}$, measures how $f$ changes when only $x_i$ changes, keeping all the other variables fixed.
-
-Numerical gradients can be computed using a method similar to finite differencing. To approximate the gradient with respect to a variable $x_i$, we calculate the value of the function $f(x_1, \dots, x_n)$ at two points: one at $x_i$ and one at $x_i + \Delta x$, while keeping all other variables constant. The partial derivative is then the ratio of the change in $f$ over the change in $x_i$:
+With an action it chose:
 
 $$
-\frac{\partial f}{\partial x_i} \approx \frac{f(x_1, \dots, x_i + \Delta x, \dots, x_n) - f(x_1, \dots, x_i, \dots, x_n)}{\Delta x}
+a_t = 0
 $$
 
-<!-- ### What Does the Gradient Mean?
+What is the probability of the action $a_t$ being taken? In the case of our example, it's very simple. The probability of an action being taken is exactly the action's probability in the distribution calculated by the policy, 0.1 or 10%.
 
-The gradient points in the direction where the function $f$ increases the fastest. Its size, or magnitude, tells us how steep that increase is. For example, if $f(x, y)$ represents the height of a hill, the gradient at any point $(x, y)$ shows the direction of the steepest slope and how steep it is. 
+This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combinds _left_ and _middle_.
 
-Another way to think about it is that the gradient is always perpendicular to the "level curves" of the function. These are the curves where $f(x, y)$ is constant, like contour lines on a map. 
- -->
+But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where are options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
+
+
+$$
+pr_{t_x} = [ 0.1, 0.6, 0.3 ]
+$$
+
+$$
+pr_{t_y} = [ 0.2, 0.3, 0.5 ]
+$$
+
+Now say it chose an action:
+
+$$
+a_{t_x} = 0
+$$
+
+$$
+a_{t_y} = 1
+$$
+
+What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
+
+$$
+pr_t = pr_{t_x}[a_{t_x}] * pr_{t_y}[a_{t_y}]
+$$
+
+In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0.03$ or 3%. This can be generalized to any number of actions and action spaces by multiplying the probabilities of each action class in the action space:
+
+$$
+pr_t = \prod_{i} pr_{t_i}[a_{t_i}]
+$$
+
+While this is mathematically correct. A trick you can use to make this easier to compute is to take the log of the probabilities and sum them. This is because the log of a product is the sum of the logs of the factors.
+
+$$
+\log pr_t = \sum_{i} \log pr_{t_i}[a_{t_i}]
+$$
+
+You will often see this trick used in practice because it is more numerically stable than simply multiplying probabilities together.
+
+--------------------------------------------------------------------------------
+
+## How do we adjust our policy to maximize the *goodness* of an action? <a name="optimization"/>
+
+
 ### Policy Gradient
 
 Right, so lets get into the meat of the article, the REINFORCE algorithm. Lets enumerate the crucial ideas that enable this algorithm to work.
-
-#### Reward
-
-A ubiquitous concept in reinforcement learning is the idea of a reward. A reward is a scalar value that is used to evaluate the goodness of an action taken by an agent. The agent's goal is to maximize the total reward it receives over time. In the context of the platform example, a reward could be the negative distance between the ball and the center of the platform. The agent would then seek to minimize this distance by adjusting the platform angle.
-
-<textarea>
-function reward(x) {
-	return -Math.abs(x[1]);
-}
-</textarea>
 
 #### Monte Carlo Methods
 
