@@ -28,8 +28,10 @@ One quick Google search on the keywords "policy gradient" will turn up hundreds 
 <label for="targ_middle">middle</label>
 <input type="radio" id="targ_right" name="target" onclick="basic.target=2"/>
 <label for="targ_right">right</label>
-<center/>
+</center>
+<center>
 <button onclick="theta=randmat(1,3)">reset</button>
+</center>
 
 <script>
 let theta = randmat(1, 3);

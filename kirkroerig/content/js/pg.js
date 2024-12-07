@@ -351,10 +351,11 @@ function optimize(pi, theta, T, params)
 function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 {
 	const e = document.getElementById(cvsId);
+	const dpr = window.devicePixelRatio || 1;
 	const ctx = ctx_cache(e);
 
 	left_top = left_top || [0, 0];
-	right_bottom = right_bottom || [ctx.canvas.width, ctx.canvas.height];
+	right_bottom = right_bottom || [ctx.canvas.width / dpr, ctx.canvas.height / dpr];
 	annotator = annotator || function(ctx, i, x, y) {};
 
 	let w = right_bottom[0] - left_top[0];
@@ -380,7 +381,7 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 
 	for (let i = 0; i < p.length; i++)
 	{
-		let x = left_top[0] + w * i / p.length;
+		let x = (left_top[0] + w * i / p.length);
 		let y = right_bottom[1] - h * p[i];
 		annotator(ctx, i, x, y);
 		if (i > 0 && i < p.length) {
@@ -391,6 +392,7 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 			ctx.fillRect(x - (10 + tw / 2), y - (10 + th / 2), text_metrics.width + (20 + tw), text_metrics.height + (20 + th));
 			ctx.fillStyle = color('black');
 			let y_offset = y > 20 ? -10 : 20;
+			ctx.font = '16px JetBrains Mono';
 			ctx.fillText(names[i-1], x, y + y_offset);
 		}
 	}
