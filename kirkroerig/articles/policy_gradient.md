@@ -14,8 +14,6 @@ canvas {
 </style>
 # Policy Gradient
 
-<!-- Imagine teaching a robot to navigate a maze, not by showing it the way, but by letting it learn through trial, error, and reward. This is the essence of policy gradient methods—one of the most dynamic and adaptable approaches in reinforcement learning. Unlike traditional algorithms, these techniques empower AI to develop complex decision-making strategies from scratch, optimizing actions to achieve long-term goals. In this article, we’ll unravel the mechanics behind policy gradients, exploring how they blend mathematics and intuition to revolutionize autonomous systems, from gaming AIs to robotics. Let’s dive into the science of teaching machines to think for themselves! -->
-
 There's something magical about the idea of a machine that can learn to play a game, drive a car, or even walk, all on its own. Yet, exactly this is the domain of [Reinforcement Learning]().
 
 Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are Policy Gradient Methods. 
@@ -57,60 +55,6 @@ setInterval(() => {
 		}
 	});
 }, 333);
-/*
-let theta = randmat(3, 4); // , randmat(8, 2)];
-let T = [platform.sample_trajectory(theta)];
-let t = 0;
-let best_T = 0;
-let best_R = 0;
-let last_reward = 0;
-let avg_len = 0;
-setInterval(() => {	
-
-	console.assert(T[best_T].X[t]);
-	platform.draw("policy_gradient_ex", T[best_T].X[t]);
-	let ctx = ctx_cache(document.getElementById("policy_gradient_ex"));
-	let left_top = [0, 0];
-	let dpr = window.devicePixelRatio || 1;
-	let right_bottom = [ctx.canvas.width/dpr, ctx.canvas.height/dpr];
-	let w = right_bottom[0] - left_top[0];
-	let h = right_bottom[1] - left_top[1];
-
-	ctx.font = '16px JetBrains Mono';
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'bottom';
-	ctx.fillText('Reward: ' + last_reward, left_top[0] + w / 2, left_top[1] + 20);
-	ctx.fillText('avg_len: ' + avg_len, left_top[0] + w / 2, left_top[1] + 40);
-
-	t++;
-	if (t >= T[best_T].X.length) {
-        let R = 0;
-        avg_len = 0;
-        const epochs = 50;
-
-	    T = []
-	    for (let e = 0; e < epochs; e++) {
-	    	T.push(platform.sample_trajectory(theta));
-	    	let T_r = 0;
-	        for (let t = 0; t < T[e].R.length; t++) {
-	            T_r += T[e].R[t];
-	        }
-	        if (T_r > best_R || e == 0) { best_R = T_r; best_T = e; }
-	        R += T_r;
-		    avg_len += T[e].R.length;
-	    }
-	    theta = optimize(platform.pi, theta, T, {
-	    	alpha: 0.1,
-	    });
-
-        avg_len /= epochs
-        last_reward = R / epochs;
-        console.log("avg_len: " + avg_len);
-        console.log(theta);
-		t = 0;
-	}
-}, 16);
-*/
 </script>
 
 In the example above we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the policy for choosing, and what actions it is penalized for choosing. 
@@ -125,9 +69,9 @@ You'll notice that the policy will start to choose the action that you reward it
 We can achieve this by adjusting our policy using this guiding principle, but first we need to answer some fundamental questions:
 
 * [What is a **policy**?](#policy)
-* [How do we measure the *goodness* or *badness* of an outcome?](#reward)
-* [How do we calculate the probability of an outcome?](#action-probability)
-* [How do we adjust our policy to maximize the *goodness* of an action?](#optimization)
+* [How do we measure the **goodness** or **badness** of an outcome?](#reward)
+* [How do we calculate the **probability** of an outcome?](#action-probability)
+* [How do we **adjust** our policy to maximize the **goodness** of its actions?](#optimization)
 
 --------------------------------------------------------------------------------
 
@@ -262,11 +206,10 @@ $$
 Now say it chose an action:
 
 $$
-a_{t_x} = 0
-$$
-
-$$
-a_{t_y} = 1
+a_t = \begin{bmatrix} 
+a_{t_x} = 0 \\
+a_{t_y} = 1 \\
+\end{bmatrix}
 $$
 
 What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
@@ -291,7 +234,7 @@ You will often see this trick used in practice because it is more numerically st
 
 --------------------------------------------------------------------------------
 
-## How do we adjust our policy to maximize the *goodness* of an action? <a name="optimization"/>
+## How do we adjust our policy to maximize the **goodness** of its actions? <a name="optimization"/>
 
 
 ### Policy Gradient

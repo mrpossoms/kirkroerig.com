@@ -73,7 +73,6 @@ function ctx_cache(e)
 function fin_diff(f, x, h)
 {
 	return (f(x + h) - f(x - h)) / (2 * h);
-	// return (f(x + h) - f(x)) / h;
 }
 
 function matmul(A, B)
