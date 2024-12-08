@@ -164,9 +164,9 @@ This is where the **reward function** comes in. The reward function is a functio
 In our example, the state never changes so we ignore it. The reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
 
 $$
-R(x, a) =
+r_t = R(x_t, a_t) =
 \begin{cases}
-	+1, & \text{if } a = a_{target} \\
+	+1, & \text{if } a_t = a_{target} \\
 	-1, & \text{otherwise}
 \end{cases}
 $$
@@ -242,7 +242,7 @@ We've gotten all the prerequisites out of the way, now we can finally get to the
 To do this, we will compute the [_**gradient**_](/article/gradient) of the probability of the policy's chosen action $a_t$ with-respect-to the policy's parameters $\Theta$. 
 
 $$
-\nabla_{\Theta} pr_t = {\Large \begin{bmatrix}
+\nabla_{\Theta} = {\Large \begin{bmatrix}
 \frac{\partial pr_{a_t}}{\partial \theta_0} & \frac{\partial pr_{a_t}}{\partial \theta_1} & \frac{\partial pr_{a_t}}{\partial \theta_2} \\
 \end{bmatrix}}
 $$
@@ -268,6 +268,13 @@ $$
 \frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{pr_{a_t}(\Theta + \Delta \theta_i) - pr_{a_t}(\Theta)}{\Delta \theta_i}
 $$
 
+Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta} pr_t$.
+
+With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
+
+$$
+{\Large \Theta' \leftarrow \Theta + \alpha (\nabla_{\Theta} * r_t)}
+$$
 
 
 
