@@ -39,7 +39,7 @@ function color(name)
 			'black': 'white'
 		},
 		'light': {
-			'LightGray': 'LightGray',
+			'LightGray': 'DarkGray',
 			'black': 'black'
 		}
 	}[detectSystemTheme()][name];

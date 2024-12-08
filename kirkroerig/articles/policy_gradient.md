@@ -12,6 +12,13 @@ canvas {
 	margin: 0;
 }
 </style>
+### TODO
+1. Policy jargon shouldn't be frontloaded in the intro
+2. Glossary of key terms up front
+3. Summary at end
+4. Probably remove the log probability thing, maybe save this for a follow-up
+5. Interactive term definitions
+
 # Policy Gradient
 
 There's something magical about the idea of a machine that can learn to play a game, drive a car, or even walk, all on its own. Yet, exactly this is the domain of [Reinforcement Learning]().
@@ -68,21 +75,21 @@ You'll notice that the policy will start to choose the action that you reward it
 We can achieve this by adjusting our policy using this guiding principle, but first we need to answer some fundamental questions:
 
 * [What is a **policy**?](#policy)
-* [How do we measure the **goodness** or **badness** of an outcome?](#reward)
-* [How do we calculate the **probability** of an outcome?](#action-probability)
+* [How do we measure the **goodness** or **badness** of an action?](#reward)
+* [How do we calculate the **probability** of an **action**?](#action-probability)
 * [How do we **adjust** our policy to maximize the **goodness** of its actions?](#optimization)
 
 --------------------------------------------------------------------------------
 
 ## What is a **policy**? <a name="policy"/>
 
-Put simply, a policy is a function which makes a decision given some context (or state). Often in literature, a policy is written as something like:
+Put simply, a policy is a function which makes a decision (action $a$) given some context (or state $x$). Often in literature, a policy is written as something like:
 
 $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - scalars, vectors and matices are all common.
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics)) are all common.
 
 Let's consider the interactive example. How is that policy defined, and how does it work? Let's write it out mathematically.
 
@@ -96,7 +103,7 @@ $$
 \pi_{\Theta}
 $$
 
-The policy function now includes a little $\Theta$ subscript. This indicates that the policy is _parameterized_ by the variable $\Theta$. Essentially, this means that the policy function depends on some parameters which we can adjust to change the policy's behavior. Specifically, the definition of $\Theta$ for our example above is:
+The policy function now includes a little $\Theta$ subscript. This indicates that the policy is _parameterized_ by the variable $\Theta$. Essentially, this means that the policy function, in addition to the state $x$, accepts some parameters $\Theta$ which we can adjust to change the policy's behavior. We could have written this as $\pi(\Theta, x)$, but that notation is not as common. Concretely, the definition of $\Theta$ for our example above is:
 
 $$
 \Theta = \begin{bmatrix}
@@ -116,11 +123,19 @@ $$
 softmax(x \Theta)
 $$
 
-Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function. The softmax function is a way of transforming a vector of numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result. The softmax function is
+Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to just $\Theta$). The softmax function is a way of transforming a vector of numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result. The softmax function is
 
 $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
 $$
+
+You could expect the softmax function to return a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. One of these vectors may very well look like this:
+
+$$
+pr_t = [ 0.1, 0.6, 0.3]
+$$
+
+
 
 _TODO: add a toy that gives a feel for how the softmax function reacts to inputs_
 
@@ -155,16 +170,18 @@ function pi(theta, x) {
 ```
 --------------------------------------------------------------------------------
 
-## How do we measure the *goodness* or *badness* of an outcome? <a name="reward"/>
+## How do we measure the *goodness* or *badness* of an action? <a name="reward"/>
 
-Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an outcome.
+Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.
 
-This is where the **reward function** comes in. The reward function is a function that takes as input the state and action and returns a scalar value which represents the goodness or badness of the outcome. This scalar value is called the **reward**.
+This is where the **reward function** comes in. The reward function is a function that takes as input the state and action and returns a scalar value which represents the goodness or badness of the action. This scalar value is called the **reward**.
 
-In our example, the state never changes so we ignore it. The reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
+The reward function could be defined to theoretically score _any_ behavior. Be it driving a car, or playing a game. Actually games are a great example to illustrate this point. In a game, the **reward function** could be the scoring system, or the number of enemies killed, or the number of coins collected.
+
+In our example, the state is always 1 so we ignore it. The reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
 
 $$
-r_t = R(x_t, a_t) =
+R(x_t, a_t) =
 \begin{cases}
 	+1, & \text{if } a_t = a_{target} \\
 	-1, & \text{otherwise}
@@ -173,9 +190,11 @@ $$
 
 Defining the reward function with both positive and negative rewards allows us to guide the policy towards actions that lead to good outcomes more quickly, we will explore why this is the case later.
 
+_TODO: actually explain this point in the optimization section_
+
 --------------------------------------------------------------------------------
 
-## How do we calculate the probability of an outcome? <a name="action-probability"/>
+## How do we calculate the probability of an action? <a name="action-probability"/>
 
 We've already seen how the policy can calculate the probability distribution over its actions given a state. But how do we calculate the probability of a specific action being taken? Take for example a probability distribution returned by our policy:
 
@@ -193,7 +212,7 @@ What is the probability of the action $a_t$ being taken? In the case of our exam
 
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combinds _left_ and _middle_.
 
-But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where are options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
+But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
 
 
 $$
@@ -209,7 +228,7 @@ Now say it chose an action:
 $$
 a_t = \begin{bmatrix} 
 a_{x_t} = 0 \\
-a_{xs_t} = 1 \\
+a_{y_t} = 1 \\
 \end{bmatrix}
 $$
 
@@ -268,16 +287,25 @@ $$
 \frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{pr_{a_t}(\Theta + \Delta \theta_i) - pr_{a_t}(\Theta)}{\Delta \theta_i}
 $$
 
-Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta} pr_t$.
+Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
 
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
 $$
-{\Large \Theta' \leftarrow \Theta + \alpha (\nabla_{\Theta} * r_t)}
+{\Large \Theta' \leftarrow \Theta + \alpha (\nabla_{\Theta} * R(x_t, a_t))}
 $$
 
 
+In essence that's it! We just repeat this sequence until our policy's actions converge to what we want. 
 
+1. Evaluate the policy to get the probability distribution of actions.
+2. Sample an action from the distribution.
+3. Compute the reward of the action.
+4. Compute the gradient of the action's probability with respect to the policy's parameters.
+5. Adjust the policy's parameters to increase the probability of the action.
+6. Repeat!
+
+This example and article are akin to a "hello world!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition to understand the core ideas of Policy Gradient Methods.
 
 
 <!-- ### Policy Gradient
