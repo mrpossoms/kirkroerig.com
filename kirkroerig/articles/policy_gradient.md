@@ -61,10 +61,9 @@ In the example above we have a simple environment with three possible actions _l
 
 The number next to each action in the visualization is the probability that the policy will choose that action. A circle is drawn next to the action that is choosen by the policy for each frame.
 
-You'll notice that the policy will start to choose the action that you reward it for more often. The core idea of Policy Gradient Methods is intuative, and boils down to just two related objectives:
+You'll notice that the policy will start to choose the action that you reward it for more often. The core idea of Policy Gradient Methods is intuative, and boils down to just one objective:
 
-* **Reduce** the probability of taking **actions** that lead to **bad** outcomes.
-* **Increase** the probability of taking **actions** that lead to **good** outcomes.
+* **Adjust** the **policy** to **Increase** the **probability** of **actions** that lead to **good** outcomes.
 
 We can achieve this by adjusting our policy using this guiding principle, but first we need to answer some fundamental questions:
 
@@ -123,6 +122,8 @@ $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
 $$
 
+_TODO: add a toy that gives a feel for how the softmax function reacts to inputs_
+
 Great, so this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 
 We can sample from the distribution as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
@@ -130,7 +131,7 @@ We can sample from the distribution as long as we can generate a uniform random 
 
 ```javascript
 function sample_multinomial(p) {
-	let r = Math.random();
+	let r = Math.random(); // real number between 0 and 1
 	let c = 0;
 	for (let i = 0; i < p.length; i++) {
 		c += p[i];
@@ -160,10 +161,10 @@ Now that we understand what a policy is, and how it can choose actions, we need 
 
 This is where the **reward function** comes in. The reward function is a function that takes as input the state and action and returns a scalar value which represents the goodness or badness of the outcome. This scalar value is called the **reward**.
 
-In our example, the reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
+In our example, the state never changes so we ignore it. The reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
 
 $$
-R(a) =
+R(x, a) =
 \begin{cases}
 	+1, & \text{if } a = a_{target} \\
 	-1, & \text{otherwise}
@@ -196,32 +197,32 @@ But what if you had an action space that was not mutually exclusive? Say instead
 
 
 $$
-pr_{t_x} = [ 0.1, 0.6, 0.3 ]
+pr_{x_t} = [ 0.1, 0.6, 0.3 ]
 $$
 
 $$
-pr_{t_y} = [ 0.2, 0.3, 0.5 ]
+pr_{y_t} = [ 0.2, 0.3, 0.5 ]
 $$
 
 Now say it chose an action:
 
 $$
 a_t = \begin{bmatrix} 
-a_{t_x} = 0 \\
-a_{t_y} = 1 \\
+a_{x_t} = 0 \\
+a_{xs_t} = 1 \\
 \end{bmatrix}
 $$
 
 What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
 
 $$
-pr_t = pr_{t_x}[a_{t_x}] * pr_{t_y}[a_{t_y}]
+pr_t = pr_{x_t}[a_{x_t}] * pr_{y_t}[a_{y_t}]
 $$
 
 In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0.03$ or 3%. This can be generalized to any number of actions and action spaces by multiplying the probabilities of each action class in the action space:
 
 $$
-pr_t = \prod_{i} pr_{t_i}[a_{t_i}]
+Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
 $$
 
 While this is mathematically correct. A trick you can use to make this easier to compute is to take the log of the probabilities and sum them. This is because the log of a product is the sum of the logs of the factors.
@@ -236,8 +237,43 @@ You will often see this trick used in practice because it is more numerically st
 
 ## How do we adjust our policy to maximize the **goodness** of its actions? <a name="optimization"/>
 
+We've gotten all the prerequisites out of the way, now we can finally get to the meat of the Policy Gradient Methods. To restate, what we want to do is adjust the policy to increase the probability of actions that lead to good outcomes.
 
-### Policy Gradient
+To do this, we will compute the [_**gradient**_](/article/gradient) of the probability of the policy's chosen action $a_t$ with-respect-to the policy's parameters $\Theta$. 
+
+$$
+\nabla_{\Theta} pr_t = {\Large \begin{bmatrix}
+\frac{\partial pr_{a_t}}{\partial \theta_0} & \frac{\partial pr_{a_t}}{\partial \theta_1} & \frac{\partial pr_{a_t}}{\partial \theta_2} \\
+\end{bmatrix}}
+$$
+
+where
+
+$$
+pr_t = \pi_{\Theta}(x)
+$$
+
+$$
+a_t = \text{argmax}(pr_t)
+$$
+
+$$
+pr_{a_t} = Pr_a(pr_t, a_t)
+$$
+
+
+Each of the partial derivatives could be computed analytically using the chain rule, but in our example we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two points and taking the ratio of the change in the function over the change in the input.
+
+$$
+\frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{pr_{a_t}(\Theta + \Delta \theta_i) - pr_{a_t}(\Theta)}{\Delta \theta_i}
+$$
+
+
+
+
+
+
+<!-- ### Policy Gradient
 
 Right, so lets get into the meat of the article, the REINFORCE algorithm. Lets enumerate the crucial ideas that enable this algorithm to work.
 
@@ -268,7 +304,7 @@ The action our policy chose at time $t$ was 'none'. The probability of this acti
 But what if the action space was continuous? In this case, we would need to compute the probability of the action taken by the policy. This can be done by evaluating the probability density function of the action taken by the policy. This is a bit more complex, but can be done with the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function) of the action space.
 
 
-#### More of the Good, Less of the Bad
+#### More of the Good, Less of the Bad -->
 
 
 
