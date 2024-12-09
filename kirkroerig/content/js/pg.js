@@ -433,6 +433,44 @@ let basic = {
 	},
 }
 
+let puck = {
+	pi: function(theta, x) {
+		let z = matmul([x], theta);
+		let z_x = z.slice(0, 3);
+		let z_y = z.slice(3, 6);
+		let pr_x = softmax(z[0]);
+		let pr_y = softmax(z[1]);
+		let a_x_idx = sample_multinomial(pr_x);
+		let a_y_idx = sample_multinomial(pr_y);
+
+
+
+		return { pr: p, idx: a_idx };
+	},
+	sample_trajectory: function(theta) {
+		let x_t = [1];
+		let T = { X: [], A_pr: [], A: [], R: []};
+
+		for (let t = 0; t < 1; t++) {
+			let a_t = puck.pi(theta, x_t);
+			let r_t = puck.step(T, x_t, a_t, 0.99);
+		}
+
+		return T;
+	},
+	step: function(T, x_t, a_t, gamma)
+	{
+		let x_t1 = platform.update(x_t);
+
+		let r_t = a_t.idx == puck.target ? 1 : -1;
+
+		T.X.push(x_t);
+		T.R.push(r_t);
+		T.A_pr.push(a_t.pr);
+		T.A.push(a_t.idx);
+	},
+}
+
 let platform = {
 	pi: function(theta, x) {
 		let _x = [[x[0], x[1], x[2]]]
