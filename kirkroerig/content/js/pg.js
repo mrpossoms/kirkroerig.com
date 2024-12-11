@@ -9,6 +9,7 @@ CTX = {}
 // {
 // 	return this[0].length;
 // }
+Array.prototype.argmax = function() { return this.indexOf(Math.max(...this)); };
 
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
@@ -165,6 +166,24 @@ function softmax(z)
 {
 	let sum = z.reduce((acc, val) => acc + Math.exp(val), 0);
 	return z.map(val => Math.exp(val) / sum);
+}
+
+function softermax(z)
+{
+	let y = softmax(z);
+	let max_idx = y.argmax();
+	if (y[max_idx] > 0.9) {
+		let rem = y[max_idx] - 0.9;
+		y[max_idx] = 0.9;
+		let b = 0;
+		for (let i = 0; i < y.length; i++) { if (i != max_idx) { b += y[i]; } }
+		for (let i = 0; i < y.length; i++) {
+			if (i == max_idx) continue;
+			y[i] += (y[i]/b) * rem;
+		}
+	}
+
+	return y;
 }
 
 function leaky_relu(z)
@@ -687,3 +706,7 @@ function gradient_example(event, show_vectors)
 		}
 	}
 }
+
+module.exports = {
+	softermax: softermax
+};
