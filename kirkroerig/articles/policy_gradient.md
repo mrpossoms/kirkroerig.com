@@ -3,13 +3,13 @@
 
 <style>
 canvas {
-	width: 100%;
-	height: 10em;
+    width: 100%;
+    height: 10em;
     touch-action: none;
 }
 
 .math * {
-	margin: 0;
+    margin: 0;
 }
 </style>
 ### TODO
@@ -45,25 +45,25 @@ Let's look at a simple example which demonstrates the core idea of Policy Gradie
 <script>
 let theta = randmat(1, 3);
 setInterval(() => {
-	let T = basic.sample_trajectory(theta);
+    let T = basic.sample_trajectory(theta);
 
-	if (T.A_pr[0][basic.target] < 0.9) {
-	    theta = optimize(basic.pi, theta, T);
-	}
+    if (T.A_pr[0][basic.target] < 0.9) {
+        theta = optimize(basic.pi, theta, T);
+    }
 
-	clear("policy_gradient_ex");
-	let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
-		          `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
+    clear("policy_gradient_ex");
+    let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
+                  `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
                   `right: ${parseInt(T.A_pr[0][2]*100)}%`];
-	draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
-	(ctx, i, x, y) => {
-		if (T.A[0] == i-1) {
-			ctx.strokeStyle = color('LightGray');
-			ctx.beginPath();
-			ctx.arc(x, y, 5, 0, 2 * Math.PI);
-			ctx.stroke();
-		}
-	});
+    draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
+    (ctx, i, x, y) => {
+        if (T.A[0] == i-1) {
+            ctx.strokeStyle = color('LightGray');
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    });
 }, 100);
 </script>
 
@@ -149,14 +149,14 @@ We can sample from the distribution as long as we can generate a uniform random 
 
 ```javascript
 function sample_multinomial(p) {
-	let r = Math.random(); // real number between 0 and 1
-	let c = 0;
-	for (let i = 0; i < p.length; i++) {
-		c += p[i];
-		if (r < c) {
-			return i;
-		}
-	}
+    let r = Math.random(); // real number between 0 and 1
+    let c = 0;
+    for (let i = 0; i < p.length; i++) {
+        c += p[i];
+        if (r < c) {
+            return i;
+        }
+    }
 }
 ```
 
@@ -164,11 +164,11 @@ Bringing all of this together, the JS implementation of our policy looks somethi
 
 ```javascript
 function pi(theta, x) {
-	let z = matmul([x], theta);
-	let p = softmax(z[0]);             // vector of action probabilities
-	let a_idx = sample_multinomial(p); // randomly sample an action from the distribution p
+    let z = matmul([x], theta);
+    let p = softmax(z[0]);             // vector of action probabilities
+    let a_idx = sample_multinomial(p); // randomly sample an action from the distribution p
 
-	return { pr: p, idx: a_idx };
+    return { pr: p, idx: a_idx };
 }
 ```
 --------------------------------------------------------------------------------
@@ -186,8 +186,8 @@ In our example, the state is always 1 so we ignore it. The reward is 1 when the 
 $$
 R(x_t, a_t) =
 \begin{cases}
-	+1, & \text{if } a_t = a_{target} \\
-	-1, & \text{otherwise}
+    +1, & \text{if } a_t = a_{target} \\
+    -1, & \text{otherwise}
 \end{cases}
 $$
 
@@ -310,91 +310,36 @@ In essence that's it! We just repeat this sequence until our policy's actions co
 
 This example and article are akin to a "hello world!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition to understand the core ideas of Policy Gradient Methods.
 
+# A More Intesting Example
+
+Now you should have a reasonable understanding of the core ideas of Policy Gradient Methods. Let's look at a more interesting example to see how these ideas can be applied to a more complex problem. We will draw on the example alluded to in the [How do we calculate the probability of an action?](#action-probability) section, and consider a 2D robot that can move in any direction. What changes do we need to make to our policy and reward function to handle this problem? Lets find out!
+
 <canvas id="policy_gradient_ex2"></canvas>
 <script>
 let t = 0;
 let puck_theta = randmat(2, 6);
 let T = puck.sample_trajectory(puck_theta);
 setInterval(() => {
-	clear("policy_gradient_ex2");
-	puck.draw("policy_gradient_ex2", T.X[t++]);
-	// let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
-	// 	          `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
-    //               `right: ${parseInt(T.A_pr[0][2]*100)}%`];
-	// draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
-	// (ctx, i, x, y) => {
-	// 	if (T.A[0] == i-1) {
-	// 		ctx.strokeStyle = color('LightGray');
-	// 		ctx.beginPath();
-	// 		ctx.arc(x, y, 5, 0, 2 * Math.PI);
-	// 		ctx.stroke();
-	// 	}
-	// });
-	if (t >= T.X.length) {
-		t = 0;
-    	puck_theta = optimize(puck.pi, puck_theta, T, {
-    		pi_pr: (theta, x, a) => {
-    			let y = puck.pi(theta, x);
-    			return y.pr[0][a[0]] * y.pr[1][a[1]];
-    		}
-    	});
-    	T = puck.sample_trajectory(puck_theta);
-	}
+    clear("policy_gradient_ex2");
+    puck.draw("policy_gradient_ex2", T.X[t++]);
+
+    if (t >= T.X.length) {
+        t = 0;
+        let avg_ret = 0;
+        const epochs = 100;
+        for (let e = 0; e < epochs; e++) {
+            T = puck.sample_trajectory(puck_theta);
+            puck_theta = optimize(puck.pi, puck_theta, T, {
+                pi_pr: (theta, x, a) => {
+                    let y = puck.pi(theta, x);
+                    return y.pr[0][a[0]] * y.pr[1][a[1]];
+                }
+            });
+            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
+        }
+        console.log(avg_ret / epochs);
+
+    }
 }, 16);
 </script>
-
-
-<!-- ### Policy Gradient
-
-Right, so lets get into the meat of the article, the REINFORCE algorithm. Lets enumerate the crucial ideas that enable this algorithm to work.
-
-#### Monte Carlo Methods
-
-[Monte Carlo methods](https://en.wikipedia.org/wiki/Monte_Carlo_method) are a class of algorithms that rely on random sampling to obtain numerical results. For the REINFORCE algorithm, this manifests as repeating experiements with a randomized initial state. We sample actions from the policy and observe the rewards that result from those actions. 
-
-#### Probability of Actions
-
-A fundemental part of the REINFORCE algorithm is our ability to compute the probability of any action chosen by the policy. The difficulty of doing this varies depending on the action space. A discrete action space is trivial. For example, let's say for a state at time $t$, $x_t$ our policy computes
-
-$$
-\pi_\Theta(x_t) \rightarrow a_t
-$$
-
-and the probabilities of each action the following probabilities for each action class in $a_t$ are:
-
-
-| Action | Probability |
-|--------|-------------|
-| left   | 0.2         |
-| none   | 0.6         |
-| right  | 0.2         |
-
-
-The action our policy chose at time $t$ was 'none'. The probability of this action having been taken is exactly the probability of the action class 'none' which is 0.6. Straight forward!
-
-But what if the action space was continuous? In this case, we would need to compute the probability of the action taken by the policy. This can be done by evaluating the probability density function of the action taken by the policy. This is a bit more complex, but can be done with the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function) of the action space.
-
-
-#### More of the Good, Less of the Bad -->
-
-
-
-<!-- #### Policy Gradient Theorem
-
-The policy gradient theorem is a fundamental result in reinforcement learning that provides a way to compute the gradient of the expected reward with respect to the policy parameters. The theorem is a cornerstone of policy gradient methods, enabling us to optimize the policy by following the gradient of the expected reward.
-
-The theorem states that the gradient of the expected reward with respect to the policy parameters is the expected value of the gradient of the reward with respect to the policy parameters:
-
-$$
-\nabla_{\theta} J(\theta) = \mathbb{E}_{\tau \sim p_{\theta}(\tau)} \left[ \nabla_{\theta} \log p_{\theta}(\tau) R(\tau) \right]
-$$
-
-Where:
-* $\nabla_{\theta} J(\theta)$ is the gradient of the expected reward with respect to the policy parameters.
-* $\mathbb{E}_{\tau \sim p_{\theta}(\tau)}$ is the expected value over trajectories sampled from the policy.
-* $\nabla_{\theta} \log p_{\theta}(\tau)$ is the gradient of the log probability of the trajectory with respect to the policy parameters.
-* $R(\tau)$ is the reward of the trajectory. -->
-
-
-
 

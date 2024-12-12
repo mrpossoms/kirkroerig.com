@@ -9,7 +9,7 @@ CTX = {}
 // {
 // 	return this[0].length;
 // }
-Array.prototype.argmax = function() { return this.indexOf(Math.max(...this)); };
+// Array.prototype.argmax = function() { return this.indexOf(Math.max(...this)); };
 
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
@@ -424,7 +424,7 @@ let basic = {
 	target: 1,
 	pi: function(theta, x) {
 		let z = matmul([x], theta);
-		let p = softermax(z[0]);
+		let p = softmax(z[0]);
 		let a_idx = sample_multinomial(p);
 
 		return { pr: p, idx: a_idx };
@@ -463,8 +463,8 @@ let puck = {
 		let _x = [dx/mag, dy/mag];
 		// _x.push(1);
 		let z = matmul([_x], theta)[0];
-		let z_x = z.slice(0, 2);
-		let z_y = z.slice(2, 4);
+		let z_x = z.slice(0, 3);
+		let z_y = z.slice(3, 6);
 		let pr_x = softmax(z_x);
 		let pr_y = softmax(z_y);
 		let a_x_idx = sample_multinomial(pr_x);
@@ -500,10 +500,10 @@ let puck = {
 		x_t1[3] = x_t[3];
 
 		// keep puck in bounds
-		if (x_t1[0] < 0) { x_t1[0] = 0; }
-		if (x_t1[0] > puck.w) { x_t1[0] = puck.w; }
-		if (x_t1[1] < 0) { x_t1[1] = 0; }
-		if (x_t1[1] > puck.h) { x_t1[1] = puck.h; }
+		if (x_t1[0] < 5) { x_t1[0] = 5; }
+		if (x_t1[0] > puck.w-5) { x_t1[0] = puck.w-5; }
+		if (x_t1[1] < 5) { x_t1[1] = 5; }
+		if (x_t1[1] > puck.h-5) { x_t1[1] = puck.h-5; }
 
 		let d1 = puck.dist_to_target(x_t1);
 
@@ -535,16 +535,16 @@ let puck = {
 		}
 
 		ctx.strokeStyle = color('black');
-		ctx.moveTo(state[2] - 10, state[3] - 10);
-		ctx.lineTo(state[2] + 10, state[3] + 10);
-		ctx.moveTo(state[2] - 10, state[3] + 10);
-		ctx.lineTo(state[2] + 10, state[3] - 10);
+		ctx.moveTo(state[2] - 5, state[3] - 5);
+		ctx.lineTo(state[2] + 5, state[3] + 5);
+		ctx.moveTo(state[2] - 5, state[3] + 5);
+		ctx.lineTo(state[2] + 5, state[3] - 5);
 		ctx.stroke();
 
 		// draw puck
 		ctx.fillStyle = color('black');
 		ctx.beginPath();
-		ctx.arc(state[0], state[1], 10, 0, 2 * Math.PI);
+		ctx.arc(state[0], state[1], 4, 0, 2 * Math.PI);
 		ctx.stroke();
 	}
 }
