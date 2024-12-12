@@ -13,6 +13,7 @@ Array.prototype.argmax = function() { return this.indexOf(Math.max(...this)); };
 
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
+let rnd = () => { return Math.random() * 2 - 1; };
 
 let zeros = (r, c) => { 
 	let z = Array(r);
@@ -352,7 +353,7 @@ function optimize(pi, theta, T, params)
 
 	let G = zeros(rows(theta), cols(theta));//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
 
-	let pi_pr = (theta, x, a) => { return pi(theta, x).pr[a]; };
+	let pi_pr = params.pi_pr || ((theta, x, a) => { return pi(theta, x).pr[a]; });
 
 	for (let ti = 0; ti < T.length; ti++) {
 		const p = 1 / T[ti].X.length;
@@ -423,7 +424,7 @@ let basic = {
 	target: 1,
 	pi: function(theta, x) {
 		let z = matmul([x], theta);
-		let p = softmax(z[0]);
+		let p = softermax(z[0]);
 		let a_idx = sample_multinomial(p);
 
 		return { pr: p, idx: a_idx };
@@ -453,41 +454,99 @@ let basic = {
 }
 
 let puck = {
+	w: 100,
+	h: 100,
 	pi: function(theta, x) {
-		let z = matmul([x], theta);
-		let z_x = z.slice(0, 3);
-		let z_y = z.slice(3, 6);
-		let pr_x = softmax(z[0]);
-		let pr_y = softmax(z[1]);
+		let dx = x[2] - x[0];
+		let dy = x[3] - x[1];
+		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
+		let _x = [dx/mag, dy/mag];
+		// _x.push(1);
+		let z = matmul([_x], theta)[0];
+		let z_x = z.slice(0, 2);
+		let z_y = z.slice(2, 4);
+		let pr_x = softmax(z_x);
+		let pr_y = softmax(z_y);
 		let a_x_idx = sample_multinomial(pr_x);
 		let a_y_idx = sample_multinomial(pr_y);
 
-
-
-		return { pr: p, idx: a_idx };
+		return { pr: [pr_x, pr_y], idx: [a_x_idx, a_y_idx] };
+	},
+	dist_to_target: function(x) {
+		return Math.sqrt(Math.pow(x[0] - x[2], 2) + Math.pow(x[1] - x[3], 2));
 	},
 	sample_trajectory: function(theta) {
-		let x_t = [1];
+		let r = Math.random;
+		let x_t = [r() * puck.w, r() * puck.h, r() * puck.w, r() * puck.h];
 		let T = { X: [], A_pr: [], A: [], R: []};
 
-		for (let t = 0; t < 1; t++) {
+		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
+			x_t = T.X[t];
 		}
 
 		return T;
 	},
 	step: function(T, x_t, a_t, gamma)
 	{
-		let x_t1 = platform.update(x_t);
+		let d0 = puck.dist_to_target(x_t);
+		let x_t1 = zeros(4, 1);
+		// x_t1[0] = x_t[0] + (a_t.idx[0] * 2 - 1) * 2;
+		// x_t1[1] = x_t[1] + (a_t.idx[1] * 2 - 1) * 2;
+		x_t1[0] = x_t[0] + (a_t.idx[0] - 1) * 2;
+		x_t1[1] = x_t[1] + (a_t.idx[1] - 1) * 2;
+		x_t1[2] = x_t[2];
+		x_t1[3] = x_t[3];
 
-		let r_t = a_t.idx == puck.target ? 1 : -1;
+		// keep puck in bounds
+		if (x_t1[0] < 0) { x_t1[0] = 0; }
+		if (x_t1[0] > puck.w) { x_t1[0] = puck.w; }
+		if (x_t1[1] < 0) { x_t1[1] = 0; }
+		if (x_t1[1] > puck.h) { x_t1[1] = puck.h; }
 
-		T.X.push(x_t);
+		let d1 = puck.dist_to_target(x_t1);
+
+		let r_t = d0 - d1;
+
+		T.X.push(x_t1);
 		T.R.push(r_t);
 		T.A_pr.push(a_t.pr);
 		T.A.push(a_t.idx);
 	},
+	draw: function(cvsId, state, left_top, right_bottom)
+	{
+		const e = document.getElementById(cvsId);
+		const ctx = ctx_cache(e);
+		const dpr = window.devicePixelRatio || 1;
+
+		if (!left_top) { left_top = [0, 0]; }
+		if (!right_bottom) { right_bottom = [ctx.canvas.width/dpr, ctx.canvas.height/dpr]; }
+
+		puck.w = right_bottom[0] - left_top[0];
+		puck.h = right_bottom[1] - left_top[1];
+
+		// draw target
+		ctx.fillStyle = color('black');
+		ctx.beginPath();
+
+		if (state == undefined) {
+			debugger;
+		}
+
+		ctx.strokeStyle = color('black');
+		ctx.moveTo(state[2] - 10, state[3] - 10);
+		ctx.lineTo(state[2] + 10, state[3] + 10);
+		ctx.moveTo(state[2] - 10, state[3] + 10);
+		ctx.lineTo(state[2] + 10, state[3] - 10);
+		ctx.stroke();
+
+		// draw puck
+		ctx.fillStyle = color('black');
+		ctx.beginPath();
+		ctx.arc(state[0], state[1], 10, 0, 2 * Math.PI);
+		ctx.stroke();
+	}
 }
 
 let platform = {
@@ -552,8 +611,6 @@ let platform = {
 
 	sample_trajectory: function(theta)
 	{
-		let rnd = () => { return Math.random() * 2 - 1; };
-
 		let x_t = [rnd(), rnd() * 25, rnd() * 0.0, 1];
 		let T = { X: [], A_pr: [], A: [], R: []};
 

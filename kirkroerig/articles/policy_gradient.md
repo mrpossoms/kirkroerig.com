@@ -45,8 +45,11 @@ Let's look at a simple example which demonstrates the core idea of Policy Gradie
 <script>
 let theta = randmat(1, 3);
 setInterval(() => {
-    let T = basic.sample_trajectory(theta);
-    theta = optimize(basic.pi, theta, T);
+	let T = basic.sample_trajectory(theta);
+
+	if (T.A_pr[0][basic.target] < 0.9) {
+	    theta = optimize(basic.pi, theta, T);
+	}
 
 	clear("policy_gradient_ex");
 	let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
@@ -61,7 +64,7 @@ setInterval(() => {
 			ctx.stroke();
 		}
 	});
-}, 333);
+}, 100);
 </script>
 
 In the example above we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the policy for choosing, and what actions it is penalized for choosing. 
@@ -306,6 +309,39 @@ In essence that's it! We just repeat this sequence until our policy's actions co
 6. Repeat!
 
 This example and article are akin to a "hello world!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition to understand the core ideas of Policy Gradient Methods.
+
+<canvas id="policy_gradient_ex2"></canvas>
+<script>
+let t = 0;
+let puck_theta = randmat(2, 6);
+let T = puck.sample_trajectory(puck_theta);
+setInterval(() => {
+	clear("policy_gradient_ex2");
+	puck.draw("policy_gradient_ex2", T.X[t++]);
+	// let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
+	// 	          `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
+    //               `right: ${parseInt(T.A_pr[0][2]*100)}%`];
+	// draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
+	// (ctx, i, x, y) => {
+	// 	if (T.A[0] == i-1) {
+	// 		ctx.strokeStyle = color('LightGray');
+	// 		ctx.beginPath();
+	// 		ctx.arc(x, y, 5, 0, 2 * Math.PI);
+	// 		ctx.stroke();
+	// 	}
+	// });
+	if (t >= T.X.length) {
+		t = 0;
+    	puck_theta = optimize(puck.pi, puck_theta, T, {
+    		pi_pr: (theta, x, a) => {
+    			let y = puck.pi(theta, x);
+    			return y.pr[0][a[0]] * y.pr[1][a[1]];
+    		}
+    	});
+    	T = puck.sample_trajectory(puck_theta);
+	}
+}, 16);
+</script>
 
 
 <!-- ### Policy Gradient
