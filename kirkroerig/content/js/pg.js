@@ -765,5 +765,8 @@ function gradient_example(event, show_vectors)
 }
 
 module.exports = {
-	softermax: softermax
+	softermax: softermax,
+	puck: puck,
+	optimize: optimize,
+	randmat: randmat
 };
