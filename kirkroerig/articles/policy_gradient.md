@@ -330,6 +330,7 @@ setInterval(() => {
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
+                alpha: 0.01,
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
