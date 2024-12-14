@@ -515,11 +515,13 @@ let puck = {
 		T.A_pr.push(a_t.pr);
 		T.A.push(a_t.idx);
 	},
-	draw: function(cvsId, state, left_top, right_bottom)
+	draw: function(cvsId, time, trajectory, left_top, right_bottom)
 	{
 		const e = document.getElementById(cvsId);
 		const ctx = ctx_cache(e);
 		const dpr = window.devicePixelRatio || 1;
+
+		let state = trajectory.X[time];
 
 		if (!left_top) { left_top = [0, 0]; }
 		if (!right_bottom) { right_bottom = [ctx.canvas.width/dpr, ctx.canvas.height/dpr]; }
@@ -542,7 +544,17 @@ let puck = {
 		ctx.lineTo(state[2] + 5, state[3] - 5);
 		ctx.stroke();
 
+		ctx.beginPath();
+		let x = trajectory.X[t];
+		ctx.moveTo(x[0], x[1]);
+		for (let t = 1; t < time; t++) {
+			x = trajectory.X[t];
+			ctx.lineTo(x[0], x[1]);
+		}
+		ctx.stroke();
+
 		// draw puck
+		ctx.beginPath();
 		ctx.fillStyle = color('black');
 		ctx.beginPath();
 		ctx.arc(state[0], state[1], 4, 0, 2 * Math.PI);

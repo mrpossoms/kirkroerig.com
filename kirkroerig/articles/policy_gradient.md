@@ -405,7 +405,8 @@ let puck_theta = [
 let T = puck.sample_trajectory(puck_theta);
 setInterval(() => {
     clear("policy_gradient_ex2");
-    puck.draw("policy_gradient_ex2", T.X[t++]);
+    puck.draw("policy_gradient_ex2", t, T);
+    t++;
 
     if (t >= T.X.length) {
         t = 0;
@@ -414,7 +415,6 @@ setInterval(() => {
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.01,
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
