@@ -346,7 +346,7 @@ function slider_param(event)
 function optimize(pi, theta, T, params)
 {
 	params = params || {};	
-	params.alpha = params.alpha || 0.1;
+	params.alpha = params.alpha == undefined ? 0.1 : params.alpha;
 	params.gamma = params.gamma || 0.99;
 
 	if (!(T instanceof Array)) { T = [T]; }
@@ -477,7 +477,7 @@ let puck = {
 	},
 	sample_trajectory: function(theta) {
 		let r = Math.random;
-		let x_t = [r() * puck.w, r() * puck.h, r() * puck.w, r() * puck.h];
+		let x_t = [r() * puck.w, r() * puck.h, puck.w / 2, puck.h / 2];
 		let T = { X: [], A_pr: [], A: [], R: []};
 
 		for (let t = 0; t < 5 * 60; t++) {

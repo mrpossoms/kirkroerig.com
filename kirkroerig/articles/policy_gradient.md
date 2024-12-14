@@ -215,6 +215,8 @@ What is the probability of the action $a_t$ being taken? In the case of our exam
 
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_.
 
+### Probability of independent actions <a name="independent-action-probability"/>
+
 But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
 
 
@@ -310,14 +312,96 @@ In essence that's it! We just repeat this sequence until our policy's actions co
 
 This example and article are akin to a "hello world!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition to understand the core ideas of Policy Gradient Methods.
 
-# A More Intesting Example
+# A More Interesting Example
 
 Now you should have a reasonable understanding of the core ideas of Policy Gradient Methods. Let's look at a more interesting example to see how these ideas can be applied to a more complex problem. We will draw on the example alluded to in the [How do we calculate the probability of an action?](#action-probability) section, and consider a 2D robot that can move in any direction. What changes do we need to make to our policy and reward function to handle this problem? Lets find out!
+
+## Environment
+
+To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The robot 'o' will be spawned at a random location and will be able to move in any direction. The robot's objective will be to reach the target 'x'.
+
+## Action Space
+
+Like the example we examined earlier in ['Probability of independent actions'](#independent-action-probability), the robot will be able to vertically and horizontally. The action space will be defined as:
+
+* vertical: _up_, _none_, _down_
+* horizontal: _left_, _none_, _right_
+
+Vertical and horizontal will be _independent random variables_ and will not influence each other. This means that the robot can move in any direction at any time.
+
+## State Space
+
+The state space will consist of the robot's current position and the target's position. The state space will be defined as:
+
+$$
+x_t = \begin{bmatrix} 
+x_{robot} \\
+y_{robot} \\
+x_{target} \\
+y_{target} \\
+\end{bmatrix}
+$$
+
+## Policy
+
+Like the policy in the 'hello world!' style example, this policy will be a simple linear map. The input to the policy will not directly be the state space, instead it will be a feature vector derived from the state space. The feature vector will be defined as:
+
+$$
+\Delta{x} = x_{robot} - x_{target}
+$$
+$$
+\Delta{y} = y_{robot} - y_{target}
+$$
+$$
+\phi(x_t) = \begin{bmatrix} 
+\Delta{x} / \sqrt{\Delta{x}^2 + \Delta{y}^2}\\
+\Delta{y} / \sqrt{\Delta{x}^2 + \Delta{y}^2}\\
+\end{bmatrix}
+$$
+
+The vector $\phi(x_t)$ will be our _feature vector_ which is the input to the policy. This feature vector is simply the direction from the robot to the target normalized to a unit vector. Normalizing the vector ensures that the policy is invariant to the distance between the robot and target.
+
+With our feature vector in place we can define the 2x6 matrix $\Theta$ which will map our feature vector to the probability distribution of actions:
+
+$$
+\Theta = \begin{bmatrix}
+\theta_{00} & \theta_{01} & \theta_{02} & \theta_{03} & \theta_{04} & \theta_{05} \\
+\theta_{10} & \theta_{11} & \theta_{12} & \theta_{13} & \theta_{14} & \theta_{15} \\
+\end{bmatrix}
+$$
+
+Our policy will mulitply the feature vector by the policy parameters. The resulting vector will be sliced into two vectors, one for the vertical actions and one for the horizontal actions. Each of these vectors will be passed through a softmax function to get the probability distribution of actions.
+
+$$
+\pi_{\Theta}(x_t) = \begin{bmatrix}
+softmax(\phi(x_t) \Theta[0]) \\
+softmax(\phi(x_t) \Theta[1]) \\
+\end{bmatrix}
+$$
+
 
 <canvas id="policy_gradient_ex2"></canvas>
 <script>
 let t = 0;
-let puck_theta = randmat(2, 6);
+let puck_theta = [
+  [
+    -0.06344286448017344,
+    -0.013060742152890104,
+    0.3612000714595811,
+    -0.265469954891274,
+    -0.25405646928285,
+    -0.2317468792603885
+  ],
+  [
+    -0.32516165515685724,
+    -0.03432296246933131,
+    0.383052435694907,
+    0.2915076462546815,
+    0.046673970000944864,
+    -0.17635189577351218
+  ]
+]; // since rng seeding isn't possible, we start intentionally with a bad policy
+
 let T = puck.sample_trajectory(puck_theta);
 setInterval(() => {
     clear("policy_gradient_ex2");
