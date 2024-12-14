@@ -38,8 +38,8 @@ setInterval(() => {
 		}
 	});
 
-	if (epoch > 0 && epoch % 100 == 0) {
-		console.log(epoch + ',' + avg_ret/100);
+	if (epoch > 0 && epoch % 10 == 0) {
+		console.log(epoch + ',' + avg_ret/10);
 		avg_ret = 0;
 	}
 	epoch++;

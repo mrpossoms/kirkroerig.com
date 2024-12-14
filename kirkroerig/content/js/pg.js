@@ -508,6 +508,7 @@ let puck = {
 		let d1 = puck.dist_to_target(x_t1);
 
 		let r_t = d0 - d1;
+		if (d1 < 5) { r_t += 10; };
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
