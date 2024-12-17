@@ -374,11 +374,14 @@ Our policy will mulitply the feature vector by the policy parameters. The result
 
 $$
 \pi_{\Theta}(x_t) = \begin{bmatrix}
-softmax(\phi(x_t) \Theta[0]) \\
-softmax(\phi(x_t) \Theta[1]) \\
+softmax([z_0, z_1, z_2]) \\
+softmax([z_3, z_4, z_5] \\
 \end{bmatrix}
 $$
-
+where
+$$
+z = \phi(x_t) \Theta
+$$
 
 <canvas id="policy_gradient_ex2"></canvas>
 <script>

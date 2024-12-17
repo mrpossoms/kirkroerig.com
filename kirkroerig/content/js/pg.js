@@ -457,6 +457,7 @@ let puck = {
 	w: 100,
 	h: 100,
 	pi: function(theta, x) {
+		// 1x2 * 2x6 -> 1x6
 		let dx = x[2] - x[0];
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
@@ -477,13 +478,20 @@ let puck = {
 	},
 	sample_trajectory: function(theta) {
 		let r = Math.random;
-		let x_t = [r() * puck.w, r() * puck.h, puck.w / 2, puck.h / 2];
+		let side = Math.min(puck.w, puck.h);
+		// in the background, trajectories could be sampled this way so there isn't an axial bias built into
+		// the optimized policy. But for visualization purposes, the puck and targets could be spawned anywhere
+		let x_t = [(puck.w / 2) - (side/2) + r() * side, r() * side, puck.w / 2, puck.h / 2];
 		let T = { X: [], A_pr: [], A: [], R: []};
 
 		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
+			if (r_t == null) {
+				break;
+			}
 			x_t = T.X[t];
+
 		}
 
 		return T;
@@ -499,21 +507,22 @@ let puck = {
 		x_t1[2] = x_t[2];
 		x_t1[3] = x_t[3];
 
-		// keep puck in bounds
-		if (x_t1[0] < 5) { x_t1[0] = 5; }
-		if (x_t1[0] > puck.w-5) { x_t1[0] = puck.w-5; }
-		if (x_t1[1] < 5) { x_t1[1] = 5; }
-		if (x_t1[1] > puck.h-5) { x_t1[1] = puck.h-5; }
+		// // keep puck in bounds
+		// if (x_t1[0] < 5) { x_t1[0] = 5; }
+		// if (x_t1[0] > puck.w-5) { x_t1[0] = puck.w-5; }
+		// if (x_t1[1] < 5) { x_t1[1] = 5; }
+		// if (x_t1[1] > puck.h-5) { x_t1[1] = puck.h-5; }
 
 		let d1 = puck.dist_to_target(x_t1);
 
 		let r_t = d0 - d1;
-		if (d1 < 5) { r_t += 10; };
+		if (d1 < 5) { return null; }
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
 		T.A_pr.push(a_t.pr);
 		T.A.push(a_t.idx);
+		return r_t;
 	},
 	draw: function(cvsId, time, trajectory, left_top, right_bottom)
 	{
@@ -530,13 +539,7 @@ let puck = {
 		puck.h = right_bottom[1] - left_top[1];
 
 		// draw target
-		ctx.fillStyle = color('black');
 		ctx.beginPath();
-
-		if (state == undefined) {
-			debugger;
-		}
-
 		ctx.strokeStyle = color('black');
 		ctx.moveTo(state[2] - 5, state[3] - 5);
 		ctx.lineTo(state[2] + 5, state[3] + 5);
@@ -544,18 +547,22 @@ let puck = {
 		ctx.lineTo(state[2] + 5, state[3] - 5);
 		ctx.stroke();
 
+		// draw path
 		ctx.beginPath();
-		let x = trajectory.X[t];
+		ctx.setLineDash([5, 15]);
+		ctx.strokeStyle = color('LightGray');
+		let x = trajectory.X[0];
 		ctx.moveTo(x[0], x[1]);
 		for (let t = 1; t < time; t++) {
 			x = trajectory.X[t];
 			ctx.lineTo(x[0], x[1]);
 		}
+		ctx.setLineDash([]);
 		ctx.stroke();
 
 		// draw puck
 		ctx.beginPath();
-		ctx.fillStyle = color('black');
+		ctx.strokeStyle = color('black');
 		ctx.beginPath();
 		ctx.arc(state[0], state[1], 4, 0, 2 * Math.PI);
 		ctx.stroke();
