@@ -359,7 +359,7 @@ $$
 \end{bmatrix}
 $$
 
-The vector $\phi(x_t)$ will be our _feature vector_ which is the input to the policy. This feature vector is simply the direction from the robot to the target normalized to a unit vector. Normalizing the vector ensures that the policy is invariant to the distance between the robot and target.
+The vector $\phi(x_t)$ will be our _feature vector_, the input to the policy. This feature vector is simply the direction from the robot to the target normalized to a unit vector. Normalizing the vector ensures that the policy is invariant to the distance between the robot and target.
 
 With our feature vector in place we can define the 2x6 matrix $\Theta$ which will map our feature vector to the probability distribution of actions:
 
@@ -383,6 +383,17 @@ $$
 z = \phi(x_t) \Theta
 $$
 
+This policy will return two probability distributions, one for the vertical actions and one for the horizontal actions. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the robot will take.
+
+## Reward Function
+
+The reward function is simple. The reward and pentalty will be exactly how much closer or further away the robot moves from the target in a given step. The reward function will be defined as:
+
+$$
+R(x_t, a_t) = \sqrt{(x_{robot} - x_{target})^2 + (y_{robot} - y_{target})^2} - \sqrt{(x_{robot} + \Delta{x} - x_{target})^2 + (y_{robot} + \Delta{y} - y_{target})^2}
+$$
+
+
 <canvas id="policy_gradient_ex2"></canvas>
 <script>
 let t = 0;
@@ -405,7 +416,7 @@ let puck_theta = [
   ]
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
-let T = puck.sample_trajectory(puck_theta);
+let T = puck.sample_trajectory(puck_theta, true);
 setInterval(() => {
     clear("policy_gradient_ex2");
     puck.draw("policy_gradient_ex2", t, T);
@@ -427,6 +438,8 @@ setInterval(() => {
         }
         console.log(avg_ret / epochs);
 
+        // Generate the next visualization traj
+        T = puck.sample_trajectory(puck_theta, true);
     }
 }, 16);
 </script>

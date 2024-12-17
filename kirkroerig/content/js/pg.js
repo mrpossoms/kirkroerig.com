@@ -476,12 +476,19 @@ let puck = {
 	dist_to_target: function(x) {
 		return Math.sqrt(Math.pow(x[0] - x[2], 2) + Math.pow(x[1] - x[3], 2));
 	},
-	sample_trajectory: function(theta) {
+	sample_trajectory: function(theta, for_visualization) {
 		let r = Math.random;
 		let side = Math.min(puck.w, puck.h);
 		// in the background, trajectories could be sampled this way so there isn't an axial bias built into
 		// the optimized policy. But for visualization purposes, the puck and targets could be spawned anywhere
-		let x_t = [(puck.w / 2) - (side/2) + r() * side, r() * side, puck.w / 2, puck.h / 2];
+		let x_t = null;
+		
+		if (for_visualization) {
+			x_t = [r() * puck.w, r() * puck.h, r() * puck.w, r() * puck.h];
+		} else {
+			x_t = [(puck.w / 2) - (side/2) + r() * side, r() * side, puck.w / 2, puck.h / 2];
+		}
+
 		let T = { X: [], A_pr: [], A: [], R: []};
 
 		for (let t = 0; t < 5 * 60; t++) {
