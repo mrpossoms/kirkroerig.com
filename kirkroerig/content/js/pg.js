@@ -420,6 +420,36 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 	}
 }
 
+function draw_reward_plot(cvsId, R, left_top, right_bottom)
+{
+	const e = document.getElementById(cvsId);
+	const ctx = ctx_cache(e);
+	const dpr = window.devicePixelRatio || 1;
+
+	left_top = left_top || [0, 0];
+	right_bottom = right_bottom || [ctx.canvas.width / dpr, ctx.canvas.height / dpr];
+
+	let w = right_bottom[0] - left_top[0];
+	let h = right_bottom[1] - left_top[1];
+
+	let path = new Path2D();
+	path.moveTo(left_top[0], right_bottom[1]);
+
+	let min = Math.min(...R);
+	let max = Math.max(...R);
+	let range = max - min;
+	for (let i = 0; i < R.length; i++)
+	{
+		let x = left_top[0] + w * i / R.length;
+		let py = (R[i] - min) / range;
+		let y = (right_bottom[1] * (1 - py)) + left_top[1] * py;
+		path.lineTo(x, y);
+	}
+	path.lineTo(right_bottom[0], right_bottom[1]);
+	ctx.strokeStyle = color('black');
+	ctx.stroke(path);
+}
+
 let basic = {
 	target: 1,
 	pi: function(theta, x) {
@@ -429,7 +459,7 @@ let basic = {
 
 		return { pr: p, idx: a_idx };
 	},
-	sample_trajectory: function(theta) {
+	sample_trajectory: function(theta, for_visualization) {
 		let x_t = [1];
 		let T = { X: [], A_pr: [], A: [], R: []};
 

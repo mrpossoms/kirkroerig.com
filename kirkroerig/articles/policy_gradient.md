@@ -395,6 +395,7 @@ $$
 
 
 <canvas id="policy_gradient_ex2"></canvas>
+<canvas id="policy_gradient_ex2_reward"></canvas>
 <script>
 let t = 0;
 let puck_theta = [
@@ -417,9 +418,12 @@ let puck_theta = [
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
 let T = puck.sample_trajectory(puck_theta, true);
+let R = []
 setInterval(() => {
     clear("policy_gradient_ex2");
+    clear("policy_gradient_ex2_reward");
     puck.draw("policy_gradient_ex2", t, T);
+    draw_reward_plot("policy_gradient_ex2_reward", R);
     t++;
 
     if (t >= T.X.length) {
@@ -429,6 +433,7 @@ setInterval(() => {
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
+                alpha: 0.01,
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
@@ -437,7 +442,7 @@ setInterval(() => {
             avg_ret += T.R.reduce((acc, val) => acc + val, 0);
         }
         console.log(avg_ret / epochs);
-
+        R.push(avg_ret / epochs);
         // Generate the next visualization traj
         T = puck.sample_trajectory(puck_theta, true);
     }
