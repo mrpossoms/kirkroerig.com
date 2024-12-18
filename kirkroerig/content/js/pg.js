@@ -432,20 +432,31 @@ function draw_reward_plot(cvsId, R, left_top, right_bottom)
 	let w = right_bottom[0] - left_top[0];
 	let h = right_bottom[1] - left_top[1];
 
-	let path = new Path2D();
-	path.moveTo(left_top[0], right_bottom[1]);
-
-	let min = Math.min(...R);
-	let max = Math.max(...R);
+	let min = Math.min(Math.min(...R),0);
+	let max = Math.max(Math.max(...R),0);
 	let range = max - min;
+
+	let py = (y) => (y - min) / range;
+	let y = (p) => (right_bottom[1] * (1 - p)) + left_top[1] * p;
+	ctx.beginPath();
+	ctx.moveTo(left_top[0], y(py(0)));
+	ctx.lineTo(right_bottom[0], y(py(0)));
+	ctx.setLineDash([5, 15]);
+	ctx.strokeStyle = color('LightGray');
+	ctx.stroke();
+	ctx.setLineDash([]);
+
+	let path = new Path2D();
 	for (let i = 0; i < R.length; i++)
 	{
 		let x = left_top[0] + w * i / R.length;
-		let py = (R[i] - min) / range;
-		let y = (right_bottom[1] * (1 - py)) + left_top[1] * py;
-		path.lineTo(x, y);
+		let p = py(R[i]);
+		if (i == 0) {
+			path.moveTo(x, y(p));
+		} else {
+			path.lineTo(x, y(p));			
+		}
 	}
-	path.lineTo(right_bottom[0], right_bottom[1]);
 	ctx.strokeStyle = color('black');
 	ctx.stroke(path);
 }
@@ -521,7 +532,7 @@ let puck = {
 
 		let T = { X: [], A_pr: [], A: [], R: []};
 
-		for (let t = 0; t < 5 * 60; t++) {
+		for (let t = 0; t < (for_visualization ? 5 * 60 : 100); t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
 			if (r_t == null) {

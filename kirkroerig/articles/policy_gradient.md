@@ -387,11 +387,16 @@ This policy will return two probability distributions, one for the vertical acti
 
 ## Reward Function
 
-The reward function is simple. The reward and pentalty will be exactly how much closer or further away the robot moves from the target in a given step. The reward function will be defined as:
+The reward function is simple. The reward and pentalty will be exactly how much closer or further away the robot moves from the target in a given step. We can implement this as:
 
 $$
-R(x_t, a_t) = \sqrt{(x_{robot} - x_{target})^2 + (y_{robot} - y_{target})^2} - \sqrt{(x_{robot} + \Delta{x} - x_{target})^2 + (y_{robot} + \Delta{y} - y_{target})^2}
+R(x_{t-1}, x_t) = dist(x_{{t-1}_{robot}}, x_{{t-1}_{target}}) - dist(x_{{t}_{robot}}, x_{{t}_{target}})
 $$
+where
+$$
+dist(a, b) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
+$$
+
 
 
 <canvas id="policy_gradient_ex2"></canvas>
@@ -433,7 +438,7 @@ setInterval(() => {
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.01,
+                alpha: 0.05,
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
