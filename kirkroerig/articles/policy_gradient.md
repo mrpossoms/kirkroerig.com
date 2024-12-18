@@ -397,6 +397,11 @@ $$
 dist(a, b) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
 $$
 
+## Optimization
+
+Here things are a little different from the simple example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_ or a sequence of states, actions and the corresponding rewards. Each trajectory begins from a random starting position and ends when the robot reaches the target, or it runs out of time. Once a trajectory is complete we will adjust the policy parameters based on the rewards collected in the trajectory.
+
+This technique of random sampling considered a [_Monte Carlo Method_](https://en.wikipedia.org/wiki/Monte_Carlo_method) and is a common method for training policies in reinforcement learning.
 
 
 <canvas id="policy_gradient_ex2"></canvas>
