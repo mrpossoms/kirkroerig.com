@@ -33,17 +33,18 @@ function when_visible(id, cb)
 	window.when_visible_observer.observe(ele);
 }
 
-function animate(id) {
+function animate(id, duration) {
 	if (!window.animation_intervals) {
 		window.animation_intervals = {};
 	}
 
 	return {
-		using: function(animation, duration) {
+		using: function(animation) {
 			return {
 				when: function(condition) {
 					if (condition) {
 						window.animation_intervals[id] = setInterval(animation, duration);
+						console.log('setInverval: ' + duration + ' for ' + id);
 					} else if (window.animation_intervals[id]) {
 						clearInterval(window.animation_intervals[id]);
 						delete window.animation_intervals[id];

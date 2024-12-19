@@ -44,6 +44,33 @@ Let's look at a simple example which demonstrates the core idea of Policy Gradie
 
 <script>
 let theta = randmat(1, 3);
+when_visible("policy_gradient_ex", (visible) => {
+	animate("policy_gradient_ex", 100)
+	.using(() => {    
+	let T = basic.sample_trajectory(theta);
+
+    if (T.A_pr[0][basic.target] < 0.9) {
+        theta = optimize(basic.pi, theta, T);
+    }
+
+    clear("policy_gradient_ex");
+    let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
+                  `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
+                  `right: ${parseInt(T.A_pr[0][2]*100)}%`];
+    draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
+    (ctx, i, x, y) => {
+        if (T.A[0] == i-1) {
+            ctx.strokeStyle = color('LightGray');
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    })
+
+})
+	.when(visible);
+});
+/*
 setInterval(() => {
     let T = basic.sample_trajectory(theta);
 
@@ -65,6 +92,7 @@ setInterval(() => {
         }
     });
 }, 100);
+*/
 </script>
 
 In the example above we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the policy for choosing, and what actions it is penalized for choosing. 
@@ -403,10 +431,22 @@ Here things are a little different from the simple example. In that example the 
 
 <canvas id="policy_gradient_montecarlo"></canvas>
 <script>
+let rand_theta = randmat(2, 6);
+let mc_trajectories = [];
+let mc_t = 0;
+for (let i = 0; i < 20; i++) {
+    mc_trajectories.push(puck.sample_trajectory(rand_theta, false));
+}
 when_visible("policy_gradient_montecarlo", (visible) => {
+
     animate("policy_gradient_montecarlo", 100)
     .using(() => {
-        console.log("visible");
+        clear("policy_gradient_montecarlo");
+        let T = mc_trajectories;
+        for (let i = 0; i < T.length; i++) {
+            puck.draw("policy_gradient_montecarlo", mc_t % T[i].X.length, T[i]);
+        }
+        mc_t++;
     })
     .when(visible);
 });
@@ -449,33 +489,43 @@ let puck_theta = [
 
 let T = puck.sample_trajectory(puck_theta, true);
 let R = []
-setInterval(() => {
-    clear("policy_gradient_ex2");
-    clear("policy_gradient_ex2_reward");
-    puck.draw("policy_gradient_ex2", t, T);
-    draw_reward_plot("policy_gradient_ex2_reward", R);
-    t++;
 
-    if (t >= T.X.length) {
-        t = 0;
-        let avg_ret = 0;
-        const epochs = 100;
-        for (let e = 0; e < epochs; e++) {
-            T = puck.sample_trajectory(puck_theta);
-            puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.05,
-                pi_pr: (theta, x, a) => {
-                    let y = puck.pi(theta, x);
-                    return y.pr[0][a[0]] * y.pr[1][a[1]];
-                }
-            });
-            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
-        }
-        console.log(avg_ret / epochs);
-        R.push(avg_ret / epochs);
-        // Generate the next visualization traj
-        T = puck.sample_trajectory(puck_theta, true);
-    }
+when_visible("policy_gradient_ex2", (visible) => {
+	animate("policy_gradient_ex2", 16)
+	.using(() => {
+	    clear("policy_gradient_ex2");
+	    clear("policy_gradient_ex2_reward");
+	    puck.draw("policy_gradient_ex2", t, T);
+	    draw_reward_plot("policy_gradient_ex2_reward", R);
+	    t++;
+
+	    if (t >= T.X.length) {
+	        t = 0;
+	        let avg_ret = 0;
+	        const epochs = 100;
+	        for (let e = 0; e < epochs; e++) {
+	            T = puck.sample_trajectory(puck_theta);
+	            puck_theta = optimize(puck.pi, puck_theta, T, {
+	                alpha: 0.05,
+	                pi_pr: (theta, x, a) => {
+	                    let y = puck.pi(theta, x);
+	                    return y.pr[0][a[0]] * y.pr[1][a[1]];
+	                }
+	            });
+	            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
+	        }
+	        console.log(avg_ret / epochs);
+	        R.push(avg_ret / epochs);
+	        // Generate the next visualization traj
+	        T = puck.sample_trajectory(puck_theta, true);
+	    }
+	})
+	.when(visible);
+});
+
+
+setInterval(() => {
+
 }, 16);
 </script>
 
