@@ -404,7 +404,11 @@ Here things are a little different from the simple example. In that example the 
 <canvas id="policy_gradient_montecarlo"></canvas>
 <script>
 when_visible("policy_gradient_montecarlo", (visible) => {
-        
+    animate("policy_gradient_montecarlo", 100)
+    .using(() => {
+        console.log("visible");
+    })
+    .when(visible);
 });
 </script>
 

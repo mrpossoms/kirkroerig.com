@@ -33,6 +33,27 @@ function when_visible(id, cb)
 	window.when_visible_observer.observe(ele);
 }
 
+function animate(id) {
+	if (!window.animation_intervals) {
+		window.animation_intervals = {};
+	}
+
+	return {
+		using: function(animation, duration) {
+			return {
+				when: function(condition) {
+					if (condition) {
+						window.animation_intervals[id] = setInterval(animation, duration);
+					} else if (window.animation_intervals[id]) {
+						clearInterval(window.animation_intervals[id]);
+						delete window.animation_intervals[id];
+					}
+				}
+			};
+		}
+	};
+}
+
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
 let rnd = () => { return Math.random() * 2 - 1; };
