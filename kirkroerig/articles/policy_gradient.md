@@ -399,7 +399,23 @@ $$
 
 ## Optimization
 
-Here things are a little different from the simple example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_ or a sequence of states, actions and the corresponding rewards. Each trajectory begins from a random starting position and ends when the robot reaches the target, or it runs out of time. Once a trajectory is complete we will adjust the policy parameters based on the rewards collected in the trajectory.
+Here things are a little different from the simple example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the robot). Sampling a trajectory involves the following steps.
+
+<canvas id="policy_gradient_montecarlo"></canvas>
+<script>
+when_visible("policy_gradient_montecarlo", (visible) => {
+        
+});
+</script>
+
+<!--
+1. Generate a random inital state $x_0$, $0 \rightarrow t$
+2. Pass state $x_t$ to policy, compute an action $a$
+3. Pass $a$ to environment, record returned reward $r$ and updated state $x_{t+1}$
+4. Increment $t+1 \rightarrow t$
+4. If $t < \text{max time}$, goto 2
+5. return trajectory
+-->
 
 This technique of random sampling considered a [_Monte Carlo Method_](https://en.wikipedia.org/wiki/Monte_Carlo_method) and is a common method for training policies in reinforcement learning.
 

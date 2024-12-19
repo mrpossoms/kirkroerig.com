@@ -11,6 +11,28 @@ CTX = {}
 // }
 // Array.prototype.argmax = function() { return this.indexOf(Math.max(...this)); };
 
+function when_visible(id, cb)
+{
+	let visible_cb = (entries, observer) => {
+		entries.forEach((entry) => {
+			window.when_visible_element_callbacks[entry.target.id](entry.isIntersecting);
+		});
+	};
+
+	if (!window.when_visible_observer) {
+		window.when_visible_observer = new IntersectionObserver(visible_cb, {
+			root: null,
+			rootMargin: '0px',
+			threshold: 0.5,
+		});
+		window.when_visible_element_callbacks = {};
+	}
+
+	let ele = document.getElementById(id);
+	window.when_visible_element_callbacks[id] = cb;
+	window.when_visible_observer.observe(ele);
+}
+
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
 let rnd = () => { return Math.random() * 2 - 1; };
