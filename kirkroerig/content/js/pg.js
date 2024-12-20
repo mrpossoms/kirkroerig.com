@@ -23,7 +23,7 @@ function when_visible(id, cb)
 		window.when_visible_observer = new IntersectionObserver(visible_cb, {
 			root: null,
 			rootMargin: '0px',
-			threshold: 0.5,
+			threshold: 0.9,
 		});
 		window.when_visible_element_callbacks = {};
 	}
@@ -561,22 +561,22 @@ let puck = {
 	dist_to_target: function(x) {
 		return Math.sqrt(Math.pow(x[0] - x[2], 2) + Math.pow(x[1] - x[3], 2));
 	},
-	sample_trajectory: function(theta, for_visualization) {
+	sample_trajectory: function(theta, left_top, right_bottom, randomize_target) {
+		left_top = left_top || [0, 0];
+		right_bottom = right_bottom || [500, 500];
 		let r = Math.random;
-		let side = Math.min(puck.w, puck.h);
+		let w = right_bottom[0] - left_top[0];
+		let h = right_bottom[1] - left_top[1];
+		let o_x = left_top[0], o_y = left_top[1];
 		// in the background, trajectories could be sampled this way so there isn't an axial bias built into
 		// the optimized policy. But for visualization purposes, the puck and targets could be spawned anywhere
-		let x_t = null;
-		
-		if (for_visualization) {
-			x_t = [r() * puck.w, r() * puck.h, r() * puck.w, r() * puck.h];
-		} else {
-			x_t = [(puck.w / 2) - (side/2) + r() * side, r() * side, puck.w / 2, puck.h / 2];
-		}
+		let targ_x = randomize_target ? r() * w : w / 2;
+		let targ_y = randomize_target ? r() * h : h / 2; 
+		let x_t = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 
 		let T = { X: [], A_pr: [], A: [], R: []};
 
-		for (let t = 0; t < (for_visualization ? 5 * 60 : 100); t++) {
+		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
 			if (r_t == null) {

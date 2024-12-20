@@ -434,8 +434,9 @@ Here things are a little different from the simple example. In that example the 
 let rand_theta = randmat(2, 6);
 let mc_trajectories = [];
 let mc_t = 0;
+let mc_cvs = document.getElementById("policy_gradient_montecarlo");
 for (let i = 0; i < 20; i++) {
-    mc_trajectories.push(puck.sample_trajectory(rand_theta, false));
+    mc_trajectories.push(puck.sample_trajectory(rand_theta, [0,0], [mc_cvs.clientWidth, mc_cvs.clientHeight]));
 }
 when_visible("policy_gradient_montecarlo", (visible) => {
 
@@ -493,6 +494,7 @@ let R = []
 when_visible("policy_gradient_ex2", (visible) => {
 	animate("policy_gradient_ex2", 16)
 	.using(() => {
+        let ele = document.getElementById("policy_gradient_ex2");
 	    clear("policy_gradient_ex2");
 	    clear("policy_gradient_ex2_reward");
 	    puck.draw("policy_gradient_ex2", t, T);
@@ -517,7 +519,7 @@ when_visible("policy_gradient_ex2", (visible) => {
 	        console.log(avg_ret / epochs);
 	        R.push(avg_ret / epochs);
 	        // Generate the next visualization traj
-	        T = puck.sample_trajectory(puck_theta, true);
+	        T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
 	    }
 	})
 	.when(visible);
