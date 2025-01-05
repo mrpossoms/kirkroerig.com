@@ -48,6 +48,7 @@ function animate(id, duration) {
 					} else if (window.animation_intervals[id]) {
 						clearInterval(window.animation_intervals[id]);
 						delete window.animation_intervals[id];
+						console.log('clearInterval for ' + id);
 					}
 				}
 			};
@@ -629,6 +630,10 @@ let puck = {
 
 		puck.w = right_bottom[0] - left_top[0];
 		puck.h = right_bottom[1] - left_top[1];
+
+		if (state == undefined) {
+			debugger;
+		}
 
 		// draw target
 		ctx.beginPath();
