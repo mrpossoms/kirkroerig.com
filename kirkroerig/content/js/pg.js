@@ -477,8 +477,8 @@ function draw_reward_plot(cvsId, R, left_top, right_bottom)
 	let w = right_bottom[0] - left_top[0];
 	let h = right_bottom[1] - left_top[1];
 
-	let min = Math.min(Math.min(...R),0);
-	let max = Math.max(Math.max(...R),0);
+	let min = Math.min(Math.min(...R),-1);
+	let max = Math.max(Math.max(...R),1);
 	let range = max - min;
 
 	let py = (y) => (y - min) / range;
@@ -499,7 +499,13 @@ function draw_reward_plot(cvsId, R, left_top, right_bottom)
 		if (i == 0) {
 			path.moveTo(x, y(p));
 		} else {
-			path.lineTo(x, y(p));			
+			path.lineTo(x, y(p));		
+		}
+
+		if (i == R.length - 1) {
+			ctx.font = '16px JetBrains Mono';
+			ctx.fillStyle = color('black');
+			ctx.fillText(parseInt(R[i]).toString(), x, y(p) + 16);
 		}
 	}
 	ctx.strokeStyle = color('black');
@@ -574,6 +580,10 @@ let puck = {
 		let targ_x = randomize_target ? r() * w : w / 2;
 		let targ_y = randomize_target ? r() * h : h / 2; 
 		let x_t = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
+
+		while(puck.dist_to_target(x_t) <= 5) {
+			x_t = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
+		}
 
 		let T = { X: [], A_pr: [], A: [], R: []};
 

@@ -449,10 +449,7 @@ when_visible("policy_gradient_montecarlo", (visible) => {
         mc_t++;
 
         if (mc_t >= T[0].X.length) {
-            do {
-                T[0] = puck.sample_trajectory(rand_theta, [0,0], [mc_cvs.clientWidth, mc_cvs.clientHeight]);                
-            } while (T[0].X.length == 0);
-
+            T[0] = puck.sample_trajectory(rand_theta, [0,0], [mc_cvs.clientWidth, mc_cvs.clientHeight]);                
         	mc_t = 0;
         }
     })
@@ -537,7 +534,7 @@ when_visible("policy_gradient_ex2", (visible) => {
 	        console.log(avg_ret / epochs);
 	        R.push(avg_ret / epochs);
 	        // Generate the next visualization traj
-	        T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
+            T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
 
             clear("policy_gradient_ex2_reward");
             draw_reward_plot("policy_gradient_ex2_reward", R);
