@@ -25,7 +25,7 @@ There's something magical about the idea of a machine that can learn to play a g
 
 Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are Policy Gradient Methods. 
 
-The goal of this article is to give you an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
+The goal of this article is to give a general audiance an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
 
 # Hello, World!
 
@@ -78,13 +78,13 @@ when_visible("policy_gradient_ex", (visible) => {
 });
 </script>
 
-The number next to each action in the visualization is the probability that the policy will choose that action. A circle is drawn next to the action that is choosen by the policy for each frame.
+The number next to each action in the visualization is the probability that the action will be chosen (by the [policy](#policy)). A circle is drawn next to the action that is choosen for each frame.
 
-You'll notice that the policy will start to choose the action that you reward it for more often. The core idea of Policy Gradient Methods is intuative, and boils down to just one objective:
+Over time, you'll notice that the action you selected will be chosen more frequently. The core idea of Policy Gradient Methods is intuative, and boils down to just one objective:
 
 * **Adjust** the **policy** to **Increase** the **probability** of **actions** that lead to **good** outcomes.
 
-We can achieve this by adjusting our policy using this guiding principle, but first we need to answer some fundamental questions:
+We can achieve this by adjusting our policy using this guiding principle, but to get there we need to answer some fundamental questions:
 
 * [What is a **policy**?](#policy)
 * [How do we measure the **goodness** or **badness** of an action?](#reward)
@@ -135,21 +135,56 @@ $$
 softmax(x \Theta)
 $$
 
-Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to just $\Theta$). The softmax function is a way of transforming a vector of numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result. The softmax function is
+Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result.
 
 $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
 $$
 
-You could expect the softmax function to return a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. One of these vectors may very well look like this:
+You could expect the softmax function to return a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to see how the softmax function works.
 
-$$
-pr_t = [ 0.1, 0.6, 0.3]
-$$
+<form>
+<canvas id="softmax_ex"></canvas>
+<input type="range" id="left_activation" step="any" oninput="update_softmax()"/>
+<label for="left_activation">left input</label>
+<input type="range" id="middle_activation" step="any" oninput="update_softmax()"/>
+<label for="middle_activation">middle input</label>
+<input type="range" id="right_activation" step="any" oninput="update_softmax()"/>
+<label for="right_activation">right input</label>
+</form>
 
+<script>
 
+function update_softmax() {
+    let left = document.getElementById('left_activation');
+    let middle = document.getElementById('middle_activation');
+    let right = document.getElementById('right_activation');    
 
-_TODO: add a toy that gives a feel for how the softmax function reacts to inputs_
+    let A = [left.valueAsNumber, middle.valueAsNumber, right.valueAsNumber];
+
+    left.nextElementSibling.textContent = `left input: ${A[0].toFixed(3)}`; 
+    middle.nextElementSibling.textContent = `middle input: ${A[1].toFixed(3)}`; 
+    right.nextElementSibling.textContent = `right input: ${A[2].toFixed(3)}`; 
+
+    let A_pr = softmax(A);
+
+    clear("softmax_ex");
+    let labels = [`left: ${A_pr[0].toFixed(3)}`, 
+                  `middle: ${A_pr[1].toFixed(3)}`, 
+                  `right: ${A_pr[2].toFixed(3)}`];
+        
+    draw_probabilities("softmax_ex", A_pr, labels, undefined, undefined, 
+    (ctx, i, x, y) => {
+        if (A[0] == i-1) {
+            ctx.strokeStyle = color('LightGray');
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    })
+}
+update_softmax();
+</script>
 
 Great, so this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 

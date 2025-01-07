@@ -458,7 +458,7 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 			ctx.fillStyle = 'red';
 			ctx.fillRect(x - (10 + tw / 2), y - (10 + th / 2), text_metrics.width + (20 + tw), text_metrics.height + (20 + th));
 			ctx.fillStyle = color('black');
-			let y_offset = y > 20 ? -10 : 20;
+			let y_offset = y > 30 ? -10 : 20;
 			ctx.font = '16px JetBrains Mono';
 			ctx.fillText(names[i-1], x, y + y_offset);
 		}
