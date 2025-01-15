@@ -106,4 +106,7 @@ if __name__ == '__main__':
 	if 'PORT' in os.environ:
 		port = os.environ['PORT']
 
-	app.run(port=port, host='0.0.0.0')
+	with open("/tmp/kirkroerig.pid", "w") as f:
+		f.write(str(os.getpid()))
+
+	app.run(port=port, host='127.0.0.1')

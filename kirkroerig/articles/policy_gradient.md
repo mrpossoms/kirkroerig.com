@@ -135,21 +135,21 @@ $$
 softmax(x \Theta)
 $$
 
-Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result.
+Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
 $$
 
-You could expect the softmax function to return a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to see how the softmax function works.
+The softmax function returns a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to see how the softmax function works.
 
 <form>
 <canvas id="softmax_ex"></canvas>
-<input type="range" id="left_activation" step="any" oninput="update_softmax()"/>
+<input type="range" id="left_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
 <label for="left_activation">left input</label>
-<input type="range" id="middle_activation" step="any" oninput="update_softmax()"/>
+<input type="range" id="middle_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
 <label for="middle_activation">middle input</label>
-<input type="range" id="right_activation" step="any" oninput="update_softmax()"/>
+<input type="range" id="right_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
 <label for="right_activation">right input</label>
 </form>
 
@@ -259,40 +259,6 @@ What is the probability of the action $a_t$ being taken? In the case of our exam
 
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_.
 
-### Probability of independent actions <a name="independent-action-probability"/>
-
-But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
-
-
-$$
-pr_{x_t} = [ 0.1, 0.6, 0.3 ]
-$$
-
-$$
-pr_{y_t} = [ 0.2, 0.3, 0.5 ]
-$$
-
-Now say it chose an action:
-
-$$
-a_t = \begin{bmatrix} 
-a_{x_t} = 0 \\
-a_{y_t} = 1 \\
-\end{bmatrix}
-$$
-
-What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
-
-$$
-pr_t = pr_{x_t}[a_{x_t}] * pr_{y_t}[a_{y_t}]
-$$
-
-In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0.03$ or 3%. This can be generalized to any number of actions and action spaces by multiplying the probabilities of each action class in the action space:
-
-$$
-Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
-$$
-
 <!-- 
 TODO: consider including this discussion elsewhere
 While this is mathematically correct. A trick you can use to make this easier to compute is to take the log of the probabilities and sum them. This is because the log of a product is the sum of the logs of the factors.
@@ -379,12 +345,50 @@ To begin, let's describe the environment. The environment will consist of a targ
 
 ## Action Space
 
-Like the example we examined earlier in ['Probability of independent actions'](#independent-action-probability), the robot will be able to vertically and horizontally. The action space will be defined as:
+The "Puck World"'s action space makes a slight departure from "Hello World". Specifically, the puck policy will choose two actions simultaneously. These actions are: 
 
 * vertical: _up_, _none_, _down_
 * horizontal: _left_, _none_, _right_
 
-Vertical and horizontal will be _independent random variables_ and will not influence each other. This means that the robot can move in any direction at any time.
+Both the horizontal and vertical actions are considered _random independent variables_ meaning they do not have influence on each-other.
+
+This means that the puck will be able to take actions such as moving _up and to the left_, or _not moving in either direction at all_. We could have achieved the same end by simply creating a policy which emits an action vector with 9 elements, one for each possible combination of horizontal and vertical actions. This has some disadvantages though, for one, the policy would require more parameters. So, how do we calculate the probability of taking a specific combined action?
+
+### Probability of independent actions <a name="independent-action-probability"/>
+<!--
+But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
+-->
+Consider, for example, the follow probability distributions for a horizontal action $pr_{x_t}$ and vertical action $pr_{y_t}$:
+
+$$
+pr_{x_t} = [ 0.1, 0.6, 0.3 ]
+$$
+
+$$
+pr_{y_t} = [ 0.2, 0.3, 0.5 ]
+$$
+
+Now say the policy chose a specific action, which includes a choice of both a horizontal action and a vertical action:
+
+$$
+a_t = \begin{bmatrix} 
+a_{x_t} = 0 \\
+a_{y_t} = 1 \\
+\end{bmatrix}
+$$
+
+What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
+
+$$
+pr_t = pr_{x_t}[a_{x_t}] * pr_{y_t}[a_{y_t}]
+$$
+
+In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0.03$ or 3%. This can be generalized to any number of actions and action spaces by multiplying the probabilities of each action class in the action space:
+
+$$
+Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
+$$
+
 
 ## State Space
 

@@ -335,6 +335,7 @@ input[type=radio]:checked:before {
 
 input[type=range] {
   border: none;
+  appearance: auto;
 }
 
 button:focus, input:focus {
