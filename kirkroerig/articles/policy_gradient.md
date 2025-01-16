@@ -101,7 +101,9 @@ $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics)) are all common.
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all common.
+
+In our specific case, our policy will output a vector. More specifically, the vector's elements will be the probabilities assigned to each action class (left, middle and right). You may be wondering, "why should our policy return probabilities for each action?". That my friend, is a great question and the answer lies in something called the [explore-exploit dilemma](https://en.wikipedia.org/wiki/Exploration-exploitation_dilemma). In essence, our policy needs to try actions to see what the outcome is. Some randomization is a good way to encourage exploration. However, we don't want the policy to try _totally_ random actions. That would mean our policy isn't learning to solve the problem at all. Instead we will use these probabilities to influence _how random_ the choice of an action is, but more on that later.
 
 Let's consider the interactive example. How is that policy defined, and how does it work? Let's write it out mathematically.
 
