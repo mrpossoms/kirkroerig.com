@@ -6,6 +6,18 @@ from importlib.resources import files
 from mistune.plugins.math import math
 from mistune.plugins.table import table
 
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import html
+
+class HighlightRenderer(mistune.HTMLRenderer):
+    def block_code(self, code, info=None):
+        if info:
+            lexer = get_lexer_by_name(info, stripall=True)
+            formatter = html.HtmlFormatter()#lineseparator="<br>")
+            return highlight(code, lexer, formatter)
+        return '<pre><code>' + mistune.escape(code) + '</code></pre>'
+
 class Article():
     def __init__(self, path):
         self.path = str(files('kirkroerig') / path)
@@ -48,11 +60,12 @@ class Article():
     def md(self, cache=True):
         if cache and self._md is not None:
             return self._md
-
         # self._md = markdown(self.text(cache))
         # renderer = 'html'#mistune.Renderer(escape=False, hard_wrap=True)
         # self._md = mistune.html(self.text(cache))
+        
         renderer = mistune.HTMLRenderer(escape=False)
+        #renderer = HighlightRenderer()
         markdown = mistune.Markdown(renderer, plugins=[math, table])
         self._md = markdown(self.text(cache))
 

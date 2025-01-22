@@ -21,17 +21,44 @@ canvas {
 
 # Policy Gradient
 
-There's something magical about the idea of a machine that can learn to play a game, drive a car, or even walk, all on its own. Yet, exactly this is the domain of [Reinforcement Learning]().
+<canvas id="pg-hook"></canvas>
+<script>
+let trained_theta = [
+  [ -5.2411426220896615, 0.08240532417772563, 5.443433754517182, 0.05314562935127422, -0.7515561637990559, -0.0528628026362152 ],
+  [ -0.018673344825325455, 0.06288750088051466, -0.020646319339298745, -5.251316470695126, 0.018008655116941566, 5.395137537266251]
+];
+when_visible("pg-hook", (visible) => {
+    let cvs = document.getElementById("pg-hook");
+    let T = puck.sample_trajectory(trained_theta, [0,0], [cvs.clientWidth, cvs.clientHeight], true);
+    let t = 0;
+	animate("pg-hook", 16)
+	.using(() => {
+	    clear("pg-hook");
+	    puck.draw("pg-hook", t, T);
+	    t++;
 
-Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are Policy Gradient Methods. 
+	    if (t >= T.X.length) {
+    T = puck.sample_trajectory(trained_theta, [0,0], [cvs.clientWidth, cvs.clientHeight], true);
+            t = 0;
+	    }
+	})
+	.when(visible);
+});
+</script>
 
-The goal of this article is to give a general audiance an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
+There's something special about the idea of a machine that can learn to play a game, drive a car, or even walk, all on its own. Yet, exactly this is the domain of [Reinforcement Learning](https://en.wikipedia.org/wiki/Reinforcement_learning).
+
+Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are [Policy Gradient Methods](https://en.wikipedia.org/wiki/Reinforcement_learning#Direct_policy_search).
+
+The goal of this article is to give an uninitiated audiance an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
 
 # Hello, World!
 
 Let's look at a dead simple, "Hello, world!" style example which demonstrates the core idea of Policy Gradient Methods.
 
-In the example below we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the policy for choosing. If either of the other actions are chosen, the policy will be penalized.
+First, we need to briefly cover what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article, but more on this later.
+
+In the example below we have a simple environment with three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the <a href="#policy" title="A policy is...">policy</a> for choosing.
 
 <canvas id="policy_gradient_ex"></canvas>
 <center>
@@ -78,15 +105,15 @@ when_visible("policy_gradient_ex", (visible) => {
 });
 </script>
 
-The number next to each action in the visualization is the probability that the action will be chosen (by the [policy](#policy)). A circle is drawn next to the action that is choosen for each frame.
+The number next to each action in the visualization is the probability that the action will be chosen. A circle is drawn next to the action that is choosen for each frame.
 
-Over time, you'll notice that the action you selected will be chosen more frequently. The core idea of Policy Gradient Methods is intuative, and boils down to just one objective:
+Over time, you'll notice that the action you selected will be chosen more frequently. The key idea of Policy Gradient Methods is intuative, and boils down to just one objective:
 
 * **Adjust** the **policy** to **Increase** the **probability** of **actions** that lead to **good** outcomes.
 
 We can achieve this by adjusting our policy using this guiding principle, but to get there we need to answer some fundamental questions:
 
-* [What is a **policy**?](#policy)
+* [How do we define a **policy**?](#policy)
 * [How do we measure the **goodness** or **badness** of an action?](#reward)
 * [How do we calculate the **probability** of an **action**?](#action-probability)
 * [How do we **adjust** our policy to maximize the **goodness** of its actions?](#optimization)
@@ -95,15 +122,23 @@ We can achieve this by adjusting our policy using this guiding principle, but to
 
 ## What is a **policy**? <a name="policy"/>
 
-Put simply, a policy is a function which makes a decision (action $a$) given some context (or state $x$). Often in literature, a policy is written as something like:
+Put simply, a policy is a function which makes a decision to take an action ($a$) given some context (or state $x$). Often in literature, a policy is written as something like:
 
 $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. The state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all common.
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot, etc. Similarly, the action can take many forms too, such as joystick inputs for a game or motor commands for a robot.
 
-In our specific case, our policy will output a vector. More specifically, the vector's elements will be the probabilities assigned to each action class (left, middle and right). You may be wondering, "why should our policy return probabilities for each action?". That my friend, is a great question and the answer lies in something called the [explore-exploit dilemma](https://en.wikipedia.org/wiki/Exploration-exploitation_dilemma). In essence, our policy needs to try actions to see what the outcome is. Some randomization is a good way to encourage exploration. However, we don't want the policy to try _totally_ random actions. That would mean our policy isn't learning to solve the problem at all. Instead we will use these probabilities to influence _how random_ the choice of an action is, but more on that later.
+Theoretically, the nature of the state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all common.
+
+#### A Policy's Output
+
+In our case, the policy will output a vector. Concretely, the vector's elements will be the probabilities assigned to each action class (left, middle and right). You may be wondering, "Why should our policy return probabilities for each action? Couldn't it output an action directly?".
+
+That my friend, is a great question and the answer lies in something called the [explore-exploit dilemma](https://en.wikipedia.org/wiki/Exploration-exploitation_dilemma). For a given state, we want to strike a balance between trying new actions (explore), and taking advantage of actions that have proven to be good (exploit). Randomization is a good way to encourage exploration. However, we don't want the policy to try _totally_ random actions. We want to remember what actions had positive outcomes and use this to bias our choices. Using a probability distribution to encode our experience is a great way to implement this idea. We'll see how this works a little later.
+
+#### Policy Definition
 
 Let's consider the interactive example. How is that policy defined, and how does it work? Let's write it out mathematically.
 
@@ -125,19 +160,19 @@ $$
 \end{bmatrix}
 $$
 
-Where each of the $\theta_i$ are the parameters of the policy. Because this is a very simple example our input state $x$ is constant (specifically, always 1), and as a result these parameters represent the _relative_ probabilities of each action.
+Where each of the $\theta_i$ are the parameters of the policy. Because this is a very simple example our input state $x$ is constant (specifically, always 1), and as a consequence these parameters represent the _relative_ probabilities of each action.
 
 $$
 a | x
 $$
 
-This should be read as _$a$ given $x$_, and it means that the policy is a conditional probability distribution. In other words, this means that the policy is a function that returns the probability of each of the possible actions given a state.
+This should be read as _$a$ given $x$_, and it means that the policy is a conditional probability distribution. In other words, this means that the policy is a function that returns $a$ the probabilities of each of the possible actions given a state $x$.
 
 $$
 softmax(x \Theta)
 $$
 
-Now this part of the expression contains the actual guts of our policy. It shows that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
+Now this part of the expression does the policy's heavy lifting. It says that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
@@ -190,17 +225,16 @@ update_softmax();
 
 Great, so this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 
-We can sample from the distribution as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
-
+As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This is achieveable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
 
 ```javascript
 function sample_multinomial(p) {
     let r = Math.random(); // real number between 0 and 1
     let c = 0;
-    for (let i = 0; i < p.length; i++) {
-        c += p[i];
+    for (let a_t = 0; a_t < p.length; a_t++) {
+        c += p[a_t];
         if (r < c) {
-            return i;
+            return a_t;
         }
     }
 }
@@ -214,7 +248,7 @@ function pi(theta, x) {
     let p = softmax(z[0]);             // vector of action probabilities
     let a_idx = sample_multinomial(p); // randomly sample an action from the distribution p
 
-    return { pr: p, idx: a_idx };
+    return { pr: p, a_t: a_idx };
 }
 ```
 --------------------------------------------------------------------------------
@@ -259,7 +293,16 @@ $$
 
 What is the probability of the action $a_t$ being taken? In the case of our example, it's very simple. The probability of an action being taken is exactly the action's probability in the distribution calculated by the policy, 0.1 or 10%.
 
-This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_.
+This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_. So the probability can be found by extracting the element from the probability vector whose index corresponds to the sampled action. To put this a little more formally:
+
+$$
+Pr_a(pr_t, a_t) = pr_{t_{a_t}}
+$$
+
+Where
+
+* $pr_t \rightarrow$ Vector of probabilities output from the policy.
+* $a_t \rightarrow$ Index of the specific action in $pr_t$ which was sampled from the distribution.
 
 <!-- 
 TODO: consider including this discussion elsewhere
@@ -277,7 +320,7 @@ You will often see this trick used in practice because it is more numerically st
 
 We've gotten all the prerequisites out of the way, now we can finally get to the meat of the Policy Gradient Methods. To restate, what we want to do is adjust the policy to increase the probability of actions that have been observed to return positive reward, and decrease the probability of those that have been observed to return negative rewards.
 
-To do this, we will compute the [_**gradient**_](/article/gradient) of the probability of the policy's chosen action $a_t$ with-respect-to the policy's parameters $\Theta$. 
+To do this, we will compute the [_**gradient**_](/article/gradient) of the probability of the policy's chosen action $a_t$ with-respect-to the policy's parameters $\Theta$. The policy's gradient is: 
 
 $$
 \nabla_{\Theta} = {\Large \begin{bmatrix}
@@ -292,7 +335,7 @@ pr_t = \pi_{\Theta}(x)
 $$
 
 $$
-a_t = \text{argmax}(pr_t)
+a_t = sample\_multinomial(pr_t)
 $$
 
 $$
@@ -583,10 +626,16 @@ when_visible("policy_gradient_ex2", (visible) => {
 	})
 	.when(visible);
 });
-
-
-setInterval(() => {
-
-}, 16);
 </script>
 
+### Resources & Further Reading
+* [RL Course by David Silver - Lecture 7: Policy Gradient Methods](https://youtu.be/KHZVXao4qXs?si=Sh30NZ0ZAbsRSUB8)
+
+<!--<script src="/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+</script>-->
+</body>
+</html>
