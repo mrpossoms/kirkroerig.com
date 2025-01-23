@@ -345,8 +345,13 @@ $$
 
 Each of the partial derivatives could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two points and taking the ratio of the change in the function over the change in the input.
 
+<!--
 $$
 \frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{pr_{a_t}(\Theta + \Delta \theta_i) - pr_{a_t}(\Theta)}{\Delta \theta_i}
+$$
+-->
+$$
+\frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{Pr_{a_t}(\pi_{\Theta + \Delta \theta_i}(x_t), a_t) - Pr_{a_t}(\pi_{\Theta}(x_t), a_t)}{\Delta \theta_i}
 $$
 
 Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
