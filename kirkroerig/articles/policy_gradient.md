@@ -128,9 +128,9 @@ $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot, etc. Similarly, the action can take many forms too, such as joystick inputs for a game or motor commands for a robot.
+What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot or something else entirely. Similarly, the action can take many forms too, such as joystick inputs for a game or motor commands for a robot.
 
-Theoretically, the nature of the state and action could be anything, but in practice they are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all common.
+Irrespective of their nature, states and actions in practice are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all commonly seen in the wild.
 
 #### A Policy's Output
 
@@ -322,6 +322,7 @@ We've gotten all the prerequisites out of the way, now we can finally get to the
 
 To do this, we will compute the [_**gradient**_](/article/gradient) of the probability of the policy's chosen action $a_t$ with-respect-to the policy's parameters $\Theta$. The policy's gradient is: 
 
+
 $$
 \nabla_{\Theta} = {\Large \begin{bmatrix}
 \frac{\partial pr_{a_t}}{\partial \theta_0} & \frac{\partial pr_{a_t}}{\partial \theta_1} & \frac{\partial pr_{a_t}}{\partial \theta_2} \\
@@ -350,37 +351,42 @@ $$
 \frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{pr_{a_t}(\Theta + \Delta \theta_i) - pr_{a_t}(\Theta)}{\Delta \theta_i}
 $$
 -->
+
 $$
-\frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{Pr_{a_t}(\pi_{\Theta + \Delta \theta_i}(x_t), a_t) - Pr_{a_t}(\pi_{\Theta}(x_t), a_t)}{\Delta \theta_i}
+Pr_{a_t}(\Theta) = Pr_a(\pi_\Theta(x_t), a_t)
 $$
 
-Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
+$$
+\frac{\partial pr_{a_t}}{\partial \theta_i} \approx \frac{Pr_{a_t}(\Theta + \Delta \theta_i) - Pr_{a_t}(\Theta)}{\Delta \theta_i}
+$$
+
+Where $\Delta \theta_i$ is a small perturbation to the parameter $\theta_i$. The function $Pr_{a_t}(\Theta)$ returns the probability of the the policy as a function of the policy's parameters $\Theta$. To declutter the notation, $Pr_{a_t}(\Theta)$ implicitly references the state $x_t$ and chosen action $a_t$ for the time $t$ since they are constant during the gradient's computation. We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
 
 _TODO add a toy here which allows the reader to tweak parameters to see what the impacts are on the policy's output_
 
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
 $$
-{\Large \Theta' \leftarrow \Theta + \alpha (\nabla_{\Theta} * R(x_t, a_t))}
+\Theta + \alpha (\nabla_{\Theta} * R(x_t, a_t)) \rightarrow \Theta'
 $$
 
 Where
 
-* $\Theta' \rightarrow$ updated policy parameters.
 * $\Theta \rightarrow$ current policy parameters.
 * $\alpha \rightarrow$ _learning rate_, a hyperparameter that controls how much the policy's parameters are adjusted in each update.
 * $\nabla_{\Theta} \rightarrow$ gradient of the policy's probability distribution with respect to the policy's parameters.
 * $R(x_t, a_t) \rightarrow$ reward of the action taken by the policy.
+* $\Theta' \rightarrow$ updated policy parameters.
 
 
 
 In essence that's it! We just repeat this sequence until our policy's actions converge to our optimization objective. Which in this case is to maximize the probability of the target action.
 
-1. Evaluate the policy to get the probability distribution of actions.
+1. For a given state, evaluate the policy to get the probability distribution of actions.
 2. Sample an action from the distribution.
-3. Compute the reward of the action.
+3. Compute the reward of the action, given both the state and action.
 4. Compute the gradient of the action's probability with respect to the policy's parameters.
-5. Adjust the policy's parameters to increase the probability of the action.
+5. Scale the gradient by the reward, such that positive rewards move the policy in the direction of increasing the likelihood of the action, and negative rewards decrease the likelihood of the action.
 6. Repeat!
 
 Like we've stated this example is akin to a "Hello, World!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition for the core ideas of Policy Gradient Methods.
