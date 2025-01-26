@@ -244,6 +244,11 @@ function leaky_relu(z)
 	return z.map(row => row.map(val => val > 0 ? val : 0.01 * val));
 }
 
+function dist(p0, p1)
+{
+	return Math.sqrt(Math.pow(p0[0] - p1[0], 2) + Math.pow(p0[1] - p1[1], 2));
+}
+
 function pg_test()
 {
 	console.log('testing');
@@ -513,9 +518,14 @@ function draw_reward_plot(cvsId, R, left_top, right_bottom)
 		}
 
 		if (i == R.length - 1) {
+			let str = parseInt(R[i]).toString();
+			let text_metrics = ctx.measureText(str);
+			let th = text_metrics.height / 2;
+			let tw = text_metrics.width;
 			ctx.font = '16px JetBrains Mono';
 			ctx.fillStyle = color('black');
-			ctx.fillText(parseInt(R[i]).toString(), x, y(p) + 16);
+			let x_off = x + tw > w ? -tw : 0;
+			ctx.fillText(str, x + x_off, y(p) + 16);
 		}
 	}
 	ctx.strokeStyle = color('black');
@@ -576,7 +586,7 @@ let puck = {
 		return { pr: [pr_x, pr_y], idx: [a_x_idx, a_y_idx] };
 	},
 	dist_to_target: function(x) {
-		return Math.sqrt(Math.pow(x[0] - x[2], 2) + Math.pow(x[1] - x[3], 2));
+		return dist([x[0],x[1]], [x[2], x[3]]);
 	},
 	initial_state: function(left_top, right_bottom, randomize_target) {
 		left_top = left_top || [0, 0];
@@ -816,8 +826,6 @@ let platform = {
 		ctx.fill();
 	}
 };
-
-
 
 function gradient_example(event, show_vectors)
 {

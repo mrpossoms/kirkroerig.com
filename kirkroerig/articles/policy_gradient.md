@@ -421,6 +421,8 @@ Like we've stated this example is akin to a "Hello, World!" of Policy Gradient M
 
 Now you should have an understanding of the core ideas of Policy Gradient Methods. Let's look at a more interesting example to see how these ideas can be applied to a more complex problem. We will consider a 2D robot (puck) that can move in any direction. What changes do we need to make to our policy and reward function to handle this problem? Lets find out by examining each of the key differences.
 
+--------------------------------------------------------------------------------
+
 ## Environment
 
 To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The robot 'o' will be spawned at a random location and will be able to move in any direction. The robot's objective will be to reach the target 'x'.
@@ -454,6 +456,8 @@ puck_env_cvs.addEventListener("mousemove", puck_env_update_state);
 puck_env_update_state({});
 </script>
 
+--------------------------------------------------------------------------------
+
 ## State Space
 
 The environment's state space will consist of the robot's current position and the target's position. The state space will be defined as:
@@ -466,6 +470,8 @@ x_{target} \\
 y_{target} \\
 \end{bmatrix}
 $$
+
+--------------------------------------------------------------------------------
 
 ## Action Space
 
@@ -501,12 +507,7 @@ let puck_act_move = (dx, dy) => {
 puck_act_draw();
 
 addEventListener("keydown", (e) => {
-    let deltas = {
-        'i': [0, -10],
-        'k': [0, 10],
-        'j': [-10, 0],
-        'l': [10, 0]
-    };
+    let deltas = {'i': [0, -10], 'k': [0, 10], 'j': [-10, 0], 'l': [10, 0]};
     if (e.key in deltas) {
         puck_act_move(deltas[e.key][0], deltas[e.key][1]);
     }
@@ -554,6 +555,8 @@ In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0
 $$
 Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
 $$
+
+--------------------------------------------------------------------------------
 
 ## Policy
 
@@ -655,6 +658,8 @@ puck_pol_cvs.addEventListener("mousemove", puck_pol_update_state);
 puck_pol_update_state({});
 </script>
 
+--------------------------------------------------------------------------------
+
 ## Reward Function
 
 The reward function is straight-forward. We want the reward to be positive when the robot's action moves it closer to the target, and negative when it moves further away. This can be implement as:
@@ -681,24 +686,30 @@ let puck_reward_draw = (reward) => {
 };
 
 let puck_reward_update_state = (e) => {
-    reward_x_t = [...reward_x];
+    reward_x_t1 = [...reward_x];
     switch(e.type) {
     case "mousemove":
-        reward_x[0] = e.offsetX;
-        reward_x[1] = e.offsetY;
+        reward_x_t1[0] = e.offsetX;
+        reward_x_t1[1] = e.offsetY;
         break;
     case "touchmove":
-        reward_x[0] = e.offsetX;
-        reward_x[1] = e.offsetY;
+        reward_x_t1[0] = e.offsetX;
+        reward_x_t1[1] = e.offsetY;
         break;
     }
-    puck_reward_draw(puck.reward(reward_x_t, reward_x));
+
+    if (dist(reward_x, reward_x_t1) > 1) {
+        puck_reward_draw(puck.reward(reward_x, reward_x_t1));
+        reward_x = reward_x_t1;        
+    }
 };
 
 puck_reward_cvs.addEventListener("touchmove", puck_reward_update_state);
 puck_reward_cvs.addEventListener("mousemove", puck_reward_update_state);
 puck_reward_update_state({});
 </script>
+
+--------------------------------------------------------------------------------
 
 ## Optimization
 
@@ -815,6 +826,8 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 
 ### Resources & Further Reading
 * [RL Course by David Silver - Lecture 7: Policy Gradient Methods](https://youtu.be/KHZVXao4qXs?si=Sh30NZ0ZAbsRSUB8)
+* [Simple statistical gradient-following algorithms for connectionist reinforcement learning](https://link.springer.com/article/10.1007/BF00992696)
+* Russell, S. (n.d.). Policy Search. In Artificial Intelligence A Modern Approach (2nd ed., pp. 781–785).
 
 <!--<script src="/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
