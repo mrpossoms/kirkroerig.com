@@ -56,6 +56,13 @@ function animate(id, duration) {
 	};
 }
 
+function animate_when_visible(params, animation_cb) {
+	when_visible(params.id, (visible) => {
+		animate(params.id, 1000 / params.fps).using(animation_cb)
+		                                     .when(visible);
+	});
+}
+
 let rows = (A) => { return A.length; }
 let cols = (A) => { return A[0].length; }
 let rnd = () => { return Math.random() * 2 - 1; };
@@ -568,7 +575,7 @@ let puck = {
 	dist_to_target: function(x) {
 		return Math.sqrt(Math.pow(x[0] - x[2], 2) + Math.pow(x[1] - x[3], 2));
 	},
-	sample_trajectory: function(theta, left_top, right_bottom, randomize_target) {
+	initial_state: function(left_top, right_bottom, randomize_target) {
 		left_top = left_top || [0, 0];
 		right_bottom = right_bottom || [500, 500];
 		let r = Math.random;
@@ -579,11 +586,16 @@ let puck = {
 		// the optimized policy. But for visualization purposes, the puck and targets could be spawned anywhere
 		let targ_x = randomize_target ? r() * w : w / 2;
 		let targ_y = randomize_target ? r() * h : h / 2; 
-		let x_t = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
+		let x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 
-		while(puck.dist_to_target(x_t) <= 5) {
-			x_t = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
+		while(puck.dist_to_target(x_0) <= 5) {
+			x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 		}
+
+		return x_0;
+	},
+	sample_trajectory: function(theta, left_top, right_bottom, randomize_target) {
+		let x_t = puck.initial_state(left_top, right_bottom, randomize_target);
 
 		let T = { X: [], A_pr: [], A: [], R: []};
 
@@ -599,9 +611,15 @@ let puck = {
 
 		return T;
 	},
-	step: function(T, x_t, a_t, gamma)
+	reward: function(x_t, x_t1)
 	{
 		let d0 = puck.dist_to_target(x_t);
+		let d1 = puck.dist_to_target(x_t1);
+		return d0 - d1;
+	},
+	step: function(T, x_t, a_t, gamma)
+	{
+		// let d0 = puck.dist_to_target(x_t);
 		let x_t1 = zeros(4, 1);
 		// x_t1[0] = x_t[0] + (a_t.idx[0] * 2 - 1) * 2;
 		// x_t1[1] = x_t[1] + (a_t.idx[1] * 2 - 1) * 2;
@@ -618,7 +636,7 @@ let puck = {
 
 		let d1 = puck.dist_to_target(x_t1);
 
-		let r_t = d0 - d1;
+		let r_t = puck.reward(x_t, x_t1);
 		if (d1 < 5) { return null; }
 
 		T.X.push(x_t1);

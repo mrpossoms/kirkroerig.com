@@ -11,14 +11,18 @@ canvas {
 .math * {
     margin: 0;
 }
+
+fieldset {
+    border: none;
+}
 </style>
-### TODO
+<!-- ### TODO
 1. Policy jargon shouldn't be frontloaded in the intro
 2. Glossary of key terms up front
 3. Summary at end
 4. Probably remove the log probability thing, maybe save this for a follow-up
 5. Interactive term definitions
-
+ -->
 # Policy Gradient
 
 <canvas id="pg-hook"></canvas>
@@ -77,9 +81,8 @@ In the example below we have a simple environment where the policy chooses from 
 
 <script>
 let theta = randmat(1, 3);
-when_visible("policy_gradient_ex", (visible) => {
-	animate("policy_gradient_ex", 100)
-	.using(() => {    
+animate_when_visible({id:"policy_gradient_ex", fps:10},
+() => {    
 	let T = basic.sample_trajectory(theta);
 
     if (T.A_pr[0][basic.target] < 0.9) {
@@ -100,8 +103,6 @@ when_visible("policy_gradient_ex", (visible) => {
         }
     })
 
-})
-	.when(visible);
 });
 </script>
 
@@ -279,8 +280,6 @@ $$
 
 Defining the reward function with both positive and negative rewards allows us to guide the policy towards actions that lead to good outcomes more quickly, we will explore why this is the case later.
 
-_TODO: actually explain this point in the optimization section_
-
 --------------------------------------------------------------------------------
 
 ## How do we calculate the probability of an action? <a name="action-probability"/>
@@ -376,6 +375,13 @@ We will repeat this computation for each of the parameters in $\Theta$ to get th
 
 **_TODO add a toy here which allows the reader to tweak parameters to see what the impacts are on the policy's output_**
 
+$\Theta = [$  $]$
+
+<!-- </td>
+    <td>foo</td>
+</tr>
+</table> -->
+
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
 $$
@@ -419,16 +425,94 @@ Now you should have an understanding of the core ideas of Policy Gradient Method
 
 To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The robot 'o' will be spawned at a random location and will be able to move in any direction. The robot's objective will be to reach the target 'x'.
 
-**_TODO: add an example where the user can control the x an show an o to illustrate what this environment looks like_**
+<canvas id="puck_env"></canvas>
+<script>
+let puck_env_cvs = document.getElementById('puck_env');
+let env_x = puck.initial_state([0,0], [puck_env_cvs.clientWidth, puck_env_cvs.clientHeight], false);
+
+let puck_env_draw = () => {
+    clear("puck_env");
+    puck.draw("puck_env", 0, {X: [env_x]});
+};
+
+let puck_env_update_state = (e) => {
+    switch(e.type) {
+    case "mousemove":
+        env_x[0] = e.offsetX;
+        env_x[1] = e.offsetY;
+        break;
+    case "touchmove":
+        env_x[0] = e.offsetX;
+        env_x[1] = e.offsetY;
+        break;
+    }
+    puck_env_draw();
+};
+
+puck_env_cvs.addEventListener("touchmove", puck_env_update_state);
+puck_env_cvs.addEventListener("mousemove", puck_env_update_state);
+puck_env_update_state({});
+</script>
+
+## State Space
+
+The environment's state space will consist of the robot's current position and the target's position. The state space will be defined as:
+
+$$
+x_t = \begin{bmatrix} 
+x_{robot} \\
+y_{robot} \\
+x_{target} \\
+y_{target} \\
+\end{bmatrix}
+$$
 
 ## Action Space
 
 The "Puck World"'s action space makes a slight departure from "Hello World". Specifically, the puck policy will choose two actions simultaneously. These actions are: 
 
-* vertical: _up_, _none_, _down_
-* horizontal: _left_, _none_, _right_
+<fieldset>
+<legend>vertical</legend>
+<button style="width:30%" onclick="puck_act_move(0, -10)">up (i)</button>
+<button style="width:30%">none</button>
+<button style="width:30%" onclick="puck_act_move(0, 10)">down (k)</button>
+</fieldset>
+<fieldset>
+<legend>horizontal</legend>
+<button style="width:30%" onclick="puck_act_move(-10,0)">left (j)</button>
+<button style="width:30%">none</button>
+<button style="width:30%" onclick="puck_act_move(10,0)">right (l)</button>
+</fieldset>
 
-**_TODO: add an example where the user can press some discrete keys to control the X_**
+<canvas id="puck_action"></canvas>
+<script>
+let puck_action_cvs = document.getElementById('puck_action');
+let act_x = puck.initial_state([0,0], [puck_action_cvs.clientWidth, puck_action_cvs.clientHeight], false);
+
+let puck_act_draw = () => {
+    clear("puck_action");
+    puck.draw("puck_action", 0, {X: [act_x]});
+};
+
+let puck_act_move = (dx, dy) => {
+    act_x[0] += dx; act_x[1] += dy
+    puck_act_draw();
+};
+puck_act_draw();
+
+addEventListener("keydown", (e) => {
+    let deltas = {
+        'i': [0, -10],
+        'k': [0, 10],
+        'j': [-10, 0],
+        'l': [10, 0]
+    };
+    if (e.key in deltas) {
+        puck_act_move(deltas[e.key][0], deltas[e.key][1]);
+    }
+});
+
+</script>
 
 Both the horizontal and vertical actions are considered _random independent variables_ meaning they do not have influence on each-other.
 
@@ -447,6 +531,8 @@ $$
 $$
 pr_{y_t} = [ 0.2, 0.3, 0.5 ]
 $$
+
+**A quick aside:** In the puck world example, you'll notice lots of $t$ subscripts. This is used to denote a variable that exists for a particular time-step or frame of the simulation.
 
 Now say the policy chose a specific action, which includes a choice of both a horizontal action and a vertical action:
 
@@ -467,20 +553,6 @@ In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0
 
 $$
 Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
-$$
-
-
-## State Space
-
-The environment's state space will consist of the robot's current position and the target's position. The state space will be defined as:
-
-$$
-x_t = \begin{bmatrix} 
-x_{robot} \\
-y_{robot} \\
-x_{target} \\
-y_{target} \\
-\end{bmatrix}
 $$
 
 ## Policy
@@ -543,6 +615,43 @@ $$
 dist(a, b) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
 $$
 
+<canvas id="puck_reward"></canvas>
+<script>
+let puck_reward_cvs = document.getElementById('puck_reward');
+let reward_x = puck.initial_state([0,0], [puck_reward_cvs.clientWidth, puck_reward_cvs.clientHeight], false);
+
+let puck_reward_draw = (reward) => {
+    clear("puck_reward");
+    puck.draw("puck_reward", 0, {X: [reward_x]});
+
+    let ctx = ctx_cache(puck_reward_cvs)
+    ctx.font = '16px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = color('black');
+    ctx.fillText(`reward: ${reward.toFixed(2)}`, puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight);
+};
+
+let puck_reward_update_state = (e) => {
+    reward_x_t = [...reward_x];
+    switch(e.type) {
+    case "mousemove":
+        reward_x[0] = e.offsetX;
+        reward_x[1] = e.offsetY;
+        break;
+    case "touchmove":
+        reward_x[0] = e.offsetX;
+        reward_x[1] = e.offsetY;
+        break;
+    }
+    puck_reward_draw(puck.reward(reward_x_t, reward_x));
+};
+
+puck_reward_cvs.addEventListener("touchmove", puck_reward_update_state);
+puck_reward_cvs.addEventListener("mousemove", puck_reward_update_state);
+puck_reward_update_state({});
+</script>
+
 ## Optimization
 
 Here things are a little different from the "Hello, World!" example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the robot). The robot's policy is then allowed to choose actions and interact with the environment until the trajectory ends (time runs out, or the target is reached).
@@ -556,10 +665,9 @@ let mc_cvs = document.getElementById("policy_gradient_montecarlo");
 for (let i = 0; i < 1; i++) {
     mc_trajectories.push(puck.sample_trajectory(rand_theta, [0,0], [mc_cvs.clientWidth, mc_cvs.clientHeight]));
 }
-when_visible("policy_gradient_montecarlo", (visible) => {
 
-    animate("policy_gradient_montecarlo", 16)
-    .using(() => {
+animate_when_visible({id:"policy_gradient_montecarlo", fps:60},
+() => {
         clear("policy_gradient_montecarlo");
         let T = mc_trajectories;
         for (let i = 0; i < T.length; i++) {
@@ -571,8 +679,6 @@ when_visible("policy_gradient_montecarlo", (visible) => {
             T[0] = puck.sample_trajectory(rand_theta, [0,0], [mc_cvs.clientWidth, mc_cvs.clientHeight]);                
         	mc_t = 0;
         }
-    })
-    .when(visible);
 });
 </script>
 
@@ -628,39 +734,35 @@ let T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHe
 let R = []
 draw_reward_plot("policy_gradient_ex2_reward", R);
 
-when_visible("policy_gradient_ex2", (visible) => {
-	animate("policy_gradient_ex2", 16)
-	.using(() => {
-	    clear("policy_gradient_ex2");
-	    puck.draw("policy_gradient_ex2", t, T);
-	    t++;
+animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
+    clear("policy_gradient_ex2");
+    puck.draw("policy_gradient_ex2", t, T);
+    t++;
 
-	    if (t >= T.X.length) {
-	        t = 0;
-	        let avg_ret = 0;
-	        const epochs = 100;
-	        for (let e = 0; e < epochs; e++) {
-	            T = puck.sample_trajectory(puck_theta);
-	            puck_theta = optimize(puck.pi, puck_theta, T, {
-	                alpha: 0.05,
-	                pi_pr: (theta, x, a) => {
-	                    let y = puck.pi(theta, x);
-	                    return y.pr[0][a[0]] * y.pr[1][a[1]];
-	                }
-	            });
-	            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
-	        }
-	        console.log(avg_ret / epochs);
-	        R.push(avg_ret / epochs);
-	        // Generate the next visualization traj
-            T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
+    if (t >= T.X.length) {
+        t = 0;
+        let avg_ret = 0;
+        const epochs = 100;
+        for (let e = 0; e < epochs; e++) {
+            T = puck.sample_trajectory(puck_theta);
+            puck_theta = optimize(puck.pi, puck_theta, T, {
+                alpha: 0.05,
+                pi_pr: (theta, x, a) => {
+                    let y = puck.pi(theta, x);
+                    return y.pr[0][a[0]] * y.pr[1][a[1]];
+                }
+            });
+            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
+        }
+        console.log(avg_ret / epochs);
+        R.push(avg_ret / epochs);
+        // Generate the next visualization traj
+        T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
 
-            clear("policy_gradient_ex2_reward");
-            draw_reward_plot("policy_gradient_ex2_reward", R);
-	    }
-	})
-	.when(visible);
-});
+        clear("policy_gradient_ex2_reward");
+        draw_reward_plot("policy_gradient_ex2_reward", R);
+    }    
+})
 </script>
 
 ### Resources & Further Reading
