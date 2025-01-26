@@ -337,6 +337,16 @@ let py = (ctx, y) => {
 	return -y * pixels_per_unit + h / 2;
 };
 
+function text(ctx, message, point, params)
+{
+	params = params || {};
+	ctx.textAlign = params.textAlign || 'center';
+	ctx.textBaseline = params.textBaseline || 'bottom';
+	ctx.font = params.font || '16px JetBrains Mono';
+	ctx.fillStyle = params.fillStyle || color('black');
+    ctx.fillText(message, point[0], point[1]);
+}
+
 function plot(cvsId, fn, params)
 {
 	const e = document.getElementById(cvsId);
@@ -368,9 +378,6 @@ function plot(cvsId, fn, params)
 	}
 
 	if (params && 'label' in params) {
-		ctx.font = '16px JetBrains Mono';
-		ctx.textAlign = 'center';
-		ctx.textBaseline = 'bottom';
 		let y = fn(params.label.x, params);
 	
 		let padding = params.label.padding ? params.label.padding : -10;
@@ -382,7 +389,8 @@ function plot(cvsId, fn, params)
 			ctx.textBaseline = y > 0 ? 'top' : 'bottom';
 			padding = -padding;
 		}
-		ctx.fillText(params.label.text, px(ctx, params.label.x), py(ctx, y) + padding);
+
+		text(ctx, params.label.text, [px(ctx, params.label.x), py(ctx, y) + padding]);
 	}
 
 	ctx.stroke(trace);
@@ -438,9 +446,6 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 	ctx.fillStyle = color('black');
 	ctx.strokeStyle = color('black');
 
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'bottom';
-
 	let path = new Path2D();
 	path.moveTo(left_top[0], right_bottom[1]);
 	p = [].concat([0], p)
@@ -464,10 +469,8 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 			let tw = text_metrics.width;
 			ctx.fillStyle = 'red';
 			ctx.fillRect(x - (10 + tw / 2), y - (10 + th / 2), text_metrics.width + (20 + tw), text_metrics.height + (20 + th));
-			ctx.fillStyle = color('black');
 			let y_offset = y > 30 ? -10 : 20;
-			ctx.font = '16px JetBrains Mono';
-			ctx.fillText(names[i-1], x, y + y_offset);
+			text(ctx, names[i-1], [x, y + y_offset]);
 		}
 	}
 }

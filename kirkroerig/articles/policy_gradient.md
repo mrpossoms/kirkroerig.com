@@ -388,7 +388,7 @@ $$
 \Theta + \alpha R(x, a) \nabla_{\Theta} \rightarrow \Theta'
 $$
 
-Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate_, a hyperparameter that controls how large of an adjustment is made. $R(x, a)$ is a function that returns the reward of taking action $a$ while in state $x$. $\nabla_{\Theta}$ is the gradient of the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$.
+Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate_, a hyperparameter that controls how large of an adjustment is made in each optimization step. $R(x, a)$ is a function that returns the reward of taking action $a$ while in state $x$. $\nabla_{\Theta}$ is the gradient of the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$.
 
 The learning rate $\alpha$ and reward $R(x, a)$ are multiplied together to yield a scalar number. As you may recall, $R(x, a) > 0$ if $a$ was a good action to take while in state $x$. Otherwise, $R(x, a) \leq 0$.
 
@@ -588,7 +588,7 @@ Our policy will mulitply the feature vector by the policy parameters. The result
 $$
 z = \phi(x_t) \Theta
 $$
-and
+where $z$ is a 6 element vector, and
 $$
 \pi_{\Theta}(x_t) = pr_t = \begin{bmatrix}
 softmax([z_0, z_1, z_2]) \\
@@ -602,6 +602,58 @@ $$
 This policy will return two probability distributions, one for the vertical actions and one for the horizontal actions. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the robot will take.
 
 Once specific verticle and horizontal actions are sampled, the probability of that combination can be computed as we've previously seen for [independent actions.](#independent-action-probability)
+
+Below is an interactive illustration of how this policy reacts to different states. The policy parameters used have already been optimized to seek the target.
+
+<canvas id="puck_pol"></canvas>
+##### Vertical Probability Distribution
+<canvas id="puck_pol_vert"></canvas>
+##### Horizontal Probability Distribution
+<canvas id="puck_pol_hori"></canvas>
+<script>
+let puck_pol_cvs = document.getElementById('puck_pol');
+let pol_x = puck.initial_state([0,0], [puck_pol_cvs.clientWidth, puck_pol_cvs.clientHeight], false);
+
+let puck_pol_draw = () => {
+    clear("puck_pol");
+    puck.draw("puck_pol", 0, {X: [pol_x]});
+};
+
+let puck_pol_update_state = (e) => {
+    switch(e.type) {
+    case "mousemove":
+        pol_x[0] = e.offsetX;
+        pol_x[1] = e.offsetY;
+        break;
+    case "touchmove":
+        pol_x[0] = e.offsetX;
+        pol_x[1] = e.offsetY;
+        break;
+    }
+
+    let pr_t = puck.pi(trained_theta, pol_x).pr;
+
+    clear("puck_pol_vert"); clear("puck_pol_hori");
+    { // draw vertical probabilities
+        let labels = [`up: ${parseInt(pr_t[1][0]*100)}%`, 
+                      `middle: ${parseInt(pr_t[1][1]*100)}%`, 
+                      `down: ${parseInt(pr_t[1][2]*100)}%`];
+        draw_probabilities("puck_pol_vert", pr_t[1], labels, undefined, undefined);        
+    }
+
+    { // draw horizontal probabilities
+        let labels = [`left: ${parseInt(pr_t[0][0]*100)}%`, 
+                      `middle: ${parseInt(pr_t[0][1]*100)}%`, 
+                      `right: ${parseInt(pr_t[0][2]*100)}%`];
+        draw_probabilities("puck_pol_hori", pr_t[0], labels, undefined, undefined);        
+    }
+    puck_pol_draw();
+};
+
+puck_pol_cvs.addEventListener("touchmove", puck_pol_update_state);
+puck_pol_cvs.addEventListener("mousemove", puck_pol_update_state);
+puck_pol_update_state({});
+</script>
 
 ## Reward Function
 
@@ -625,11 +677,7 @@ let puck_reward_draw = (reward) => {
     puck.draw("puck_reward", 0, {X: [reward_x]});
 
     let ctx = ctx_cache(puck_reward_cvs)
-    ctx.font = '16px JetBrains Mono';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillStyle = color('black');
-    ctx.fillText(`reward: ${reward.toFixed(2)}`, puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight);
+    text(ctx, `reward: ${reward.toFixed(2)}`, [puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight]);
 };
 
 let puck_reward_update_state = (e) => {

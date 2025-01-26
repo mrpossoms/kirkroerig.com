@@ -311,6 +311,10 @@ input, button, textarea {
   -webkit-appearance: none;
 }
 
+button {
+  touch-action: manipulation;
+}
+
 input[type=checkbox], input[type=radio] {
   display: inline-grid;
   place-content: center;
