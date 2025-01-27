@@ -54,7 +54,7 @@ There's something special about the idea of a machine that can learn to play a g
 
 Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are [Policy Gradient Methods](https://en.wikipedia.org/wiki/Reinforcement_learning#Direct_policy_search).
 
-The goal of this article is to give an uninitiated audiance an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
+The goal of this article is to give an uninitiated audience an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
 
 # Hello, World!
 
@@ -103,12 +103,14 @@ animate_when_visible({id:"policy_gradient_ex", fps:10},
         }
     })
 
+
+    text("policy_gradient_ex", "try me!", [32,32], {angle: -Math.PI / 4})
 });
 </script>
 
-The number next to each action in the visualization is the probability that the action will be chosen. A circle is drawn next to the action that is choosen for each frame.
+The number next to each action in the visualization is the probability that the action will be chosen. A circle is drawn next to the action that is chosen for each frame.
 
-Over time, you'll notice that the action you selected will be chosen more frequently. The key idea of Policy Gradient Methods is intuative, and boils down to just one objective:
+Over time, you'll notice that the action you selected will be chosen more frequently. The key idea of Policy Gradient Methods is intuitive, and boils down to just one objective:
 
 > **Adjust** the **policy** to **increase** the **probability** of **actions** that lead to **good** outcomes.
 
@@ -177,7 +179,7 @@ Now this part of the expression does the policy's heavy lifting. It says that th
 
 ##### The Softmax Function
 
-The softmax function transforms a vector of abitrary numbers into a probability distribution. It does this by exponentiating each element of the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
+The softmax function transforms a vector of arbitrary numbers into a probability distribution. It does this by exponentiation of each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
 softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
@@ -232,7 +234,7 @@ Great, so this enables us to calculate the probability distribution for all acti
 
 ##### Sampling An Action
 
-As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This is achieveable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
+As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
 
 ```javascript
 function sample_multinomial(p) {
@@ -347,7 +349,7 @@ $$
 
 It's worth noting that this gradient shares the same shape as the parameters $\Theta$. In our case, this is a vector with 3 elements since our policy's $\Theta$ is also a vector with 3 elements.
 
-Each of the partial derivatives could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the purtubation.
+Each of the partial derivatives could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
 
 In our case, the input we are perturbing are the parameters themselves.
 
@@ -369,7 +371,7 @@ $$
 \frac{\partial pr_{a}}{\partial \theta_i} \approx \frac{Pr_a(pr', a) - Pr_a(pr,a)}{\Delta \theta_i}
 $$
 
-$pr$ is the probability distribution returned by the policy with the current parameters. $pr'$ is almost the same distribution, but with a small pertubation of $\Delta\theta_i$ to parameter $\theta_i$. Tweaking the value of $\theta_i$ by a small amount lets us see what impact the adjustment has the resulting probability distribution.
+$pr$ is the probability distribution returned by the policy with the current parameters. $pr'$ is almost the same distribution, but with a small perturbation of $\Delta\theta_i$ to parameter $\theta_i$. Tweaking the value of $\theta_i$ by a small amount lets us see what impact the adjustment has the resulting probability distribution.
 
 We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
 
@@ -392,9 +394,9 @@ Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate
 
 The learning rate $\alpha$ and reward $R(x, a)$ are multiplied together to yield a scalar number. As you may recall, $R(x, a) > 0$ if $a$ was a good action to take while in state $x$. Otherwise, $R(x, a) \leq 0$.
 
-As a consequence, this scaling may cause the direction of the gradient flip, depending on the sign of $R(x, a)$. This means when $R(x, a) < 0$ we will move the policy's parameters in a direction which decreases the likelihood of $a$ occuring in state $x$. 
+As a consequence, this scaling may cause the direction of the gradient flip, depending on the sign of $R(x, a)$. This means when $R(x, a) < 0$ we will move the policy's parameters in a direction which decreases the likelihood of $a$ occurring in state $x$. 
 
-Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a direction which increases the likelihood of $a$ occuring while in state $x$. 
+Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a direction which increases the likelihood of $a$ occurring while in state $x$. 
 
 <!-- Where
 
@@ -435,6 +437,7 @@ let env_x = puck.initial_state([0,0], [puck_env_cvs.clientWidth, puck_env_cvs.cl
 let puck_env_draw = () => {
     clear("puck_env");
     puck.draw("puck_env", 0, {X: [env_x]});
+    text(puck_env_cvs, "try me!", [32,32], {angle: -Math.PI / 4});
 };
 
 let puck_env_update_state = (e) => {
@@ -498,6 +501,7 @@ let act_x = puck.initial_state([0,0], [puck_action_cvs.clientWidth, puck_action_
 let puck_act_draw = () => {
     clear("puck_action");
     puck.draw("puck_action", 0, {X: [act_x]});
+    text(puck_action_cvs, "try me!", [32,32], {angle: -Math.PI / 4});
 };
 
 let puck_act_move = (dx, dy) => {
@@ -560,7 +564,7 @@ $$
 
 ## Policy
 
-Like the policy in the 'hello world!' style example, this policy will be a simple linear map. The input to the policy will not directly be the state space, instead it will be a [feature vector](https://en.wikipedia.org/wiki/Feature_(machine_learning\)) derived from the state space. Our policy only cares about the target's position relative to the puck. Because of this we will construct the feature vector as:
+Like the policy in the 'hello world!' style example, this policy will be a simple linear map. Because of its linearity, unlike a non-linear system like a neural-network, the policy has limited ability to learn complex representations, so we will give it some help. The input to the policy will not directly be the state space, instead it will be a [feature vector](https://en.wikipedia.org/wiki/Feature_(machine_learning\)) derived from the state space. Our policy only cares about the target's position relative to the puck. Because of this we will construct the feature vector as:
 
 $$
 \Delta{x} = x_{target} - x_{robot}
@@ -604,7 +608,7 @@ $$
 
 This policy will return two probability distributions, one for the vertical actions and one for the horizontal actions. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the robot will take.
 
-Once specific verticle and horizontal actions are sampled, the probability of that combination can be computed as we've previously seen for [independent actions.](#independent-action-probability)
+Once specific vertical and horizontal actions are sampled, the probability of that combination can be computed as we've previously seen for [independent actions.](#independent-action-probability)
 
 Below is an interactive illustration of how this policy reacts to different states. The policy parameters used have already been optimized to seek the target.
 
@@ -620,6 +624,7 @@ let pol_x = puck.initial_state([0,0], [puck_pol_cvs.clientWidth, puck_pol_cvs.cl
 let puck_pol_draw = () => {
     clear("puck_pol");
     puck.draw("puck_pol", 0, {X: [pol_x]});
+    text(puck_pol_cvs, "try me!", [32,32], {angle: -Math.PI / 4});
 };
 
 let puck_pol_update_state = (e) => {
@@ -683,6 +688,7 @@ let puck_reward_draw = (reward) => {
 
     let ctx = ctx_cache(puck_reward_cvs)
     text(ctx, `reward: ${reward.toFixed(2)}`, [puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight]);
+    text(ctx, "try me!", [32,32], {angle: -Math.PI / 4});
 };
 
 let puck_reward_update_state = (e) => {
@@ -698,7 +704,7 @@ let puck_reward_update_state = (e) => {
         break;
     }
 
-    if (dist(reward_x, reward_x_t1) > 1) {
+    if (dist(reward_x, reward_x_t1) > 1 || !('type' in e)) {
         puck_reward_draw(puck.reward(reward_x, reward_x_t1));
         reward_x = reward_x_t1;        
     }
@@ -713,7 +719,7 @@ puck_reward_update_state({});
 
 ## Optimization
 
-Here things are a little different from the "Hello, World!" example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the robot). The robot's policy is then allowed to choose actions and interact with the environment until the trajectory ends (time runs out, or the target is reached).
+Here things are a little different from the "Hello, World!" example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the robot). The robot's policy is then allowed to choose actions and interact with the environment until time runs out ($t$ states are generated), or the target is reached.
 
 <canvas id="policy_gradient_montecarlo"></canvas>
 <script>
@@ -741,12 +747,24 @@ animate_when_visible({id:"policy_gradient_montecarlo", fps:60},
 });
 </script>
 
-The illustration above shows what a trajectory looks like for the robot with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action and interacting with the environment, each interaction returns a reward. The trajectory stores these values as well as the probability distribution output from the policy, this isn't strickly necessary, but it allows us to skip recomputing it when we optimize the policy.
+The illustration above shows what a trajectory looks like for the robot with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action, interacting with the environment and receiving a reward. The trajectory stores these values as well as the probability distribution output from the policy, this isn't strickly necessary, but it allows us to skip recomputing it when we optimize the policy.
 
 $$
-\tau = \{ x_0, pr_0, a_0, r_0, x_1, a_1, r_1, pr_1, \ldots \}
+\tau = \{ x_0, pr_0, a_0, r_0, \ldots x_{t-1}, pr_{t-1}, a_{t-1}, r_{t-1}\}
 $$
 
+Once a trajectory has been generated, we can compute the the policy's gradient of the probability of the actions taken in the trajectory with respect to the policy's parameters. This is done by summing the gradients of the probabilities of each action in the trajectory.
+
+$$
+\nabla_{\Theta} = \frac{1}{t} \sum_{t} \nabla_{\Theta_{t}} R(x_t, a_t) \gamma^t
+$$
+
+$$
+\nabla_{\Theta_{t}} = \large \begin{bmatrix}
+\frac{\partial pr_{a_t}}{\partial \theta_{00}} & \frac{\partial pr_{a_t}}{\partial \theta_{01}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{04}} & \frac{\partial pr_{a_t}}{\partial \theta_{05}} \\
+\frac{\partial pr_{a_t}}{\partial \theta_{10}} & \frac{\partial pr_{a_t}}{\partial \theta_{11}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{14}} & \frac{\partial pr_{a_t}}{\partial \theta_{15}} \\
+\end{bmatrix}
+$$
 
 
 <!--
@@ -801,11 +819,11 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     if (t >= T.X.length) {
         t = 0;
         let avg_ret = 0;
-        const epochs = 100;
+        const epochs = 10;
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.05,
+                alpha: 0.5,
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
@@ -823,6 +841,11 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     }    
 })
 </script>
+
+## Summary
+
+In this article we've covered the basics of Policy Gradient Methods. We've seen how a policy can be defined, how actions are sampled, how the probability of an action can be computed, and how the policy can be optimized to maximize the probability of good actions. We've also seen how these ideas can be applied to a more complex problem, the "Puck World".
+
 
 ### Resources & Further Reading
 * [RL Course by David Silver - Lecture 7: Policy Gradient Methods](https://youtu.be/KHZVXao4qXs?si=Sh30NZ0ZAbsRSUB8)

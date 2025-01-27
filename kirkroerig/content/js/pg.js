@@ -342,14 +342,34 @@ let py = (ctx, y) => {
 	return -y * pixels_per_unit + h / 2;
 };
 
-function text(ctx, message, point, params)
+function text(ctx_cvs_or_id, message, point, params)
 {
+	let ctx = ctx_cvs_or_id;
+	if (typeof ctx_cvs_or_id == 'string') {
+		ctx = ctx_cache(document.getElementById(ctx_cvs_or_id));
+	}
+	else if (ctx_cvs_or_id instanceof HTMLCanvasElement) {
+		ctx = ctx_cache(ctx_cvs_or_id);
+	}
+
 	params = params || {};
 	ctx.textAlign = params.textAlign || 'center';
 	ctx.textBaseline = params.textBaseline || 'bottom';
 	ctx.font = params.font || '16px JetBrains Mono';
 	ctx.fillStyle = params.fillStyle || color('black');
+
+	if ('angle' in params) {
+		ctx.save();
+		ctx.translate(point[0], point[1]);
+		ctx.rotate(params.angle);
+		point = [0, 0];
+	}
+
     ctx.fillText(message, point[0], point[1]);
+
+	if ('angle' in params) {
+		ctx.restore();
+	}
 }
 
 function plot(cvsId, fn, params)
@@ -601,7 +621,7 @@ let puck = {
 		let targ_y = randomize_target ? r() * h : h / 2; 
 		let x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 
-		while(puck.dist_to_target(x_0) <= 5) {
+		while(puck.dist_to_target(x_0) <= 10) {
 			x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 		}
 
