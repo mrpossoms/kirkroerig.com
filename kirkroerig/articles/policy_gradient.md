@@ -759,13 +759,28 @@ $$
 \nabla_{\Theta} = \frac{1}{t} \sum_{t} \nabla_{\Theta_{t}} R(x_t, a_t) \gamma^t
 $$
 
+Where we compute $\nabla_{\Theta_{t}}$, the gradient for each timestep $t$ as:
+
 $$
-\nabla_{\Theta_{t}} = \large \begin{bmatrix}
+\nabla_{\Theta_{t}} = \Large \begin{bmatrix}
 \frac{\partial pr_{a_t}}{\partial \theta_{00}} & \frac{\partial pr_{a_t}}{\partial \theta_{01}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{04}} & \frac{\partial pr_{a_t}}{\partial \theta_{05}} \\
 \frac{\partial pr_{a_t}}{\partial \theta_{10}} & \frac{\partial pr_{a_t}}{\partial \theta_{11}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{14}} & \frac{\partial pr_{a_t}}{\partial \theta_{15}} \\
 \end{bmatrix}
 $$
 
+Which depends on the probability of the action taken at time $t$ and the policy's parameters at time $t$.
+
+$$
+pr_{a_t} = Pr_a(pr_t, a_t)
+$$
+
+$$
+a_t \sim pr_t
+$$
+
+$$
+pr_t = \pi_{\Theta}(x_t)
+$$
 
 <!--
 1. Generate a random inital state $x_0$, $0 \rightarrow t$
@@ -780,10 +795,10 @@ $$
 
 ## Bringing it all together
 
-Once we have generated a trajectory we can optimize the policy using the rewards and actions stored in the trajectory. The optimization process is the same as in the "Hello, World!" example, but now we will be optimizing over multiple actions and rewards.
+Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the robot reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the robot over 10 epochs. The robot's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
 
 <canvas id="policy_gradient_ex2"></canvas>
-Average Reward per 100 Epochs
+Average Reward per 10 Epochs
 <canvas id="policy_gradient_ex2_reward"></canvas>
 <script>
 let t = 0;
@@ -844,7 +859,6 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 
 ## Summary
 
-In this article we've covered the basics of Policy Gradient Methods. We've seen how a policy can be defined, how actions are sampled, how the probability of an action can be computed, and how the policy can be optimized to maximize the probability of good actions. We've also seen how these ideas can be applied to a more complex problem, the "Puck World".
 
 
 ### Resources & Further Reading
