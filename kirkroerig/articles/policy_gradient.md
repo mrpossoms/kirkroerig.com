@@ -859,6 +859,9 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 
 ## Summary
 
+Policy Gradient Methods are an intuitive and elegant approach to reinforcement learning, enabling machines to learn behaviors by optimizing their actions toward favorable outcomes. Starting with the basic "Hello, World!" example, this article has demonstrated how policies, rewards, and gradients come together to guide decision-making. By extending these ideas to more complex environments, like "Puck World," we explored the practicality of policy gradients in dynamic scenarios.
+
+Through step-by-step explanations and interactive examples, we illustrated key concepts such as policy definition, reward functions, action probabilities, and optimization. These foundational insights lay the groundwork for deeper exploration into advanced reinforcement learning techniques. Whether you're a beginner or revisiting the basics, Policy Gradient Methods provide a powerful toolkit for tackling diverse real-world problems.
 
 
 ### Resources & Further Reading
