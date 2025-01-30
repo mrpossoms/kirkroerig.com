@@ -1,6 +1,6 @@
 import mistune
 import datetime
-import os
+import subprocess
 
 from pathlib import Path
 
@@ -39,14 +39,19 @@ class Article():
 
     def posted(self, cache=True):
         if cache and self._posted is None:
-            # import pdb; pdb.set_trace()
-            self._posted = os.popen("git log --follow --find-renames --diff-filter=A -- " + str(self.path) + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
+
             mos = { 'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec': 12 }
-            try:
-                mo, day, yr = self._posted.split(' ')
-                self._date = datetime.date(int(yr), mos[mo], int(day))
-            except ValueError:
-                pass
+            lines = subprocess.Popen(["git", "log", "--follow", "--find-renames", "--diff-filter=A", "--", str(self.path)], stdout=subprocess.PIPE).communicate()[0].decode('utf-8').split('\n')
+            for line in lines:
+                if 'Date:' in line:
+                    _, _, _, _, mo, day, _, yr, _ = line.split(' ')
+                    self._posted = ' '.join([mo, day, yr])
+                    try:
+                        self._date = datetime.date(int(yr), mos[mo], int(day))
+                    except ValueError:
+                        pass
+                    break
+
         return self._posted
 
     def text(self, cache=True):
