@@ -1,4 +1,4 @@
-~article math derivative
+~article,math,derivative
 <script src="/js/pg.js"></script>
 
 <style>

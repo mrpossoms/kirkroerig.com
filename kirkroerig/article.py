@@ -2,6 +2,8 @@ import mistune
 import datetime
 import os
 
+from pathlib import Path
+
 from importlib.resources import files
 from mistune.plugins.math import math
 from mistune.plugins.table import table
@@ -20,13 +22,17 @@ class HighlightRenderer(mistune.HTMLRenderer):
 
 class Article():
     def __init__(self, path):
-        self.path = str(files('kirkroerig') / path)
+        self.path = Path(files('kirkroerig')) / path #str(files('kirkroerig') / path)
         self._text = None
         self._md = None
         self._keywords = None
         self._posted = None
         self._date = datetime.date(1, 1, 1)
 
+    @property
+    def title(self):
+        return self.path.stem.replace('_', ' ')
+    
     def keywords(self, cache=True):
         self.text(cache)
         return self._keywords
@@ -34,7 +40,7 @@ class Article():
     def posted(self, cache=True):
         if cache and self._posted is None:
             # import pdb; pdb.set_trace()
-            self._posted = os.popen("git log --follow --find-renames --diff-filter=A -- " + self.path + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
+            self._posted = os.popen("git log --follow --find-renames --diff-filter=A -- " + str(self.path) + " | grep Date: | awk '{ print $3, $4, $6 }'").read()
             mos = { 'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec': 12 }
             try:
                 mo, day, yr = self._posted.split(' ')

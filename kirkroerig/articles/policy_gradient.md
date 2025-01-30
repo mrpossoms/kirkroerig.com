@@ -1,4 +1,4 @@
-~article policy gradient ml machine learning
+~article,policy,gradient,ml,machine,learning
 <script src="/js/pg.js"></script>
 
 <style>

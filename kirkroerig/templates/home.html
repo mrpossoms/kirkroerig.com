@@ -11,21 +11,4 @@
 {% include "partials/article.html" %}
 {% endfor %}
 {% endif %}
-
-<footer>
-<nav>
-<center>
-{% if paging != None %}
-{% if paging['prev'] %}
-<a href="{{paging['prev']}}">< prev</a>
-{% endif %}
-
-{% if paging['next'] %}
-<a href="{{paging['next']}}">next ></a>
-{% endif %}
-{% endif %}
-</center>
-</nav>
-</footer>
-
 {% endblock %}

@@ -60,6 +60,14 @@ def specific_article(title):
 	                       range=(0, 1),
 	                       paging=None)
 
+@app.route("/articles")
+def articles():
+	posts = filter_posts(keywords={'article'})
+	years = sorted([year for year in set([p._date.year for p in posts])], reverse=True)
+	posts = {year: [p for p in posts if p._date.year == year] for year in years}
+	return render_template("articles.html", posts=posts, years=years)
+
+
 @app.route("/articles/search")
 def search():
 	keywords = set(request.args['tags'].split('+'))

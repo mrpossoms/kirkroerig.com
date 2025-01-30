@@ -1,0 +1,12 @@
+{% extends "layouts/main.html" %}
+
+{% block body %}
+{% for year in years %}
+<h2>{{year}}</h2>
+	<ul>
+	{% for post in posts[year] %}
+	<li><a href="/article/{{post.path.stem}}">{{post.title}}</a></li>
+	{% endfor %}
+	</ul>
+{% endfor %}
+{% endblock %}

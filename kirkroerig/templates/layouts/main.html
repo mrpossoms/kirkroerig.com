@@ -12,22 +12,15 @@
 		<div class="content centered">
 			<header class="centered">
 				<h1 class="main-title"><a href="/">[KIRK<b>ROERIG</b>]</a></h1>
-				<nav class="">
-					<ol>
-						<li><a href="/about">About</a></li>
-						<li><a href="/">Posts</a></li>
-						<li><a href="/work">Projects</a></li>
-						<li class="no-padding">
-							<form action="/articles/search" method="get">
-							<input name="tags"/>
-							<input type="submit" value="search"/>
-							</form>
-						</li>
-					<ol>
+				<nav>
+					<ul>
+						<li><a href="/articles">articles</a></li>
+						<li><a href="/projects">projects</a></li>
+						<li><a href="/about">about</a></li>
+						<li><a href="/contact">contact</a></li>
+					</ul>
 				</nav>
 			</header>
-			<br style="clear:both"/>
-
 			<main>
 			{% block body %}{% endblock %}
 			</main>

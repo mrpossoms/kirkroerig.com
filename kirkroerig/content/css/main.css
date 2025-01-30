@@ -81,6 +81,24 @@ h1 {
   margin-bottom: calc(var(--line-height) * 2);
   text-transform: uppercase;
 }
+
+h1 b {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><path d="M0 4 L4 0" stroke="rgb(3,3,3)" stroke-width="1"/></svg>');
+  -webkit-background-clip: text; 
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  h1 b {
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><path d="M0 4 L4 0" stroke="rgb(170,170,170)" stroke-width="1"/></svg>');
+    -webkit-background-clip: text; 
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+
 h2 {
   font-size: 1rem;
   text-transform: uppercase;
@@ -103,6 +121,19 @@ hr:after {
   width: 100%;
   border-top: calc(var(--border-thickness) * 3) double var(--text-color);
   height: 0;
+}
+
+nav {
+  list-style-type: none;
+  padding-left: 0;
+
+  ul {
+    padding: 0;
+
+    li {
+      display: inline-block;
+    }
+  }
 }
 
 a {

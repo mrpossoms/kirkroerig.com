@@ -1,4 +1,4 @@
-~article math gradient
+~article,math,gradient
 <script src="/js/pg.js"></script>
 
 <style>
