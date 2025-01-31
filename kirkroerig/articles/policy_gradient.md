@@ -447,8 +447,8 @@ let puck_env_update_state = (e) => {
         env_x[1] = e.offsetY;
         break;
     case "touchmove":
-        env_x[0] = e.offsetX;
-        env_x[1] = e.offsetY;
+        env_x[0] = e.layerX;
+        env_x[1] = e.layerY;
         break;
     }
     puck_env_draw();
@@ -634,8 +634,8 @@ let puck_pol_update_state = (e) => {
         pol_x[1] = e.offsetY;
         break;
     case "touchmove":
-        pol_x[0] = e.offsetX;
-        pol_x[1] = e.offsetY;
+        pol_x[0] = e.layerX;
+        pol_x[1] = e.layerY;
         break;
     }
 
@@ -699,8 +699,8 @@ let puck_reward_update_state = (e) => {
         reward_x_t1[1] = e.offsetY;
         break;
     case "touchmove":
-        reward_x_t1[0] = e.offsetX;
-        reward_x_t1[1] = e.offsetY;
+        reward_x_t1[0] = e.layerX;
+        reward_x_t1[1] = e.layerY;
         break;
     }
 
