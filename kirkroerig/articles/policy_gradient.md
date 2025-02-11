@@ -56,11 +56,14 @@ Reinforcement learning (RL) encompasses a multitude of techniques and algorithms
 
 The goal of this article is to give an uninitiated audience an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
 
+_A final note before we begin;
+In this artical I intentionally deviate from the standard notation found in the literature. I do this to make the concepts more approachable to a wider audience. If you are already familiar with these concepts, you may find the notation verbose._
+
 # Hello, World!
 
 Let's look at a dead simple, "Hello, world!" style example which demonstrates the core idea of Policy Gradient Methods.
 
-First, we need to briefly cover what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article, but more on this later.
+First, we need to briefly touch upon what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article, but more on this later.
 
 In the example below we have a simple environment where the policy chooses from three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the <a href="#policy" title="A policy is...">policy</a> for choosing.
 
@@ -125,7 +128,7 @@ We can achieve our goal of choosing the action that leads to a **good** outcome 
 
 ## What is a **policy**? <a name="policy"/>
 
-Put simply, a policy is a function which makes a decision to take an action ($a$) given some context (or state $x$). Often in literature, a policy is written as something like:
+Put simply, a policy is a function which makes a decision to take an action ($a$) given some context (or state $x$). Often a policy is written as something like:
 
 $$
 \pi(x) \rightarrow a
@@ -135,6 +138,13 @@ What this expression gestures at is very simple. A policy $\pi$ is a function wh
 
 Irrespective of their nature, states and actions in practice are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all commonly seen in the wild.
 
+##### Notation Key
+
+In the remainder of the article, we will use the following notation:
+* Scalars will be denoted by regular symbols like $x$, $\theta$, $i$.
+* Bold faced symbols like $\mathbf{x}$, $\mathbf{pr}$ will denote vectors.
+* Matrices will be denoted by capital symbols like $X$, $\Theta$.
+
 #### A Policy's Output
 
 In our case, the policy will output a vector. Concretely, the vector's elements will be the probabilities assigned to each action class (left, middle and right). You may be wondering, "Why should our policy return probabilities for each action? Couldn't it output an action directly?".
@@ -143,19 +153,19 @@ That my friend, is a great question and the answer lies in something called the 
 
 #### Policy Definition
 
-Let's consider the interactive example. How is that policy defined, and how does it work? Let's write it out mathematically.
+Let's consider the interactive example above. How is that policy defined, and how does it work? Let's write it out mathematically.
 
 $$
-\pi_{\Theta}(a | x) = softmax(x \Theta)
+\pi(\Theta, \mathbf{x}) = softmax(\mathbf{x} \Theta) = \mathbf{pr}
 $$
 
 You probably noticed that the notation changed a bit. So let's break each part of it down to understand what it means.
 
 $$
-\pi_{\Theta}
+\pi(\Theta, \mathbf{x})
 $$
 
-The policy function now includes a little $\Theta$ subscript. This indicates that the policy is _parameterized_ by the variable $\Theta$. Essentially, this means that the policy function, in addition to the state $x$, accepts some parameters $\Theta$ which we can adjust to change the policy's behavior. We could have written this as $\pi(\Theta, x)$, but that notation is not as common. Concretely, the definition of $\Theta$ for our example above is:
+The policy function now includes a $\Theta$ input parameter. This indicates that the policy is _parameterized_ by the variable $\Theta$. Meaning the policy function, in addition to the state $x$, accepts some parameters $\Theta$ which we can adjust to change the policy's behavior. Concretely, the definition of $\Theta$ for our example above is:
 
 $$
 \Theta = \begin{bmatrix}
@@ -166,34 +176,34 @@ $$
 Where each of the $\theta_i$ are the scalar parameters of the policy. Because this is a very simple example our input state $x$ is constant (specifically, 1 and can be ignored), and as a consequence these parameters represent the _relative_ probabilities of each action.
 
 $$
-a | x
-$$
-
-This should be read as _$a$ given $x$_, and it means that the policy is a conditional probability distribution. In other words, this means that the policy is a function that returns $a$ the probabilities of each of the possible actions given a state $x$.
-
-$$
 softmax(x \Theta)
 $$
 
-Now this part of the expression does the policy's heavy lifting. It says that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function (again, $x$ is 1 in our example, so this simplifies to $\Theta$). 
+Now this part of the expression does the policy's heavy lifting. It says that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function.
+
+$$
+\mathbf{pr}
+$$
+
+This is the probability distribution returned when $\pi(\Theta, x)$ is evaluated. $\mathbf{pr}$ is a vector containing the probabilities of each of the possible actions (left, middle, right) given a particular state $x$. It's worth mentioning that $\mathbf{pr}$ can't be used directly as an action, instead we will use the distribution $\mathbf{pr}$ to sample an action. We will get to the specifics of this soon.
 
 ##### The Softmax Function
 
 The softmax function transforms a vector of arbitrary numbers into a probability distribution. It does this by exponentiation of each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
-softmax(z) = \frac{e^{z}}{\sum_{i} e^{z_i}}
+softmax(\mathbf{z}) = \frac{e^{\mathbf{z}}}{\sum_{i} e^{\mathbf{z}_i}}
 $$
 
-The softmax function returns a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to see how the softmax function works.
+The softmax function returns a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to get a feel for how the softmax function works.
 
 <form>
 <canvas id="softmax_ex"></canvas>
-<input type="range" id="left_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
+<input type="range" id="left_activation" step="any" min=-10 max=10 oninput="update_softmax()"/>
 <label for="left_activation">left input</label>
-<input type="range" id="middle_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
+<input type="range" id="middle_activation" step="any" min=-10 max=10 oninput="update_softmax()"/>
 <label for="middle_activation">middle input</label>
-<input type="range" id="right_activation" step="any" min=-100 max=100 oninput="update_softmax()"/>
+<input type="range" id="right_activation" step="any" min=-10 max=10 oninput="update_softmax()"/>
 <label for="right_activation">right input</label>
 </form>
 
@@ -237,13 +247,13 @@ Great, so this enables us to calculate the probability distribution for all acti
 As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
 
 ```javascript
-function sample_multinomial(p) {
+function sample_multinomial(pr) {
     let r = Math.random(); // real number between 0 and 1
     let c = 0;
-    for (let a_t = 0; a_t < p.length; a_t++) {
-        c += p[a_t];
+    for (let a = 0; a < pr.length; a++) {
+        c += pr[a];
         if (r < c) {
-            return a_t;
+            return a;
         }
     }
 }
@@ -254,10 +264,10 @@ Bringing all of this together, the JS implementation of our policy looks somethi
 ```javascript
 function pi(theta, x) {
     let z = matmul([x], theta);
-    let p = softmax(z[0]);             // vector of action probabilities
-    let a_idx = sample_multinomial(p); // randomly sample an action from the distribution p
+    let pr = softmax(z[0]);             // vector of action probabilities
+    let a_idx = sample_multinomial(pr); // randomly sample an action from the distribution p
 
-    return { pr: p, a_t: a_idx };
+    return { pr: pr, a: a_idx };
 }
 ```
 --------------------------------------------------------------------------------
@@ -289,7 +299,7 @@ Defining the reward function with both positive and negative rewards allows us t
 We've already seen how the policy can calculate the probability distribution over its actions given a state. But how do we calculate the probability of a specific action being taken? Take for example a probability distribution returned by our policy:
 
 $$
-pr = [ 0.1, 0.6, 0.3]
+\mathbf{pr} = [ 0.1, 0.6, 0.3]
 $$
 
 With an action it chose:
@@ -303,10 +313,10 @@ What is the probability of the action $a$ being taken? In the case of our exampl
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_. So the probability can be found by extracting the element from the probability vector whose index corresponds to the sampled action. To put this a little more formally:
 
 $$
-Pr_a(pr, a) = pr[a]
+Pr_a(\mathbf{pr}, a) = \mathbf{pr}_a
 $$
 
-Where $pr$ is the vector of probabilities output from the policy. $a$ is the index of the specific action in $pr$ which was sampled from the distribution. Finally $pr_a$ is the $a$-th element in the vector $pr$.
+Where $\mathbf{pr}$ is the vector of probabilities output from the policy. $a$ is the index of the specific action in $\mathbf{pr}$ which was sampled from the distribution. Finally $\mathbf{pr}_a$ is the $a$-th element in the vector $\mathbf{pr}$.
 
 <!-- 
 TODO: consider including this discussion elsewhere
@@ -328,7 +338,7 @@ To do this, we will compute the [_**gradient**_](/article/gradient) of the the p
 
 
 $$
-\nabla_{\Theta} = {\Large \begin{bmatrix}
+\nabla_{\Theta}pr_{a} = {\Large \begin{bmatrix}
 \frac{\partial pr_{a}}{\partial \theta_0} & \frac{\partial pr_{a}}{\partial \theta_1} & \frac{\partial pr_{a}}{\partial \theta_2} \\
 \end{bmatrix}}
 $$
@@ -336,15 +346,15 @@ $$
 where
 
 $$
-pr = \pi_{\Theta}(x)
+\mathbf{pr} = \pi(\Theta, \mathbf{x})
 $$
 
 $$
-a = sample\_multinomial(pr)
+a = sample\_multinomial(\mathbf{pr})
 $$
 
 $$
-pr_{a} = Pr_a(pr, a)
+pr_{a} = Pr_a(\mathbf{pr}, a)
 $$
 
 It's worth noting that this gradient shares the same shape as the parameters $\Theta$. In our case, this is a vector with 3 elements since our policy's $\Theta$ is also a vector with 3 elements.
@@ -360,24 +370,22 @@ $$
 -->
 
 $$
-pr = \pi_\Theta(x)
+\mathbf{pr} = \pi(\Theta, x)
 $$
 
 $$
-pr' = \pi_{\Theta + \Delta\theta_i}(x)
+\mathbf{pr'} = \pi(\Theta + \Delta\theta_i, x)
 $$
 
 $$
-\frac{\partial pr_{a}}{\partial \theta_i} \approx \frac{Pr_a(pr', a) - Pr_a(pr,a)}{\Delta \theta_i}
+\frac{\partial pr_{a}}{\partial \theta_i} \approx \frac{Pr_a(\mathbf{pr'}, a) - Pr_a(\mathbf{pr},a)}{\Delta \theta_i}
 $$
 
-$pr$ is the probability distribution returned by the policy with the current parameters. $pr'$ is almost the same distribution, but with a small perturbation of $\Delta\theta_i$ to parameter $\theta_i$. Tweaking the value of $\theta_i$ by a small amount lets us see what impact the adjustment has the resulting probability distribution.
+$\mathbf{pr}$ is the probability distribution returned by the policy with the current parameters. $\mathbf{pr'}$ is almost the same distribution, but with a small perturbation of $\Delta\theta_i$ to parameter $\theta_i$. Tweaking the value of $\theta_i$ by a small amount lets us see what impact the adjustment has the resulting probability distribution.
 
-We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}$.
+We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
 
 **_TODO add a toy here which allows the reader to tweak parameters to see what the impacts are on the policy's output_**
-
-$\Theta = [$  $]$
 
 <!-- </td>
     <td>foo</td>
@@ -387,10 +395,10 @@ $\Theta = [$  $]$
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
 $$
-\Theta + \alpha R(x, a) \nabla_{\Theta} \rightarrow \Theta'
+\Theta + \alpha R(x, a) \nabla_{\Theta}pr_{a} \rightarrow \Theta'
 $$
 
-Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate_, a hyperparameter that controls how large of an adjustment is made in each optimization step. $R(x, a)$ is a function that returns the reward of taking action $a$ while in state $x$. $\nabla_{\Theta}$ is the gradient of the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$.
+Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate_, a hyperparameter that controls how large of an adjustment is made in each optimization step. $R(x, a)$ is a function that returns the reward of taking action $a$ while in state $x$. $\nabla_{\Theta}pr_{a}$ is the gradient of the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$.
 
 The learning rate $\alpha$ and reward $R(x, a)$ are multiplied together to yield a scalar number. As you may recall, $R(x, a) > 0$ if $a$ was a good action to take while in state $x$. Otherwise, $R(x, a) \leq 0$.
 
@@ -427,7 +435,7 @@ Now you should have an understanding of the core ideas of Policy Gradient Method
 
 ## Environment
 
-To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The robot 'o' will be spawned at a random location and will be able to move in any direction. The robot's objective will be to reach the target 'x'.
+To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The puck 'o' will be spawned at a random location and will be able to move in any direction. The puck's objective will be to reach the target 'x'.
 
 <canvas id="puck_env"></canvas>
 <script>
@@ -463,12 +471,12 @@ puck_env_update_state({});
 
 ## State Space
 
-The environment's state space will consist of the robot's current position and the target's position. The state space will be defined as:
+The environment's state space will consist of the puck's current position and the target's position. The state space will be defined as:
 
 $$
-x_t = \begin{bmatrix} 
-x_{robot} \\
-y_{robot} \\
+\mathbf{x} = \begin{bmatrix} 
+x_{puck} \\
+y_{puck} \\
 x_{target} \\
 y_{target} \\
 \end{bmatrix}
@@ -525,16 +533,16 @@ This means that the puck will be able to take actions such as moving _up and to 
 
 #### Probability of independent actions <a name="independent-action-probability"/>
 <!--
-But what if you had an action space that was not mutually exclusive? Say instead we are controlling a robot in a 2D space, and the actions are the robot's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
+But what if you had an action space that was not mutually exclusive? Say instead we are controlling a puck in a 2D space, and the actions are the puck's direction along the x **AND** y axis. Where the options along the x axis are _left_, _none_, and _right_, and along the y axis are _up_, _none_, and _down_. 
 -->
-Consider, for example, the follow probability distributions for a horizontal action $pr_{x_t}$ and vertical action $pr_{y_t}$:
+Consider, for example, the follow probability distributions for a horizontal action $pr_{x}$ and vertical action $pr_{y}$:
 
 $$
-pr_{x_t} = [ 0.1, 0.6, 0.3 ]
+\mathbf{pr_{x}} = [ 0.1, 0.6, 0.3 ]
 $$
 
 $$
-pr_{y_t} = [ 0.2, 0.3, 0.5 ]
+\mathbf{pr_{y}} = [ 0.2, 0.3, 0.5 ]
 $$
 
 **A quick aside:** In the puck world example, you'll notice lots of $t$ subscripts. This is used to denote a variable that exists for a particular time-step or frame of the simulation.
@@ -542,22 +550,22 @@ $$
 Now say the policy chose a specific action, which includes a choice of both a horizontal action and a vertical action:
 
 $$
-a_t = \begin{bmatrix} 
-a_{x_t} = 0 \\
-a_{y_t} = 1 \\
+\mathbf{a} = \begin{bmatrix} 
+a_{x} = 0 \\
+a_{y} = 1 \\
 \end{bmatrix}
 $$
 
-What is the probability of the action $a_t$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a_t$:
+What is the probability of the action $a$ being taken? This is a bit more complex, but can be done by evaluating the probability density function of the action space. This amounts to multiplying the probabilities of each action class in $a$:
 
 $$
-pr_t = pr_{x_t}[a_{x_t}] * pr_{y_t}[a_{y_t}]
+pr = \mathbf{pr_{x}}[a_{x}] * \mathbf{pr_{y}}[a_{y}]
 $$
 
 In this case the probability of the action taken by the policy is $0.1 * 0.3 = 0.03$ or 3%. This can be generalized to any number of actions and action spaces by multiplying the probabilities of each action class in the action space:
 
 $$
-Pr_a(pr_t, a_t) = \prod_{i} pr_{t_i}[a_{t_i}]
+Pr_a(\mathbf{pr}, \mathbf{a}) = \prod_{i} \mathbf{pr_{a_i}}
 $$
 
 --------------------------------------------------------------------------------
@@ -567,19 +575,19 @@ $$
 Like the policy in the 'hello world!' style example, this policy will be a simple linear map. Because of its linearity, unlike a non-linear system like a neural-network, the policy has limited ability to learn complex representations, so we will give it some help. The input to the policy will not directly be the state space, instead it will be a [feature vector](https://en.wikipedia.org/wiki/Feature_(machine_learning\)) derived from the state space. Our policy only cares about the target's position relative to the puck. Because of this we will construct the feature vector as:
 
 $$
-\Delta{x} = x_{target} - x_{robot}
+\Delta{x} = x_{target} - x_{puck}
 $$
 $$
-\Delta{y} = y_{target} - y_{robot}
+\Delta{y} = y_{target} - y_{puck}
 $$
 $$
-\phi(x_t) = \begin{bmatrix} 
+\phi(x) = \begin{bmatrix} 
 \Delta{x} / \sqrt{\Delta{x}^2 + \Delta{y}^2}\\
 \Delta{y} / \sqrt{\Delta{x}^2 + \Delta{y}^2}\\
 \end{bmatrix}
 $$
 
-The vector $\phi(x_t)$ will be our _feature vector_, the input to the policy. This feature vector is simply the direction from the robot to the target normalized to a unit vector. Normalizing the vector ensures that the policy is invariant to the distance between the robot and target.
+The vector $\phi(\mathbf{x_t})$ will be our _feature vector_, the input to the policy. This feature vector is simply the direction from the puck to the target normalized to a unit vector. Normalizing the vector ensures that the policy is invariant to the distance between the puck and target.
 
 With our feature vector in place we can define the 2x6 matrix $\Theta$ which will map our feature vector to the probability distribution of actions:
 
@@ -593,30 +601,30 @@ $$
 Our policy will mulitply the feature vector by the policy parameters. The resulting vector will be sliced in two, one vector for the vertical actions and one for the horizontal actions. Each of these vectors will be passed through a softmax function to get the probability distribution of actions.
 
 $$
-z = \phi(x_t) \Theta
+\mathbf{z} = \phi(\mathbf{x}) \Theta
 $$
 where $z$ is a 6 element vector, and
 $$
-\pi_{\Theta}(x_t) = pr_t = \begin{bmatrix}
+\pi(\Theta, \mathbf{x}) = \mathbf{pr} = \begin{bmatrix}
 softmax([z_0, z_1, z_2]) \\
 softmax([z_3, z_4, z_5] \\
 \end{bmatrix} = \begin{bmatrix}
-pr_{vertical} \\
-pr_{horizontal} \\
+\mathbf{pr_{x}} \\
+\mathbf{pr_{y}} \\
 \end{bmatrix}
 $$
 
-This policy will return two probability distributions, one for the vertical actions and one for the horizontal actions. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the robot will take.
+This policy will return two probability distributions, one for the horizontal actions $\mathbf{pr_x}$ and one for the vertical actions $\mathbf{pr_y}$. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the puck will take.
 
 Once specific vertical and horizontal actions are sampled, the probability of that combination can be computed as we've previously seen for [independent actions.](#independent-action-probability)
 
 Below is an interactive illustration of how this policy reacts to different states. The policy parameters used have already been optimized to seek the target.
 
 <canvas id="puck_pol"></canvas>
-##### Vertical Probability Distribution
-<canvas id="puck_pol_vert"></canvas>
-##### Horizontal Probability Distribution
+##### Horizontal Probability Distribution $\mathbf{pr_{x}}$
 <canvas id="puck_pol_hori"></canvas>
+##### Vertical Probability Distribution $\mathbf{pr_{y}}$
+<canvas id="puck_pol_vert"></canvas>
 <script>
 let puck_pol_cvs = document.getElementById('puck_pol');
 let pol_x = puck.initial_state([0,0], [puck_pol_cvs.clientWidth, puck_pol_cvs.clientHeight], false);
@@ -667,14 +675,14 @@ puck_pol_update_state({});
 
 ## Reward Function
 
-The reward function is straight-forward. We want the reward to be positive when the robot's action moves it closer to the target, and negative when it moves further away. This can be implement as:
+The reward function is straight-forward. We want the reward to be positive when the puck's action moves it closer to the target, and negative when it moves further away. This can be implement as:
 
 $$
-R(x_{t-1}, x_t) = dist(x_{{t-1}_{robot}}, x_{{t-1}_{target}}) - dist(x_{{t}_{robot}}, x_{{t}_{target}})
+R(\mathbf{x_{t-1}}, \mathbf{x_t}) = dist(x_{{t-1}_{puck}}, x_{{t-1}_{target}}) - dist(x_{{t}_{puck}}, x_{{t}_{target}})
 $$
 where
 $$
-dist(a, b) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
+dist(\mathbf{a}, \mathbf{b}) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
 $$
 
 <canvas id="puck_reward"></canvas>
@@ -719,7 +727,7 @@ puck_reward_update_state({});
 
 ## Optimization
 
-Here things are a little different from the "Hello, World!" example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the robot). The robot's policy is then allowed to choose actions and interact with the environment until time runs out ($t$ states are generated), or the target is reached.
+Here things are a little different from the "Hello, World!" example. In that example the policy computes a single action for which we give some reward or penalty, then immediately adjust the policy parameters. In this example we will sample a _trajectory_. Each trajectory begins from a random initial state (a randomized starting position for the puck). The puck's policy is then allowed to choose actions and interact with the environment until time runs out ($t$ states are generated), or the target is reached.
 
 <canvas id="policy_gradient_montecarlo"></canvas>
 <script>
@@ -747,55 +755,50 @@ animate_when_visible({id:"policy_gradient_montecarlo", fps:60},
 });
 </script>
 
-The illustration above shows what a trajectory looks like for the robot with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action, interacting with the environment and receiving a reward. The trajectory stores these values as well as the probability distribution output from the policy, this isn't strickly necessary, but it allows us to skip recomputing it when we optimize the policy.
+The illustration above shows what a trajectory looks like for the puck with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action, interacting with the environment and receiving a reward. The trajectory stores these values as well as the probability distribution output from the policy, this isn't strickly necessary, but it allows us to skip recomputing it when we optimize the policy.
 
 $$
-\tau = \{ x_0, pr_0, a_0, r_0, \ldots x_{t-1}, pr_{t-1}, a_{t-1}, r_{t-1}\}
+\tau = \{ \mathbf{x_0}, \mathbf{pr_0}, a_0, r_0, \ldots \mathbf{x_{t-1}}, \mathbf{pr_{t-1}}, a_{t-1}, r_{t-1}\}
 $$
 
-Once a trajectory has been generated, we can compute the the policy's gradient of the probability of the actions taken in the trajectory with respect to the policy's parameters. This is done by summing the gradients of the probabilities of each action in the trajectory.
+Once a trajectory has been generated, we can compute the the policy's gradient of the probability of the action $pr_{a_t}$ taken for each time step $t$ **with respect to** the policy's parameters $\Theta$. This is done by summing the gradients of the probabilities of each action in the trajectory.
 
 $$
-\nabla_{\Theta} = \frac{1}{t} \sum_{t} \nabla_{\Theta_{t}} R(x_t, a_t) \gamma^t
+\nabla_{\Theta} = \frac{1}{t} \sum_{t} \nabla_{\Theta}pr_{a_t} R(x_t, a_t)
 $$
 
-Where we compute $\nabla_{\Theta_{t}}$, the gradient for each timestep $t$ as:
+Where we compute $\nabla_{\Theta}pr_{a_t}$, the gradient for each timestep $t$ as:
 
 $$
-\nabla_{\Theta_{t}} = \Large \begin{bmatrix}
+\nabla_{\Theta}pr_{a_{t}} = \Large \begin{bmatrix}
 \frac{\partial pr_{a_t}}{\partial \theta_{00}} & \frac{\partial pr_{a_t}}{\partial \theta_{01}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{04}} & \frac{\partial pr_{a_t}}{\partial \theta_{05}} \\
 \frac{\partial pr_{a_t}}{\partial \theta_{10}} & \frac{\partial pr_{a_t}}{\partial \theta_{11}} & \dots & \frac{\partial pr_{a_t}}{\partial \theta_{14}} & \frac{\partial pr_{a_t}}{\partial \theta_{15}} \\
 \end{bmatrix}
 $$
 
-Which depends on the probability of the action taken at time $t$ and the policy's parameters at time $t$.
+Which depends on the state of the system $x$ and probability of the action $pr_a$ taken at time $t$.
 
 $$
-pr_{a_t} = Pr_a(pr_t, a_t)
-$$
-
-$$
-a_t \sim pr_t
+pr_{a_t} = Pr_a(\mathbf{pr_t}, a_t)
 $$
 
 $$
-pr_t = \pi_{\Theta}(x_t)
+a_t \sim \mathbf{pr_t}
 $$
 
-<!--
-1. Generate a random inital state $x_0$, $0 \rightarrow t$
-2. Pass state $x_t$ to policy, compute an action $a$
-3. Pass $a$ to environment, record returned reward $r$ and updated state $x_{t+1}$
-4. Increment $t+1 \rightarrow t$
-4. If $t < \text{max time}$, goto 2
-5. return trajectory
--->
+$$
+\mathbf{pr_t} = \pi(\Theta, \mathbf{x_t})
+$$
 
-<!-- This technique of random action sampling influences the evolution of each trajectory from its initial conditions. This is considered a [_Monte Carlo Method_](https://en.wikipedia.org/wiki/Monte_Carlo_method) and is a common tool for training policies in reinforcement learning. -->
+Finally, we adjust the policy's parameters by taking a step in the direction of the gradient for the trajectory scaled by the reward and learning rate:
+
+$$
+\Theta + \alpha \nabla_{\Theta} \rightarrow \Theta'
+$$
 
 ## Bringing it all together
 
-Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the robot reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the robot over 10 epochs. The robot's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
+Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the puck reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the puck over 10 epochs. The puck's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
 
 <canvas id="policy_gradient_ex2"></canvas>
 Average Reward per 10 Epochs
@@ -856,6 +859,11 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     }    
 })
 </script>
+
+### A Final Note
+
+The examples and discussions in this article are meant to provide a high-level overview of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition for the core ideas of Policy Gradient Methods.
+
 
 ## Summary
 

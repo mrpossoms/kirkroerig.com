@@ -445,7 +445,7 @@ function optimize(pi, theta, T, params)
 
 		for (let t = 0; t < T[ti].X.length; t++) {
 			let G_t = matscl(policy_grad(pi_pr, theta, T[ti].X[t], T[ti].A[t], 0.001), p);
-			G = matadd(G, matscl(G_t, T[ti].R[t] * Math.pow(params.gamma, t)));
+			G = matadd(G, matscl(G_t, T[ti].R[t]/* * Math.pow(params.gamma, t)*/));
 		}
 
 		G = matscl(G, 1 / T.length);

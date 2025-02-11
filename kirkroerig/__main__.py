@@ -117,4 +117,4 @@ if __name__ == '__main__':
 	with open("/tmp/kirkroerig.pid", "w") as f:
 		f.write(str(os.getpid()))
 
-	app.run(port=port, host='127.0.0.1')
+	app.run(port=port, host='0.0.0.0')
