@@ -158,7 +158,11 @@ That my friend, is a great question and the answer lies in something called the 
 Let's consider the interactive example above. How is that policy defined, and how does it work? Let's write it out mathematically.
 
 $$
-\pi(\Theta, \mathbf{x}) = softmax(\mathbf{x} \Theta) = \mathbf{pr}
+\pi(\Theta, \mathbf{x}) = softmax(\mathbf{x} \Theta)
+$$
+
+$$
+\pi(\Theta, \mathbf{x}) \rightarrow \mathbf{pr}
 $$
 
 You probably noticed that the notation changed a bit. So let's break each part of it down to understand what it means.
@@ -187,17 +191,25 @@ $$
 \mathbf{pr}
 $$
 
-This is the probability distribution returned when $\pi(\Theta, x)$ is evaluated. $\mathbf{pr}$ is a vector containing the probabilities of each of the possible actions (left, middle, right) given a particular state $x$. It's worth mentioning that $\mathbf{pr}$ can't be used directly as an action, instead we will use the distribution $\mathbf{pr}$ to sample an action. We will get to the specifics of this soon.
+This is the probability distribution returned when $\pi(\Theta, x)$ is evaluated. $\mathbf{pr}$ is a vector whose elements are the probabilities of each of the possible actions (left, middle, right) given a particular state $x$. It's worth mentioning that $\mathbf{pr}$ can't be used directly as an action, instead we will use the distribution $\mathbf{pr}$ to sample an action. We will get to the specifics of this soon.
 
 ##### The Softmax Function
 
-The softmax function transforms a vector of arbitrary numbers into a probability distribution. It does this by exponentiation of each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
+The softmax function transforms a vector of arbitrary numbers $\mathbf{z}$ into a probability distribution. It achieves this by normalizing $\mathbf{z}$, ensuring the sum of its elements are exactly 1. Normalization is accomplished by exponentiating each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
 softmax(\mathbf{z}) = \frac{e^{\mathbf{z}}}{\sum_{i} e^{\mathbf{z}_i}}
 $$
 
-The softmax function returns a vector of probabilities that sum to 1. This is because the exponential function is always positive, and the sum of the exponentials in the denominator normalizes the probabilities to sum to 1. Play around with the example below to get a feel for how the softmax function works.
+The key reason this works is because the result of $e^{\mathbf{z}_i}$ is always positive for any real number, as the plot below demonstrates.
+
+<canvas id="exponential"></canvas>
+<script>
+plot("exponential", (x, p) => { return -1; }, {'lineDash': [10, 10], 'strokeStyle': color('LightGray')});
+plot("exponential", (z_i, p) => { return Math.exp(z_i) - 1; }, {});
+</script>
+
+Play around with the example below to get a feel for how the softmax function works.
 
 <form>
 <canvas id="softmax_ex"></canvas>
@@ -210,28 +222,28 @@ The softmax function returns a vector of probabilities that sum to 1. This is be
 </form>
 
 <script>
-
+let softmax_pr = [1/3,1/3,1/3];
 function update_softmax() {
     let left = document.getElementById('left_activation');
     let middle = document.getElementById('middle_activation');
     let right = document.getElementById('right_activation');    
 
-    let A = [left.valueAsNumber, middle.valueAsNumber, right.valueAsNumber];
+    let z = [left.valueAsNumber, middle.valueAsNumber, right.valueAsNumber];
 
-    left.nextElementSibling.textContent = `left input: ${A[0].toFixed(3)}`; 
-    middle.nextElementSibling.textContent = `middle input: ${A[1].toFixed(3)}`; 
-    right.nextElementSibling.textContent = `right input: ${A[2].toFixed(3)}`; 
+    left.nextElementSibling.textContent = `left input: ${z[0].toFixed(3)}`; 
+    middle.nextElementSibling.textContent = `middle input: ${z[1].toFixed(3)}`; 
+    right.nextElementSibling.textContent = `right input: ${z[2].toFixed(3)}`; 
 
-    let A_pr = softmax(A);
+    softmax_pr = softmax(z);
 
     clear("softmax_ex");
-    let labels = [`left: ${A_pr[0].toFixed(3)}`, 
-                  `middle: ${A_pr[1].toFixed(3)}`, 
-                  `right: ${A_pr[2].toFixed(3)}`];
+    let labels = [`left: ${softmax_pr[0].toFixed(3)}`, 
+                  `middle: ${softmax_pr[1].toFixed(3)}`, 
+                  `right: ${softmax_pr[2].toFixed(3)}`];
         
-    draw_probabilities("softmax_ex", A_pr, labels, undefined, undefined, 
+    draw_probabilities("softmax_ex", softmax_pr, labels, undefined, undefined, 
     (ctx, i, x, y) => {
-        if (A[0] == i-1) {
+        if (z[0] == i-1) {
             ctx.strokeStyle = color('LightGray');
             ctx.beginPath();
             ctx.arc(x, y, 5, 0, 2 * Math.PI);
@@ -242,11 +254,49 @@ function update_softmax() {
 update_softmax();
 </script>
 
-Great, so this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
+Great, this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 
 ##### Sampling An Action
 
-As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
+As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This can be written as:
+
+$$
+a \sim \mathbf{pr}
+$$
+
+Where $a$ is the discrete action we will take. The $\sim$ symbol means that $a$ is sampled from the distribution $\mathbf{pr}$.
+
+This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
+
+<canvas id="sample_multinomial"></canvas>
+<script>
+animate_when_visible({id:"sample_multinomial", fps:10},
+() => {    
+    let ctx = ctx_cache("sample_multinomial");
+    let w = ctx.canvas.width, h = ctx.canvas.height;
+
+    let cdf_frame = {
+        left: 10, top: 10,
+        right: (w/2) - 10, bottom: h - 10,
+    };
+
+    let frame_width = (frame) => { return frame.right - frame.left; };
+    let frame_height = (frame) => { return frame.bottom - frame.top; };
+    let line = (x0, y0, x1, y1) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
+
+    clear("sample_multinomial");
+    ctx.strokeStyle = color('black');
+    ctx.strokeRect(cdf_frame.left, cdf_frame.top, frame_width(cdf_frame), frame_height(cdf_frame));
+    let x = cdf_frame.left;
+    for (pi = 0; pi < 3; pi++) {
+        let pr = softmax_pr[pi];
+        ctx.strokeStyle = color('black');
+        let last_x = x;
+        x += frame_width(cdf_frame) * pr;
+        line(x, cdf_frame.top, x, cdf_frame.bottom);
+    }
+});
+</script>
 
 ```javascript
 function sample_multinomial(pr) {

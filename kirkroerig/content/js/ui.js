@@ -76,6 +76,10 @@ function color(name)
 
 function ctx_cache(e)
 {
+	if (typeof e == 'string') {
+		e = document.getElementById(e);
+	}
+
 	let just_added = false;
 	if (e.id in CTX == false) {
 		CTX[e.id] = e.getContext('2d');
