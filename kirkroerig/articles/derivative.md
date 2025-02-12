@@ -1,5 +1,6 @@
 ~article,math,derivative
-<script src="/js/pg.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/math.js"></script>
 
 <style>
 canvas {

@@ -1,5 +1,6 @@
 ~article,math,gradient
-<script src="/js/pg.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/grad.js"></script>
 
 <style>
 canvas {

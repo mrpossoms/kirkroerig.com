@@ -1,4 +1,6 @@
 ~article,policy,gradient,ml,machine,learning
+<script src="/js/math.js"></script>
+<script src="/js/ui.js"></script>
 <script src="/js/pg.js"></script>
 
 <style>
