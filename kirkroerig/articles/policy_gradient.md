@@ -268,35 +268,83 @@ Where $a$ is the discrete action we will take. The $\sim$ symbol means that $a$ 
 
 This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
 
+The example below demonstrates this idea. The rectangle on the left represents the probability distribution, its width is 1. You'll notice dots appearing inside the rectangle. Their horizontal position is uniformly random, ranging from 0 to 1. The histogram on the right counts how many dots have landed on each action.
+
 <canvas id="sample_multinomial"></canvas>
 <script>
+last_softmax_pr = [1/3,1/3,1/3];
+dist_hist = [0,0,0];
 animate_when_visible({id:"sample_multinomial", fps:10},
 () => {    
-    let ctx = ctx_cache("sample_multinomial");
-    let w = ctx.canvas.width, h = ctx.canvas.height;
+    if (softmax_pr[0] != last_softmax_pr[0]) {
+        last_softmax_pr = softmax_pr;
+        dist_hist = [0,0,0];
+        clear("sample_multinomial");
+    }
 
+    let ctx = ctx_cache("sample_multinomial");
     let cdf_frame = {
-        left: 10, top: 10,
-        right: (w/2) - 10, bottom: h - 10,
+        left: 10, top: 30,
+        right: (ctx.canvas.width/2) - 10, bottom: ctx.canvas.height - 30,
+    };
+
+    let hist_frame = {
+        left: cdf_frame.right + 10, top: 30,
+        right: ctx.canvas.width - 10, bottom: ctx.canvas.height - 30,
     };
 
     let frame_width = (frame) => { return frame.right - frame.left; };
     let frame_height = (frame) => { return frame.bottom - frame.top; };
     let line = (x0, y0, x1, y1) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
 
-    clear("sample_multinomial");
+    let should_draw = dist_hist.reduce((a, b) => a + b) == 0;
     ctx.strokeStyle = color('black');
-    ctx.strokeRect(cdf_frame.left, cdf_frame.top, frame_width(cdf_frame), frame_height(cdf_frame));
+    if (should_draw) ctx.strokeRect(cdf_frame.left, cdf_frame.top, frame_width(cdf_frame), frame_height(cdf_frame));
     let x = cdf_frame.left;
+    let labels = [`left\n${softmax_pr[0].toFixed(3)}`, `middle\n${softmax_pr[1].toFixed(3)}`, `right\n${softmax_pr[2].toFixed(3)}`];
+    let label_y = [cdf_frame.top - 10, cdf_frame.bottom + 20, cdf_frame.top - 10];
+    let r = Math.random(), rh = Math.random(), c = 0;
+
     for (pi = 0; pi < 3; pi++) {
         let pr = softmax_pr[pi];
+        c += pr;
+        if (r < c) {
+            dist_hist[pi]++;
+            c = 0;
+        }
         ctx.strokeStyle = color('black');
         let last_x = x;
         x += frame_width(cdf_frame) * pr;
-        line(x, cdf_frame.top, x, cdf_frame.bottom);
+        if (should_draw) line(x, cdf_frame.top, x, cdf_frame.bottom);
+        if (should_draw) text("sample_multinomial", labels[pi], [last_x + (x - last_x) / 2, label_y[pi]], {align: 'center'});
     }
+    ctx.strokeStyle = color('LightGray');
+    ctx.beginPath(); ctx.arc(r * frame_width(cdf_frame) + cdf_frame.left, cdf_frame.top+frame_height(cdf_frame)*rh, 0.5, 0, 2 * Math.PI); ctx.stroke();
+
+    { // draw hist
+        ctx.clearRect(hist_frame.left, hist_frame.top, frame_width(hist_frame), frame_height(hist_frame) + 30);
+        let max_hist = Math.max(100, Math.max(...dist_hist));
+        let hist_height = frame_height(hist_frame);
+        let hist_width = frame_width(hist_frame);
+        let bar_width = hist_width / 3;
+        let labels = ['left', 'middle', 'right'];
+        for (pi = 0; pi < 3; pi++) {
+            let pr = dist_hist[pi] / max_hist;
+            let x = hist_frame.left + bar_width * pi;
+            let y = hist_frame.bottom - hist_height * pr;
+            ctx.fillStyle = color('black');
+            ctx.strokeRect(x + 10, y, bar_width - 10, hist_height * pr);
+            text("sample_multinomial", labels[pi], [x + bar_width / 2, hist_frame.bottom + 20], {align: 'center'});
+            if (hist_height * pr > 20) {
+                text("sample_multinomial", dist_hist[pi], [x + bar_width / 2, y + (hist_height * pr) / 2 + 8], {align: 'center'});
+            }
+        }        
+    }
+
 });
 </script>
+
+This sampling process can be implemented in JavaScript like so:
 
 ```javascript
 function sample_multinomial(pr) {
@@ -311,7 +359,7 @@ function sample_multinomial(pr) {
 }
 ```
 
-Bringing all of this together, the JS implementation of our policy looks something like this:
+Bringing all of this together, the JavaScript implementation of our policy looks something like this:
 
 ```javascript
 function pi(theta, x) {
