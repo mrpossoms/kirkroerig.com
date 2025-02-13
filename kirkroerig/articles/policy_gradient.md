@@ -310,7 +310,7 @@ animate_when_visible({id:"sample_multinomial", fps:10},
         c += pr;
         if (r < c) {
             dist_hist[pi]++;
-            c = 0;
+            c = -10;
         }
         ctx.strokeStyle = color('black');
         let last_x = x;
