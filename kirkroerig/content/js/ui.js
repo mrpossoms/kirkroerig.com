@@ -147,15 +147,17 @@ function slider_param(event)
 }
 
 let px = (ctx, x) => {
-	let w = ctx.canvas.width;
-	let h = ctx.canvas.height;
+	const dpr = window.devicePixelRatio || 1;
+	let w = ctx.canvas.width / dpr;
+	let h = ctx.canvas.height / dpr;
 	let pixels_per_unit = h / 2;
 	return x * pixels_per_unit + w / 2;
 };
 
 let py = (ctx, y) => {
-	let w = ctx.canvas.width;
-	let h = ctx.canvas.height;
+	const dpr = window.devicePixelRatio || 1;
+	let w = ctx.canvas.width / dpr;
+	let h = ctx.canvas.height / dpr;
 	let pixels_per_unit = h / 2;
 	return -y * pixels_per_unit + h / 2;
 };
@@ -163,9 +165,10 @@ let py = (ctx, y) => {
 function plot(cvsId, fn, params)
 {
 	const e = document.getElementById(cvsId);
+	const dpr = window.devicePixelRatio || 1;
 	const ctx = ctx_cache(e);
-	let w = ctx.canvas.width;
-	let h = ctx.canvas.height;
+	let w = ctx.canvas.width / dpr;
+	let h = ctx.canvas.height / dpr;
 	let pixels_per_unit = h / 2;
 
 	if (params) {
@@ -179,8 +182,6 @@ function plot(cvsId, fn, params)
 		ctx.lineWidth = 2;
 		ctx.setLineDash([]);
 	}
-
-
 
 	let trace = new Path2D();
 	for (let x = -(w/2) / pixels_per_unit; x < w / pixels_per_unit; x += 0.01)

@@ -282,15 +282,17 @@ animate_when_visible({id:"sample_multinomial", fps:10},
         clear("sample_multinomial");
     }
 
+    const dpr = window.devicePixelRatio || 1;
     let ctx = ctx_cache("sample_multinomial");
+    let w = ctx.canvas.width / dpr, h = ctx.canvas.height / dpr;
     let cdf_frame = {
         left: 10, top: 30,
-        right: (ctx.canvas.width/2) - 10, bottom: ctx.canvas.height - 30,
+        right: (w/2) - 10, bottom: h - 30,
     };
 
     let hist_frame = {
         left: cdf_frame.right + 10, top: 30,
-        right: ctx.canvas.width - 10, bottom: ctx.canvas.height - 30,
+        right: w - 10, bottom: h - 30,
     };
 
     let frame_width = (frame) => { return frame.right - frame.left; };
