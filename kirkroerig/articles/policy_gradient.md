@@ -153,7 +153,7 @@ In our case, the policy will output a vector. Concretely, the vector's elements 
 
 That my friend, is a great question and the answer lies in something called the [explore-exploit dilemma](https://en.wikipedia.org/wiki/Exploration-exploitation_dilemma). For a given state, we want to strike a balance between trying new actions (explore), and taking advantage of actions that have proven to be good (exploit). Randomization is a good way to encourage exploration. However, we don't want the policy to try _totally_ random actions. We want to remember what actions had positive outcomes and use this to bias our choices. Using a probability distribution to encode our experience is a great way to implement this idea. We'll see how this works a little later.
 
-#### Policy Definition
+#### Policy Definition <a name="policy_definition"/>
 
 Let's consider the interactive example above. How is that policy defined, and how does it work? Let's write it out mathematically.
 
@@ -256,7 +256,7 @@ update_softmax();
 
 Great, this enables us to calculate the probability distribution for all actions given a state $x$ and our policy parameters $\Theta$, but how do we actually choose which action to take?
 
-##### Sampling An Action
+##### Sampling An Action <a name="action_sampling"/>
 
 As we alluded to earlier, we can sample from the distribution to somewhat randomly choose an action. This can be written as:
 
@@ -268,7 +268,7 @@ Where $a$ is the discrete action we will take. The $\sim$ symbol means that $a$ 
 
 This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
 
-The example below demonstrates this idea. The rectangle on the left represents the probability distribution, its width is 1. You'll notice dots appearing inside the rectangle. Their horizontal position is uniformly random, ranging from 0 to 1. The histogram on the right counts how many dots have landed on each action.
+The example below demonstrates this idea. The rectangle on the left represents the probability distribution, its width is 1. You'll notice dots appearing inside the rectangle. Their horizontal position is uniformly random, ranging from 0 (left) to 1 (right). The histogram on the right counts how many dots have landed on each action.
 
 <canvas id="sample_multinomial"></canvas>
 <script>
@@ -378,7 +378,7 @@ function pi(theta, x) {
 
 Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.
 
-This is where the **reward function** comes in. The reward function is a function that takes as input the state and action and returns a scalar value which represents the goodness or badness of the action. This scalar value is called the **reward**.
+This is where the **reward function** comes in. The reward function takes as input the state and action then returns a scalar value which represents how _good_ or how _bad_ that action choice was for the given state. This scalar value is called the **reward**.
 
 The reward function could be defined to theoretically score _any_ behavior. Be it driving a car, or playing a game. Actually games are a great example to illustrate this point. In a game, the **reward function** could be the scoring system, or the number of enemies killed, or the number of coins collected.
 
@@ -410,7 +410,7 @@ $$
 a = 0
 $$
 
-What is the probability of the action $a$ being taken? In the case of our example, it's very simple. The probability of an action being taken is exactly the action's probability in the distribution calculated by the policy, 0.1 or 10%.
+What is the probability of the action $a$ being taken? In the case of our example, it's very straight forward. The probability of an action being taken is exactly the action's probability in the distribution calculated by the policy, 0.1 or 10%.
 
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_. So the probability can be found by extracting the element from the probability vector whose index corresponds to the sampled action. To put this a little more formally:
 
@@ -436,6 +436,7 @@ You will often see this trick used in practice because it is more numerically st
 
 We've gotten all the prerequisites out of the way, now we can finally get to the meat of the Policy Gradient Methods. To restate, what we want to do is adjust the policy to increase the probability of actions that have been observed to return positive reward, and decrease the probability of those that have been observed to return negative rewards.
 
+<a name="policy_gradient"/>
 To do this, we will compute the [_**gradient**_](/article/gradient) of the the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$. The policy's gradient is:
 
 
@@ -461,7 +462,7 @@ $$
 
 It's worth noting that this gradient shares the same shape as the parameters $\Theta$. In our case, this is a vector with 3 elements since our policy's $\Theta$ is also a vector with 3 elements.
 
-Each of the partial derivatives could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
+Each of the partial derivatives that constitute the gradient could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
 
 In our case, the input we are perturbing are the parameters themselves.
 
@@ -520,18 +521,18 @@ Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a directi
 
 In essence that's it! We just repeat this sequence until our policy's actions converge to our optimization objective. Which in this case is to maximize the probability of the target action.
 
-1. For a given state, evaluate the policy to get the probability distribution of actions.
-2. Sample an action from the distribution.
-3. Compute the reward of the action, given both the state and action.
-4. Compute the gradient of the action's probability with respect to the policy's parameters.
-5. Scale the gradient by the reward, such that positive rewards move the policy in the direction of increasing the likelihood of the action, and negative rewards decrease the likelihood of the action.
+1. [evaluate the policy](#policy_definition) to get the probability distribution $pr$ of actions.
+2. [Sample an action](#action_sampling) $a$ from the distribution $pr$.
+3. [Compute the reward](#reward) $R(x, a)$ of the action, given both the state and action.
+4. [Compute the gradient](#policy_gradient) $\nabla_{\Theta}pr_{a}$ of the action's probability with respect to the policy's parameters.
+5. Scale the gradient $\nabla_{\Theta}pr_{a}$ by $\alpha R(x, a)$, such that positive rewards move the policy in the direction of increasing the likelihood of the action, and negative rewards decrease the likelihood of the action.
 6. Repeat!
 
-Like we've stated this example is akin to a "Hello, World!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition for the core ideas of Policy Gradient Methods.
+Like I stated, this example is akin to a "Hello, World!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems.
 
 # Puck World!
 
-Now you should have an understanding of the core ideas of Policy Gradient Methods. Let's look at a more interesting example to see how these ideas can be applied to a more complex problem. We will consider a 2D robot (puck) that can move in any direction. What changes do we need to make to our policy and reward function to handle this problem? Lets find out by examining each of the key differences.
+Now that you have an understanding of the core ideas of Policy Gradient Methods. Let's look at a more interesting example to see how these ideas can be applied to a more complex problem. We will consider a 2D robot (puck) that can move in any direction. What changes do we need to make to our policy and reward function to handle this problem? Lets find out by examining each of the key differences.
 
 --------------------------------------------------------------------------------
 

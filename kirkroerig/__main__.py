@@ -103,11 +103,7 @@ def contact():
 
 @app.route("/")
 def index():
-	posts = filter_posts(keywords={'article'})
-	_paging = paging(posts)
-	return render_template("home.html",
-	                       posts=_paging['pages'],
-	                       paging=_paging)
+	return articles()
 
 if __name__ == '__main__':
 	port = 8080
