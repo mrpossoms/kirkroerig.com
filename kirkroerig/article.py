@@ -25,7 +25,7 @@ class Article():
         self.path = Path(files('kirkroerig')) / path #str(files('kirkroerig') / path)
         self._text = None
         self._md = None
-        self._keywords = None
+        self._keywords = []
         self._posted = None
         self._date = datetime.date(1, 1, 1)
 
