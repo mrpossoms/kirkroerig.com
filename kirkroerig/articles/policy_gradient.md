@@ -98,6 +98,7 @@ animate_when_visible({id:"policy_gradient_ex", fps:10},
     let labels = [`left: ${parseInt(T.A_pr[0][0]*100)}%`, 
                   `middle: ${parseInt(T.A_pr[0][1]*100)}%`, 
                   `right: ${parseInt(T.A_pr[0][2]*100)}%`];
+    ctx_cache('policy_gradient_ex').strokeStyle = color('black');
     draw_probabilities("policy_gradient_ex", T.A_pr[0], labels, undefined, undefined, 
     (ctx, i, x, y) => {
         if (T.A[0] == i-1) {
@@ -240,7 +241,7 @@ function update_softmax() {
     let labels = [`left: ${softmax_pr[0].toFixed(3)}`, 
                   `middle: ${softmax_pr[1].toFixed(3)}`, 
                   `right: ${softmax_pr[2].toFixed(3)}`];
-        
+    ctx_cache('softmax_ex').strokeStyle = color('black');
     draw_probabilities("softmax_ex", softmax_pr, labels, undefined, undefined, 
     (ctx, i, x, y) => {
         if (z[0] == i-1) {
@@ -488,12 +489,25 @@ $\mathbf{pr}$ is the probability distribution returned by the policy with the cu
 
 We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
 
-**_TODO add a toy here which allows the reader to tweak parameters to see what the impacts are on the policy's output_**
+<canvas id="gradient_ex"></canvas>
+<script>
+let grad_ex_theta = randmat(1, 3);
 
-<!-- </td>
-    <td>foo</td>
-</tr>
-</table> -->
+function draw_grad_toy()
+{
+    let ctx = ctx_cache("gradient_ex");
+    clear("gradient_ex");
+    ctx.strokeStyle = color('black');
+    ctx.setLineDash([]);
+    draw_probabilities("gradient_ex", basic.pi(grad_ex_theta, [1]).pr, ['left', 'middle', 'right'], undefined, undefined);  
+
+    let theta_prime = matadd(grad_ex_theta, [[1, 0, 0]]);
+    ctx.strokeStyle = color('LightGray');
+    ctx.setLineDash([5, 15]);
+    draw_probabilities("gradient_ex", basic.pi(theta_prime, [1]).pr, ['','',''], undefined, undefined); 
+}
+draw_grad_toy();
+</script>
 
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
@@ -757,6 +771,7 @@ let puck_pol_update_state = (e) => {
         let labels = [`up: ${parseInt(pr_t[1][0]*100)}%`, 
                       `middle: ${parseInt(pr_t[1][1]*100)}%`, 
                       `down: ${parseInt(pr_t[1][2]*100)}%`];
+        ctx_cache('puck_pol_vert').strokeStyle = color('black');
         draw_probabilities("puck_pol_vert", pr_t[1], labels, undefined, undefined);        
     }
 
@@ -764,6 +779,7 @@ let puck_pol_update_state = (e) => {
         let labels = [`left: ${parseInt(pr_t[0][0]*100)}%`, 
                       `middle: ${parseInt(pr_t[0][1]*100)}%`, 
                       `right: ${parseInt(pr_t[0][2]*100)}%`];
+        ctx_cache('puck_pol_hori').strokeStyle = color('black');
         draw_probabilities("puck_pol_hori", pr_t[0], labels, undefined, undefined);        
     }
     puck_pol_draw();

@@ -69,9 +69,6 @@ function draw_probabilities(cvsId, p, names, left_top, right_bottom, annotator)
 	let w = right_bottom[0] - left_top[0];
 	let h = right_bottom[1] - left_top[1];
 
-	ctx.fillStyle = color('black');
-	ctx.strokeStyle = color('black');
-
 	let path = new Path2D();
 	path.moveTo(left_top[0], right_bottom[1]);
 	p = [].concat([0], p)
