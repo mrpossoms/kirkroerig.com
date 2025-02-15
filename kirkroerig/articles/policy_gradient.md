@@ -489,12 +489,21 @@ $\mathbf{pr}$ is the probability distribution returned by the policy with the cu
 
 We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
 
+<form autocomplete="off">
+<input type="radio" name="target" onclick="draw_grad_toy(0)"/>
+<label for="targ_left">left</label>
+<input type="radio" id="targ_middle" name="target" checked="checked" onclick="draw_grad_toy(1)"/>
+<label for="targ_middle">middle</label>
+<input type="radio" id="targ_right" name="target" onclick="draw_grad_toy(2)"/>
+<label for="targ_right">right</label>
+</form>
 <canvas id="gradient_ex"></canvas>
 <script>
 let grad_ex_theta = randmat(1, 3);
-
-function draw_grad_toy()
+function draw_grad_toy(i)
 {
+    if (i == undefined) { i = 0; }
+
     let ctx = ctx_cache("gradient_ex");
     clear("gradient_ex");
     ctx.strokeStyle = color('black');
