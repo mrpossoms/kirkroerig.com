@@ -210,7 +210,7 @@ plot("exponential", (x, p) => { return -1; }, {'lineDash': [10, 10], 'strokeStyl
 plot("exponential", (z_i, p) => { return Math.exp(z_i) - 1; }, {});
 </script>
 
-Play around with the example below to get a feel for how the softmax function works.
+Play around with the example below to get a feel for the softmax function.
 
 <form>
 <canvas id="softmax_ex"></canvas>
@@ -486,7 +486,7 @@ $$
 
 $\mathbf{pr}$ is the probability distribution returned by the policy with the current parameters. $\mathbf{pr'}$ is almost the same distribution, but with a small perturbation of $\Delta\theta_i$ to parameter $\theta_i$. Tweaking the value of $\theta_i$ by a small amount lets us see what impact the adjustment has the resulting probability distribution.
 
-We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
+Check out the interactive example below to see how a small tweak of any parameter $\theta_i$ influences the change in the probability of the chosen action $pr_a$.
 
 <canvas id="gradient_ex"></canvas>
 <script>
@@ -503,7 +503,7 @@ function draw_grad_toy(i)
         if (basic.target == i-1) { last_y = y; }
     });
 
-    let d_theta = zeros(1, 3); d_theta[0][i] = 1;
+    let d_theta = zeros(1, 3); d_theta[0][i] = 0.5;
     let theta_prime = matadd(grad_ex_theta, d_theta);
     ctx.strokeStyle = color('LightGray');
     ctx.setLineDash([5, 15]);
@@ -520,13 +520,14 @@ function draw_grad_toy(i)
         }
 
         if ((i - 1) >= 0 && (i - 1) < labels.length) {
-            text(ctx, labels[i-1], [x, ctx.height - 10], {align: 'center'});
+            text(ctx, labels[i-1], [x, 17], {align: 'center'});
         }
-    }); 
+    });
+    text(ctx, "try me!", [32,32], {angle: -Math.PI / 4});
 }
 draw_grad_toy(basic.target);
 </script>
-With respect to
+With respect to...
 <!-- <form autocomplete="off"> -->
 <input type="radio" id="theta_0" name="target" onclick="draw_grad_toy(0)"/>
 <label for="theta_0">$\partial \theta_0$</label>
@@ -535,6 +536,8 @@ With respect to
 <input type="radio" id="theta_2" name="target" onclick="draw_grad_toy(2)"/>
 <label for="theta_2">$\partial \theta_2$</label>
 <!-- </form> -->
+
+We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
 
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
@@ -716,7 +719,7 @@ $$
 
 ## Policy
 
-Like the policy in the 'hello world!' style example, this policy will be a simple linear map. Because of its linearity, unlike a non-linear system like a neural-network, the policy has limited ability to learn complex representations, so we will give it some help. The input to the policy will not directly be the state space, instead it will be a [feature vector](https://en.wikipedia.org/wiki/Feature_(machine_learning\)) derived from the state space. Our policy only cares about the target's position relative to the puck. Because of this we will construct the feature vector as:
+Like the policy in the 'hello world!' style example, this policy will be a simple linear map. Because of its linearity, the policy has limited ability to learn complex relationships, so we will give it some help. The input to the policy will not directly be the state space, instead it will be a [feature vector](https://en.wikipedia.org/wiki/Feature_(machine_learning\)) derived from the state space. Our policy only cares about the target's position relative to the puck. Because of this we will construct the feature vector as:
 
 $$
 \Delta{x} = x_{target} - x_{puck}
@@ -747,15 +750,15 @@ Our policy will mulitply the feature vector by the policy parameters. The result
 $$
 \mathbf{z} = \phi(\mathbf{x}) \Theta
 $$
-where $z$ is a 6 element vector, and
+where $\mathbf{z}$ is a 6 element vector, and
 $$
-\pi(\Theta, \mathbf{x}) = \mathbf{pr} = \begin{bmatrix}
+\pi(\Theta, \mathbf{x}) = \begin{bmatrix}
 softmax([z_0, z_1, z_2]) \\
 softmax([z_3, z_4, z_5] \\
 \end{bmatrix} = \begin{bmatrix}
 \mathbf{pr_{x}} \\
 \mathbf{pr_{y}} \\
-\end{bmatrix}
+\end{bmatrix} = \mathbf{pr}
 $$
 
 This policy will return two probability distributions, one for the horizontal actions $\mathbf{pr_x}$ and one for the vertical actions $\mathbf{pr_y}$. Just like the last example, we will sample from each of these to determine what horizontal and vertical actions the puck will take.
@@ -841,7 +844,7 @@ let puck_reward_draw = (reward) => {
     puck.draw("puck_reward", 0, {X: [reward_x]});
 
     let ctx = ctx_cache(puck_reward_cvs)
-    text(ctx, `reward: ${reward.toFixed(2)}`, [puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight]);
+    text(ctx, `reward: ${(reward > 0 ? '+' : '') + reward.toFixed(2)}`, [puck_reward_cvs.clientWidth / 2, puck_reward_cvs.clientHeight]);
     text(ctx, "try me!", [32,32], {angle: -Math.PI / 4});
 };
 
@@ -922,7 +925,7 @@ $$
 \end{bmatrix}
 $$
 
-Which depends on the state of the system $x$ and probability of the action $pr_a$ taken at time $t$.
+Which depends on the state of the system $\mathbf{x}$ and probability of the action $pr_a$ taken at time $t$.
 
 $$
 pr_{a_t} = Pr_a(\mathbf{pr_t}, a_t)
@@ -1006,7 +1009,7 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 })
 </script>
 
-### A Final Note
+##### A Final Note
 
 The examples and discussions in this article are meant to provide a high-level overview of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition for the core ideas of Policy Gradient Methods.
 
