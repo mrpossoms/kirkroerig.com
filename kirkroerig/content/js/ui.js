@@ -140,6 +140,14 @@ function text(ctx_cvs_or_id, message, point, params)
 	}
 }
 
+function line(ctx, x0, y0, x1, y1)
+{
+	ctx.beginPath(); 
+	ctx.moveTo(x0, y0); 
+	ctx.lineTo(x1, y1); 
+	ctx.stroke();
+}
+
 function slider_param(event)
 {
 	if (!event) { event = { currentTarget: { value: 0 }}; }

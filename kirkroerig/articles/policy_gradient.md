@@ -298,7 +298,6 @@ animate_when_visible({id:"sample_multinomial", fps:10},
 
     let frame_width = (frame) => { return frame.right - frame.left; };
     let frame_height = (frame) => { return frame.bottom - frame.top; };
-    let line = (x0, y0, x1, y1) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
 
     let should_draw = dist_hist.reduce((a, b) => a + b) == 0;
     ctx.strokeStyle = color('black');
@@ -318,7 +317,7 @@ animate_when_visible({id:"sample_multinomial", fps:10},
         ctx.strokeStyle = color('black');
         let last_x = x;
         x += frame_width(cdf_frame) * pr;
-        if (should_draw) line(x, cdf_frame.top, x, cdf_frame.bottom);
+        if (should_draw) line(ctx, x, cdf_frame.top, x, cdf_frame.bottom);
         if (should_draw) text("sample_multinomial", labels[pi], [last_x + (x - last_x) / 2, label_y[pi]], {align: 'center'});
     }
     ctx.strokeStyle = color('LightGray');
@@ -489,14 +488,6 @@ $\mathbf{pr}$ is the probability distribution returned by the policy with the cu
 
 We will repeat this computation for each of the parameters in $\Theta$ to get the full approximated gradient $\nabla_{\Theta}pr_{a}$.
 
-<form autocomplete="off">
-<input type="radio" name="target" onclick="draw_grad_toy(0)"/>
-<label for="targ_left">left</label>
-<input type="radio" id="targ_middle" name="target" checked="checked" onclick="draw_grad_toy(1)"/>
-<label for="targ_middle">middle</label>
-<input type="radio" id="targ_right" name="target" onclick="draw_grad_toy(2)"/>
-<label for="targ_right">right</label>
-</form>
 <canvas id="gradient_ex"></canvas>
 <script>
 let grad_ex_theta = randmat(1, 3);
@@ -508,15 +499,40 @@ function draw_grad_toy(i)
     clear("gradient_ex");
     ctx.strokeStyle = color('black');
     ctx.setLineDash([]);
-    draw_probabilities("gradient_ex", basic.pi(grad_ex_theta, [1]).pr, ['left', 'middle', 'right'], undefined, undefined);  
+    let last_y;
+    draw_probabilities("gradient_ex", basic.pi(grad_ex_theta, [1]).pr, ['', '', ''], undefined, undefined,
+    (ctx, i, x, y) => {
+        if (basic.target == i) { last_y = y; }
+    });
 
-    let theta_prime = matadd(grad_ex_theta, [[1, 0, 0]]);
+    let d_theta = zeros(1, 3); d_theta[0][i] = 1;
+    let theta_prime = matadd(grad_ex_theta, d_theta);
     ctx.strokeStyle = color('LightGray');
     ctx.setLineDash([5, 15]);
-    draw_probabilities("gradient_ex", basic.pi(theta_prime, [1]).pr, ['','',''], undefined, undefined); 
+    draw_probabilities("gradient_ex", basic.pi(theta_prime, [1]).pr, ['','',''], undefined, undefined,
+    (ctx, i, x, y) => {
+        if (basic.target == i) {
+            let my = (y + last_y) / 2;
+            ctx.setLineDash([1, 1]);
+            line(ctx, x, y, x, last_y);
+            text(ctx, "∂prₐ", [x - 80, my + 5]);
+            ctx.setLineDash([1, 5]);
+            line(ctx, x - 60, my, x, my);
+            ctx.setLineDash([5, 15]);
+        }
+    }); 
 }
 draw_grad_toy();
 </script>
+With respect to
+<!-- <form autocomplete="off"> -->
+<input type="radio" id="theta_0" name="target" onclick="draw_grad_toy(0)"/>
+<label for="theta_0">$\partial \theta_0$</label>
+<input type="radio" id="theta_1" name="target" checked="checked" onclick="draw_grad_toy(1)"/>
+<label for="theta_1">$\partial \theta_1$</label>
+<input type="radio" id="theta_2" name="target" onclick="draw_grad_toy(2)"/>
+<label for="theta_2">$\partial \theta_2$</label>
+<!-- </form> -->
 
 With the gradient in hand, we can finally adjust the policy's parameters to increase the probability of actions that lead to good outcomes. This is done by taking a step in the direction of the gradient using a technique called _gradient ascent_.
 
