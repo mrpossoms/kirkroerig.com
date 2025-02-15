@@ -493,16 +493,14 @@ We will repeat this computation for each of the parameters in $\Theta$ to get th
 let grad_ex_theta = randmat(1, 3);
 function draw_grad_toy(i)
 {
-    if (i == undefined) { i = 0; }
-
     let ctx = ctx_cache("gradient_ex");
     clear("gradient_ex");
     ctx.strokeStyle = color('black');
     ctx.setLineDash([]);
-    let last_y;
+    let last_y, labels = ['left', 'middle', 'right'];
     draw_probabilities("gradient_ex", basic.pi(grad_ex_theta, [1]).pr, ['', '', ''], undefined, undefined,
     (ctx, i, x, y) => {
-        if (basic.target == i) { last_y = y; }
+        if (basic.target == i-1) { last_y = y; }
     });
 
     let d_theta = zeros(1, 3); d_theta[0][i] = 1;
@@ -511,7 +509,7 @@ function draw_grad_toy(i)
     ctx.setLineDash([5, 15]);
     draw_probabilities("gradient_ex", basic.pi(theta_prime, [1]).pr, ['','',''], undefined, undefined,
     (ctx, i, x, y) => {
-        if (basic.target == i) {
+        if (basic.target == i-1) {
             let my = (y + last_y) / 2;
             ctx.setLineDash([1, 1]);
             line(ctx, x, y, x, last_y);
@@ -520,9 +518,13 @@ function draw_grad_toy(i)
             line(ctx, x - 60, my, x, my);
             ctx.setLineDash([5, 15]);
         }
+
+        if ((i - 1) >= 0 && (i - 1) < labels.length) {
+            text(ctx, labels[i-1], [x, ctx.height - 10], {align: 'center'});
+        }
     }); 
 }
-draw_grad_toy();
+draw_grad_toy(basic.target);
 </script>
 With respect to
 <!-- <form autocomplete="off"> -->
