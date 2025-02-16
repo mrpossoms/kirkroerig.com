@@ -56,16 +56,16 @@ There's something special about the idea of a machine that can learn to play a g
 
 Reinforcement learning (RL) encompasses a multitude of techniques and algorithms which can be employed to achieve goals like these. In my humble opinion, one of the most elegant RL algorithms are [Policy Gradient Methods](https://en.wikipedia.org/wiki/Reinforcement_learning#Direct_policy_search).
 
-The goal of this article is to give an uninitiated audience an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability, calculus, but I will do my best to explain these concepts as we go.
+The goal of this article is to give an uninitiated audience an intuitive understanding of Policy Gradient Methods through interactive examples. There is a plethora of resources available which dive deep into the mathematics and theory behind these methods, but the core ideas can be distilled. You will get the most from this article if you at least have a basic understanding of linear algebra, probability and calculus but I will do my best to explain these concepts as we go.
 
-_A final note before we begin;
-In this artical I intentionally deviate from the standard notation found in the literature. I do this to make the concepts more approachable to a wider audience. If you are already familiar with these concepts, you may find the notation verbose._
+_A disclaimer before we begin;
+In this article I intentionally deviate from the standard notation found in the literature. I do this to make the concepts more approachable to a wider audience. If you are already familiar with these concepts, you may find the notation verbose and odd._
 
 # Hello, World!
 
 Let's look at a dead simple, "Hello, world!" style example which demonstrates the core idea of Policy Gradient Methods.
 
-First, we need to briefly touch upon what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article, but more on this later.
+First, we need to briefly touch upon what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article.
 
 In the example below we have a simple environment where the policy chooses from three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the <a href="#policy" title="A policy is...">policy</a> for choosing.
 
@@ -127,6 +127,13 @@ We can achieve our goal of choosing the action that leads to a **good** outcome 
 * [How do we calculate the **probability** of an **action**?](#action-probability)
 * [How do we **adjust** our policy to maximize the **goodness** of its actions?](#optimization)
 
+##### Notation Key
+
+In the remainder of the article, we will use the following notation:
+* Scalars will be denoted by regular symbols like $x$, $\theta$, $i$.
+* Bold faced symbols like $\mathbf{x}$, $\mathbf{pr}$ will denote vectors.
+* Matrices will be denoted by capital symbols like $X$, $\Theta$.
+
 --------------------------------------------------------------------------------
 
 ## What is a **policy**? <a name="policy"/>
@@ -140,13 +147,6 @@ $$
 What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot or something else entirely. Similarly, the action can take many forms too, such as joystick inputs for a game or motor commands for a robot.
 
 Irrespective of their nature, states and actions in practice are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all commonly seen in the wild.
-
-##### Notation Key
-
-In the remainder of the article, we will use the following notation:
-* Scalars will be denoted by regular symbols like $x$, $\theta$, $i$.
-* Bold faced symbols like $\mathbf{x}$, $\mathbf{pr}$ will denote vectors.
-* Matrices will be denoted by capital symbols like $X$, $\Theta$.
 
 #### A Policy's Output
 
@@ -186,7 +186,7 @@ $$
 softmax(x \Theta)
 $$
 
-Now this part of the expression does the policy's heavy lifting. It says that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function.
+Now this part of the expression does the policy's heavy lifting. It says that the state $x$ is multiplied by the parameters $\Theta$ and are passed through a [softmax](https://en.wikipedia.org/wiki/Softmax_function) function to produce a probability distribution, we will look at this more closely in a few moments.
 
 $$
 \mathbf{pr}
@@ -380,7 +380,7 @@ Now that we understand what a policy is, and how it can choose actions, we need 
 
 This is where the **reward function** comes in. The reward function takes as input the state and action then returns a scalar value which represents how _good_ or how _bad_ that action choice was for the given state. This scalar value is called the **reward**.
 
-The reward function could be defined to theoretically score _any_ behavior. Be it driving a car, or playing a game. Actually games are a great example to illustrate this point. In a game, the **reward function** could be the scoring system, or the number of enemies killed, or the number of coins collected.
+The reward function could be defined to theoretically score _any_ behavior. Be it driving a car, or playing a game. Actually games are a great example to illustrate this point. In a game, the **reward function** could be the scoring system, the number of enemies killed, or the number of coins collected.
 
 In our example, the state is always 1 so we ignore it. The reward is 1 when the policy chooses the target action and -1 when it chooses the other actions. Put more formally:
 
@@ -462,7 +462,7 @@ $$
 
 It's worth noting that this gradient shares the same shape as the parameters $\Theta$. In our case, this is a vector with 3 elements since our policy's $\Theta$ is also a vector with 3 elements.
 
-Each of the partial derivatives that constitute the gradient could be computed analytically using the chain rule, but for simplicity, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
+Each of the partial derivatives that constitute the gradient could be computed analytically using the chain rule, but for its explanitory power, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
 
 In our case, the input we are perturbing are the parameters themselves.
 
