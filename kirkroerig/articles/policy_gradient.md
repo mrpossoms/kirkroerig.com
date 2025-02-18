@@ -67,7 +67,7 @@ Let's look at a dead simple, "Hello, world!" style example which demonstrates th
 
 First, we need to briefly touch upon what a policy is. At its simplest, a policy is a function that decides what action to take given some context. This function, how we define it and optimize its behavior is the core focus of this article.
 
-In the example below we have a simple environment where the policy chooses from three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the <a href="#policy" title="A policy is...">policy</a> for choosing.
+In the example below we have a simple environment where in each frame the policy chooses from three possible actions _left_, _middle_ and _right_. The corresponding buttons allow you to select which action you want to reward the <a href="#policy" title="A policy is...">policy</a> for choosing.
 
 <canvas id="policy_gradient_ex"></canvas>
 <center>
@@ -114,7 +114,7 @@ animate_when_visible({id:"policy_gradient_ex", fps:10},
 });
 </script>
 
-The number next to each action in the visualization is the probability that the action will be chosen. A circle is drawn next to the action that is chosen for each frame.
+The number next to each action in the visualization is the probability that the action will be chosen. A circle is drawn below the action that is chosen for each frame.
 
 Over time, you'll notice that the action you selected will be chosen more frequently. The key idea of Policy Gradient Methods is intuitive, and boils down to just one objective:
 
@@ -138,13 +138,13 @@ In the remainder of the article, we will use the following notation:
 
 ## What is a **policy**? <a name="policy"/>
 
-Put simply, a policy is a function which makes a decision to take an action ($a$) given some context (or state $x$). Often a policy is written as something like:
+Put simply, a policy is a construct which decides which action to take. For our purposes, a policy is implemented as a function which accepts some context or state $x$ and yields an action $a$. Often a policy is written as something like:
 
 $$
 \pi(x) \rightarrow a
 $$
 
-What this expression gestures at is very simple. A policy $\pi$ is a function which accepts a state $x$ and yields an action $a$. You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot or something else entirely. Similarly, the action can take many forms too, such as joystick inputs for a game or motor commands for a robot.
+You can think of the state as the policy's observation of its environment. This could take many different forms, such as the position of objects in a game, sensor measurements from a robot or something else entirely. The action can take just as many forms too, such as joystick inputs for a game or motor commands for a robot.
 
 Irrespective of their nature, states and actions in practice are usually numerical - [scalars](https://en.wikipedia.org/wiki/Scalar_(mathematics\)), [vectors](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics\)) and [matrices](https://en.wikipedia.org/wiki/Matrix_(mathematics\)) are all commonly seen in the wild.
 
@@ -166,7 +166,7 @@ $$
 \pi(\Theta, \mathbf{x}) \rightarrow \mathbf{pr}
 $$
 
-You probably noticed that the notation changed a bit. So let's break each part of it down to understand what it means.
+Let's break each part of these expressions to understand what they mean.
 
 $$
 \pi(\Theta, \mathbf{x})
@@ -196,13 +196,13 @@ This is the probability distribution returned when $\pi(\Theta, x)$ is evaluated
 
 ##### The Softmax Function
 
-The softmax function transforms a vector of arbitrary numbers $\mathbf{z}$ into a probability distribution. It achieves this by normalizing $\mathbf{z}$, ensuring the sum of its elements are exactly 1. Normalization is accomplished by exponentiating each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
+Let's spend a little time thinking about the softmax function and how it works. The softmax function transforms a vector of arbitrary numbers $\mathbf{z}$ into a probability distribution. It achieves this by normalizing $\mathbf{z}$, ensuring the sum of its elements are exactly 1. Normalization is accomplished by exponentiating each element in the vector and then normalizing the result by dividing it by the sum of all of the vector's exponetiated elements. 
 
 $$
 softmax(\mathbf{z}) = \frac{e^{\mathbf{z}}}{\sum_{i} e^{\mathbf{z}_i}}
 $$
 
-The key reason this works is because the result of $e^{\mathbf{z}_i}$ is always positive for any real number, as the plot below demonstrates.
+The key reason this works is because the result of $e^{\mathbf{z}_i}$ is always positive for any finite real number, as the plot below demonstrates.
 
 <canvas id="exponential"></canvas>
 <script>
@@ -267,7 +267,7 @@ $$
 
 Where $a$ is the discrete action we will take. The $\sim$ symbol means that $a$ is sampled from the distribution $\mathbf{pr}$.
 
-This is achievable as long as we can generate a uniform random number on the interval $[0, 1)$. This can be done by incrementally computing the cumulative sum of the probabilities and checking if the random number is less than sum.
+This is achievable as long as we can generate a [uniform random number](https://en.wikipedia.org/wiki/Continuous_uniform_distribution) on the interval $[0, 1)$. With a random number generated next we incrementally compute the cumulative sum of the probabilities $\mathbf{pr}_i$ in $\mathbf{pr}$ and check if the random number is less than sum. If it is, we return the index $i$ which pushed the cumulative sum over the edge as the sampled action.
 
 The example below demonstrates this idea. The rectangle on the left represents the probability distribution, its width is 1. You'll notice dots appearing inside the rectangle. Their horizontal position is uniformly random, ranging from 0 (left) to 1 (right). The histogram on the right counts how many dots have landed on each action.
 
@@ -352,10 +352,10 @@ This sampling process can be implemented in JavaScript like so:
 function sample_multinomial(pr) {
     let r = Math.random(); // real number between 0 and 1
     let c = 0;
-    for (let a = 0; a < pr.length; a++) {
-        c += pr[a];
+    for (let i = 0; i < pr.length; i++) {
+        c += pr[i];
         if (r < c) {
-            return a;
+            return i;
         }
     }
 }
@@ -367,16 +367,16 @@ Bringing all of this together, the JavaScript implementation of our policy looks
 function pi(theta, x) {
     let z = matmul([x], theta);
     let pr = softmax(z[0]);             // vector of action probabilities
-    let a_idx = sample_multinomial(pr); // randomly sample an action from the distribution p
+    let i = sample_multinomial(pr); // randomly sample an action from the distribution p
 
-    return { pr: pr, a: a_idx };
+    return { pr: pr, a: i };
 }
 ```
 --------------------------------------------------------------------------------
 
 ## How do we measure the *goodness* or *badness* of an action? <a name="reward"/>
 
-Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.
+Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.https://en.wikipedia.org/wiki/Probability_distribution#Discrete_probability_distribution
 
 This is where the **reward function** comes in. The reward function takes as input the state and action then returns a scalar value which represents how _good_ or how _bad_ that action choice was for the given state. This scalar value is called the **reward**.
 
@@ -410,7 +410,7 @@ $$
 a = 0
 $$
 
-What is the probability of the action $a$ being taken? In the case of our example, it's very straight forward. The probability of an action being taken is exactly the action's probability in the distribution calculated by the policy, 0.1 or 10%.
+What is the probability of the action $a$ being taken? Because we are using a [discrete probability distribution](https://en.wikipedia.org/wiki/Probability_distribution#Discrete_probability_distribution), it's very straight forward. The probability of an action being taken is exactly the action's probability $\mathbf{pr}_a$ in the distribution calculated by the policy, 0.1 or 10%.
 
 This is the case because all of our actions in this distribution (_left_, _middle_, and _right_) are mutually exclusive. You can not have an action that combines _left_ and _middle_. So the probability can be found by extracting the element from the probability vector whose index corresponds to the sampled action. To put this a little more formally:
 
@@ -436,8 +436,8 @@ You will often see this trick used in practice because it is more numerically st
 
 We've gotten all the prerequisites out of the way, now we can finally get to the meat of the Policy Gradient Methods. To restate, what we want to do is adjust the policy to increase the probability of actions that have been observed to return positive reward, and decrease the probability of those that have been observed to return negative rewards.
 
-<a name="policy_gradient"/>
-To do this, we will compute the [_**gradient**_](/article/gradient) of the the probability of the chosen action $a$ with-respect-to the policy's parameters $\Theta$. The policy's gradient is:
+<a name="policy_gradient"></a>
+To do this, we will compute the [gradient](/article/gradient) of the the probability $pr_a$ of the chosen action $a$ with-respect-to the policy's parameters $\Theta$. The policy's gradient is:
 
 
 $$
@@ -462,7 +462,9 @@ $$
 
 It's worth noting that this gradient shares the same shape as the parameters $\Theta$. In our case, this is a vector with 3 elements since our policy's $\Theta$ is also a vector with 3 elements.
 
-Each of the partial derivatives that constitute the gradient could be computed analytically using the chain rule, but for its explanitory power, we will use a numerical approximation to the gradient using finite differencing. Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
+Each of the partial derivatives that constitute the gradient could be computed analytically using the chain rule, but for its explanitory power, we will use a numerical approximation to the gradient using finite differencing.
+
+Finite differencing is a method of approximating the derivative of a function by evaluating the function at two different points by _slightly_ perturbing the input of one of the points and dividing the difference by the perturbation.
 
 In our case, the input we are perturbing are the parameters themselves.
 
@@ -549,9 +551,7 @@ Where $\Theta$ are the current policy parameters. $\alpha$ is the _learning rate
 
 The learning rate $\alpha$ and reward $R(x, a)$ are multiplied together to yield a scalar number. As you may recall, $R(x, a) > 0$ if $a$ was a good action to take while in state $x$. Otherwise, $R(x, a) \leq 0$.
 
-As a consequence, this scaling may cause the direction of the gradient flip, depending on the sign of $R(x, a)$. This means when $R(x, a) < 0$ we will move the policy's parameters in a direction which decreases the likelihood of $a$ occurring in state $x$. 
-
-Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a direction which increases the likelihood of $a$ occurring while in state $x$. 
+As a consequence, this scaling may cause the direction of the gradient flip, depending on the sign of $R(x, a)$. This means when $R(x, a) < 0$ we will move the policy's parameters in a direction which decreases the likelihood of $a$ occurring in state $x$. Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a direction which increases the likelihood of $a$ occurring while in state $x$. 
 
 <!-- Where
 
@@ -563,7 +563,7 @@ Conversely, when $R(x, a) > 0$ we will move the policy's parameters in a directi
  -->
 
 
-In essence that's it! We just repeat this sequence until our policy's actions converge to our optimization objective. Which in this case is to maximize the probability of the target action.
+In essence that's it! We just repeat this sequence until our policy's actions converge to our optimization objective. Which in this case is to maximize the probability of the target action. To restate, we can optimize our policy by following these steps:
 
 1. [evaluate the policy](#policy_definition) to get the probability distribution $pr$ of actions.
 2. [Sample an action](#action_sampling) $a$ from the distribution $pr$.
@@ -571,8 +571,6 @@ In essence that's it! We just repeat this sequence until our policy's actions co
 4. [Compute the gradient](#policy_gradient) $\nabla_{\Theta}pr_{a}$ of the action's probability with respect to the policy's parameters.
 5. Scale the gradient $\nabla_{\Theta}pr_{a}$ by $\alpha R(x, a)$, such that positive rewards move the policy in the direction of increasing the likelihood of the action, and negative rewards decrease the likelihood of the action.
 6. Repeat!
-
-Like I stated, this example is akin to a "Hello, World!" of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems.
 
 # Puck World!
 
@@ -691,8 +689,6 @@ $$
 $$
 \mathbf{pr_{y}} = [ 0.2, 0.3, 0.5 ]
 $$
-
-**A quick aside:** In the puck world example, you'll notice lots of $t$ subscripts. This is used to denote a variable that exists for a particular time-step or frame of the simulation.
 
 Now say the policy chose a specific action, which includes a choice of both a horizontal action and a vertical action:
 
@@ -872,6 +868,8 @@ puck_reward_cvs.addEventListener("mousemove", puck_reward_update_state);
 puck_reward_update_state({});
 </script>
 
+**A quick aside:** In the puck world example, you'll notice lots of $t$ subscripts. This is used to denote a variable that exists for a particular time-step or frame of the simulation.
+
 --------------------------------------------------------------------------------
 
 ## Optimization
@@ -904,19 +902,18 @@ animate_when_visible({id:"policy_gradient_montecarlo", fps:60},
 });
 </script>
 
-The illustration above shows what a trajectory looks like for the puck with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action, interacting with the environment and receiving a reward. The trajectory stores these values as well as the probability distribution output from the policy, this isn't strickly necessary, but it allows us to skip recomputing it when we optimize the policy.
-
+The illustration above shows what a trajectory looks like for the puck with a randomly initialized policy. As you can see from the animation, a trajectory consists of a sequence of states, each new state was generated by the policy choosing an action, interacting with the environment and receiving a reward. 
 $$
-\tau = \{ \mathbf{x_0}, \mathbf{pr_0}, a_0, r_0, \ldots \mathbf{x_{t-1}}, \mathbf{pr_{t-1}}, a_{t-1}, r_{t-1}\}
+\tau = \{ \mathbf{x_0}, a_0, r_0, \ldots \mathbf{x_{t-1}}, a_{t-1}, r_{t-1}\}
 $$
 
 Once a trajectory has been generated, we can compute the the policy's gradient of the probability of the action $pr_{a_t}$ taken for each time step $t$ **with respect to** the policy's parameters $\Theta$. This is done by summing the gradients of the probabilities of each action in the trajectory.
 
 $$
-\nabla_{\Theta} = \frac{1}{t} \sum_{t} \nabla_{\Theta}pr_{a_t} R(x_t, a_t)
+\nabla_{\Theta} = \frac{1}{T} \sum_{t} \nabla_{\Theta}pr_{a_t} R(x_t, a_t)
 $$
 
-Where we compute $\nabla_{\Theta}pr_{a_t}$, the gradient for each timestep $t$ as:
+Where $T$ is the number of timesteps in $\tau$ and we compute $\nabla_{\Theta}pr_{a_t}$, the gradient for each timestep $t$ as:
 
 $$
 \nabla_{\Theta}pr_{a_{t}} = \Large \begin{bmatrix}
@@ -947,7 +944,9 @@ $$
 
 ## Bringing it all together
 
-Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the puck reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the puck over 10 epochs. The puck's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
+Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the puck reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the puck over 10 trajectories. The puck's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
+
+If you'd like to study this example in isolation, please take a look at this [CodePen](https://codepen.io/mrpossoms/pen/qEBOENm) for a complete working sample!
 
 <canvas id="policy_gradient_ex2"></canvas>
 Average Reward per 10 Epochs
@@ -1008,6 +1007,7 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     }    
 })
 </script>
+
 
 ##### A Final Note
 
