@@ -4,7 +4,7 @@
 <script src="/js/pg.js"></script>
 
 <style>
-canvas {
+.no-scroll {
     width: 100%;
     height: 10em;
     touch-action: none;
@@ -582,7 +582,7 @@ Now that you have an understanding of the core ideas of Policy Gradient Methods.
 
 To begin, let's describe the environment. The environment will consist of a target 'x' at the center of the screen. The puck 'o' will be spawned at a random location and will be able to move in any direction. The puck's objective will be to reach the target 'x'.
 
-<canvas id="puck_env"></canvas>
+<canvas id="puck_env" class="no-scroll"></canvas>
 <script>
 let puck_env_cvs = document.getElementById('puck_env');
 let env_x = puck.initial_state([0,0], [puck_env_cvs.clientWidth, puck_env_cvs.clientHeight], false);
@@ -763,7 +763,7 @@ Once specific vertical and horizontal actions are sampled, the probability of th
 
 Below is an interactive illustration of how this policy reacts to different states. The policy parameters used have already been optimized to seek the target.
 
-<canvas id="puck_pol"></canvas>
+<canvas id="puck_pol" class="no-scroll"></canvas>
 ##### Horizontal Probability Distribution $\mathbf{pr_{x}}$
 <canvas id="puck_pol_hori"></canvas>
 ##### Vertical Probability Distribution $\mathbf{pr_{y}}$
@@ -830,7 +830,7 @@ $$
 dist(\mathbf{a}, \mathbf{b}) = \sqrt{(a_x - b_x)^2 + (a_y - b_y)^2}
 $$
 
-<canvas id="puck_reward"></canvas>
+<canvas id="puck_reward" class="no-scroll"></canvas>
 <script>
 let puck_reward_cvs = document.getElementById('puck_reward');
 let reward_x = puck.initial_state([0,0], [puck_reward_cvs.clientWidth, puck_reward_cvs.clientHeight], false);
@@ -922,10 +922,10 @@ $$
 \end{bmatrix}
 $$
 
-Which depends on the state of the system $\mathbf{x}$ and probability of the action $pr_a$ taken at time $t$.
+Which depends on the state of the policy's parameters $\Theta$ and probability of the action $pr_{a_t}$ taken at time $t$.
 
 $$
-pr_{a_t} = Pr_a(\mathbf{pr_t}, a_t)
+\pi(\Theta, \mathbf{x_t}) \rightarrow \mathbf{pr_t}
 $$
 
 $$
@@ -933,8 +933,9 @@ a_t \sim \mathbf{pr_t}
 $$
 
 $$
-\mathbf{pr_t} = \pi(\Theta, \mathbf{x_t})
+pr_{a_t} = Pr_a(\mathbf{pr_t}, a_t)
 $$
+
 
 Finally, we adjust the policy's parameters by taking a step in the direction of the gradient for the trajectory scaled by the reward and learning rate:
 
@@ -944,7 +945,7 @@ $$
 
 ## Bringing it all together
 
-Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the puck reaching the target. Below is a live example of how the policy parameters are optimized over time. The plot shows the average reward of the puck over 10 trajectories. The puck's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method.
+Now that we have all the pieces in place, we can optimize the policy to maximize the probability of the puck reaching the target. Below is a live example of this optimization process occurring. The plot shows the average reward of the puck over the last 10 trajectories. The puck's policy parameters are initialized with a bad policy, and then optimized using the policy gradient method and the setup described above.
 
 If you'd like to study this example in isolation, please take a look at this [CodePen](https://codepen.io/mrpossoms/pen/qEBOENm) for a complete working sample!
 
@@ -1011,7 +1012,7 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 
 ##### A Final Note
 
-The examples and discussions in this article are meant to provide a high-level overview of Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make the algorithm work well with complex problems. But this should give you a good starting intuition for the core ideas of Policy Gradient Methods.
+The examples and discussions in this article are meant to provide intuition and a high-level introduction to Policy Gradient Methods. In practice, there are many more considerations and optimizations that need to be made to make this class of algorithms work well with complex problems. 
 
 
 ## Summary
