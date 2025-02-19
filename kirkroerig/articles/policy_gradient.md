@@ -299,7 +299,7 @@ animate_when_visible({id:"sample_multinomial", fps:10},
     let frame_width = (frame) => { return frame.right - frame.left; };
     let frame_height = (frame) => { return frame.bottom - frame.top; };
 
-    let should_draw = dist_hist.reduce((a, b) => a + b) == 0;
+    let should_draw = dist_hist.reduce((a, b) => a + b) == 0 || ctx.wants_redraw;
     ctx.strokeStyle = color('black');
     if (should_draw) ctx.strokeRect(cdf_frame.left, cdf_frame.top, frame_width(cdf_frame), frame_height(cdf_frame));
     let x = cdf_frame.left;

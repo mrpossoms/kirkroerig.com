@@ -92,12 +92,15 @@ function ctx_cache(e)
 		e.width = rect.width * dpr;
 		e.height = rect.height * dpr;
 		CTX[e.id].scale(dpr, dpr);
-		e.style.width = `${rect.width}px`;
-		e.style.height = `${rect.height}px`;
+		//e.style.width = `${rect.width}px`;
+		//e.style.height = `${rect.height}px`;
 		// These are just to check for size changes and have no other impact
 		CTX[e.id].width = e.offsetWidth;
 		CTX[e.id].height = e.offsetHeight;
+		CTX[e.id].wants_redraw = true;
 		console.log("updated canvas size");
+	} else {
+		CTX[e.id].wants_redraw = false;
 	}
 
 	return CTX[e.id];
