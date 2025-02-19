@@ -4,9 +4,12 @@
 <script src="/js/pg.js"></script>
 
 <style>
-.no-scroll {
+canvas {
     width: 100%;
     height: 10em;
+}
+
+.no-scroll {
     touch-action: none;
 }
 
