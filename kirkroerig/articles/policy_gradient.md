@@ -369,8 +369,8 @@ Bringing all of this together, the JavaScript implementation of our policy looks
 ```javascript
 function pi(theta, x) {
     let z = matmul([x], theta);
-    let pr = softmax(z[0]);             // vector of action probabilities
-    let i = sample_multinomial(pr); // randomly sample an action from the distribution p
+    let pr = softmax(z[0]);         // vector of action probabilities
+    let i = sample_multinomial(pr); // randomly sample an action from the distribution pr
 
     return { pr: pr, a: i };
 }
@@ -379,7 +379,7 @@ function pi(theta, x) {
 
 ## How do we measure the *goodness* or *badness* of an action? <a name="reward"/>
 
-Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.https://en.wikipedia.org/wiki/Probability_distribution#Discrete_probability_distribution
+Now that we understand what a policy is, and how it can choose actions, we need to understand how we can measure the goodness or badness of an action.
 
 This is where the **reward function** comes in. The reward function takes as input the state and action then returns a scalar value which represents how _good_ or how _bad_ that action choice was for the given state. This scalar value is called the **reward**.
 
