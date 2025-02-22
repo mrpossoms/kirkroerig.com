@@ -33,6 +33,10 @@ class Article():
     def title(self):
         return self.path.stem.replace('_', ' ')
     
+    @property
+    def url(self):
+        return '/article/{}'.format(self.path.stem)
+
     def keywords(self, cache=True):
         self.text(cache)
         return self._keywords
@@ -44,10 +48,11 @@ class Article():
             lines = subprocess.Popen(["git", "log", "--follow", "--find-renames", "--diff-filter=A", "--", str(self.path)], stdout=subprocess.PIPE, cwd=files('kirkroerig')).communicate()[0].decode('utf-8').split('\n')
             for line in lines:
                 if 'Date:' in line:
-                    _, _, _, _, mo, day, _, yr, _ = line.split(' ')
+                    _, _, _, _, mo, day, time, yr, _ = line.split(' ')
                     self._posted = ' '.join([mo, day, yr])
                     try:
-                        self._date = datetime.date(int(yr), mos[mo], int(day))
+                        hr, mn, sc = time.split(':')
+                        self._date = datetime.datetime(int(yr), mos[mo], int(day), int(hr), int(mn), int(sc))
                     except ValueError:
                         pass
                     break

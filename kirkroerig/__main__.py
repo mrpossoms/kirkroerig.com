@@ -1,9 +1,11 @@
 import os
+
 from importlib.resources import files
 
 from flask import Flask
-from flask import render_template
-from flask import request
+from flask import render_template, request, make_response
+
+from genrss import GenRSS
 
 from .article import Article
 
@@ -105,12 +107,32 @@ def contact():
 def index():
 	return articles()
 
+@app.route("/rss.xml")
+def rss():
+	posts = filter_posts(keywords={'article'})
+	years = sorted([year for year in set([p._date.year for p in posts])], reverse=True)
+	posts = {year: [p for p in posts if p._date.year == year] for year in years}
+	rss = GenRSS('KirkRoerig.com', "http://www.kirkroerig.com/", "http://www.kirkroerig.com/rss.xml", author="Kirk Roerig")
+
+	for year in years:
+		for post in posts[year]:
+			rss.item(post.title, url=post.url, author="Kirk Roerig", pub_date=post.posted(), description="Short description")
+
+	response = make_response(rss.xml())
+	response.headers.set('Content-Type', 'application/rss+xml')
+
+	return response
+
 if __name__ == '__main__':
 	port = 8080
 	if 'PORT' in os.environ:
 		port = os.environ['PORT']
 
+	host = '127.0.0.1'
+	if 'HOST' in os.environ:
+		host = os.environ['HOST']
+
 	with open("/tmp/kirkroerig.pid", "w") as f:
 		f.write(str(os.getpid()))
 
-	app.run(port=port, host='0.0.0.0')
+	app.run(port=port, host=host)
