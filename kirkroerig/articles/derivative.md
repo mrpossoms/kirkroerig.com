@@ -32,10 +32,9 @@ function derivative(event) {
 
 	clear("derivative");
 
-	
-	let f = (x) => { return Math.sin(x); }//{ return Math.pow(x, 2) - 1; };
-	let slope = fin_diff(f, derivative_x, derivative_dx);
-	let df = (x) => { return slope * (x-derivative_x) + f(derivative_x); };
+	let f = (x) => { return Math.sin(x); }
+	let slope = (f(derivative_x + derivative_dx) - f(derivative_x)) / derivative_dx;
+	let df = (x) => { return slope * (x - derivative_x) + f(derivative_x); };
 
 	plot("derivative", (x, p) => { return 0; }, {'lineDash': [10, 10], 'strokeStyle': color('LightGray')});
 	plot("derivative", (x, p) => { return f(x); }, {});
@@ -43,17 +42,22 @@ function derivative(event) {
 
 	let ctx = ctx_cache(document.getElementById("derivative"));
 
-	ctx.beginPath();
-	ctx.setLineDash([10, 10]);
-	ctx.moveTo(px(ctx,derivative_x+derivative_dx), py(ctx,f(derivative_x+derivative_dx)));
-	ctx.lineTo(px(ctx,derivative_x+derivative_dx), py(ctx,0));
-	ctx.strokeStyle = color('LightGray');
-	ctx.stroke();
+	let vertical_dash = (x) => {
+		ctx.beginPath();
+		ctx.setLineDash([10, 10]);
+		ctx.moveTo(px(ctx,x), py(ctx,f(x)));
+		ctx.lineTo(px(ctx,x), py(ctx,0));
+		ctx.strokeStyle = color('LightGray');
+		ctx.stroke();
 
-	ctx.beginPath();
-	ctx.arc(px(ctx,derivative_x), py(ctx,f(derivative_x)), 3, 0, 2 * Math.PI);
-	ctx.fillStyle = color('LightGray');
-	ctx.fill();
+		ctx.beginPath();
+		ctx.arc(px(ctx,x), py(ctx,f(x)), 3, 0, 2 * Math.PI);
+		ctx.fillStyle = color('LightGray');
+		ctx.fill();
+	};
+
+	vertical_dash(derivative_x);
+	vertical_dash(derivative_x + derivative_dx);
 }
 derivative();
 </script>
