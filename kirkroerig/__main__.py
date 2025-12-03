@@ -123,6 +123,12 @@ def rss():
 
 	return response
 
+@app.route("/LMyto1RZRbR3UZHXbKzK7KBV7eQtyEHq/ld56")
+def ld56():
+    from importlib.resources import files
+    from pathlib import Path
+    return render_template("ld56.html", files=os.listdir(Path(files('kirkroerig')) / 'content/ld56'))
+
 if __name__ == '__main__':
 	port = 8080
 	if 'PORT' in os.environ:
