@@ -1,625 +1,601 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
-	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<style>
-			*{
-				font-family: Arial;
-				font-size: 14px;
-				/*color: #333;*/
-			}
-
-			body{
-				padding: 50px;
-			}
-			body:before{
-				position: absolute;
-				display: inline-block;
-				left: 50%;
-				-webkit-transform: rotate(45deg);
-				margin-left: -375px;
-				font-size: 750px;
-				color: #FEEBD3;
-				z-index: -1;
-				/*content: "[ ]";*/
-			}
-
-			a{
-				color: #F89A25;
-				/*font-weight: normal;*/
-			}
-
-			header{
-				font-size: 30px;
-			}
-
-			address, time{
-				float: right;
-				color: #999;
-			}
-
-			p{
-				max-width: 600px;
-				margin: 0 0 10px 0;
-			}
-
-			ul{
-				padding-left: 20px;
-				margin: 0;
-			}
-
-			section{
-				margin: 20px 0 10px 0;
-				break-inside: avoid;
-			}
-
-			h2{
-				margin: 20px 0 5px 0;
-				font-size: 14px;
-				font-weight: bold;
-			}
-			h2:before{
-				margin: 0;
-				color: #333;
-				content: "[";
-			}
-			h2:after{
-				margin: 0;
-				color: #333;
-				content: "]";
-			}
-
-			.name{
-				font-size: 30px;
-			}
-
-			.job-title {
-				font-size: 16px;
-			}
-
-			.job {
-				border-left: 2px solid #ccc;
-				border-right: 0;
-			}
-
-			.top-to-bottom {
-			    -webkit-border-image: -webkit-gradient(linear, 0, 100%, from(#FEEBD3), to(rgba(254, 235, 211, 0))) 1 100%;
-			    -webkit-border-image:
-			      -webkit-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
-			    -moz-border-image:
-			      -moz-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
-			    -o-border-image:
-			      -o-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
-			    border-image:
-			      linear-gradient(to bottom, #FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
-			}
-
-			.github {
-				width: 32px;
-				height: 32px;
-				position: absolute;
-				margin: 2px;
-			}
-
-			@media (min-width:800px) {
-				.ind-10{
-					margin-left: 10px;
-				}
-
-				.ind-20{
-					margin-left: 20px;
-				}
-
-				.ind-40{
-					margin-left: 40px;
-				}
-			}
-			@media (max-width:799px) {
-				.ind-10{
-					margin-left: 5px;
-				}
-
-				.ind-20{
-					margin-left: 10px;
-				}
-
-				.ind-40{
-					margin-left: 20px;
-				}
-			}
-
-			@media (min-width:800px) {
-				article{
-					margin-left: 10%;
-					width: 80%;
-				}
-			}
-			@media (max-width:799px) {
-				article{
-					margin-left: auto;
-					width: 100%;
-				}
-			}
-
-			@media (prefers-color-scheme: dark) {
-				#cvs {
-					background: #111;
-				}
-
-				path {
-					stroke: '#000';
-				}
-
-				h1, h2, h3, time{
-					background-color: #333;
-					color: #BBB;
-				}
-
-				li, p, footer {
-					color: #BBB;
-				}
-
-				article, footer, body {
-					background-color: #333;
-					color: #BBB;
-				}
-
-				time {
-					color: #666;
-				}
-
-				ol > li {
-					background-color: #444;
-					color: #BBB;
-				}
-
-				h1 > a{
-					color: #BBB;
-				}
-
-				line {
-				  stroke: #000;
-				}
-
-				line:hover {
-				  stroke: #555;
-				}
-
-				h2:before, h2:after{
-					color: #BBB;
-				}
-
-				b {
-					color:  #EEE;
-				}
-
-				.github {
-					background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDIxIDc5LjE1NDkxMSwgMjAxMy8xMC8yOS0xMTo0NzoxNiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RERCMUIwOUY4NkNFMTFFM0FBNTJFRTMzNTJEMUJDNDYiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RERCMUIwOUU4NkNFMTFFM0FBNTJFRTMzNTJEMUJDNDYiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU1MTc4QTJBOTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU1MTc4QTJCOTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+jUqS1wAAApVJREFUeNq0l89rE1EQx3e3gVJoSPzZeNEWPKgHoa0HBak0iHiy/4C3WvDmoZ56qJ7txVsPQu8qlqqHIhRKJZceesmhioQEfxTEtsoSpdJg1u/ABJ7Pmc1m8zLwgWTmzcw3L+/te+tHUeQltONgCkyCi2AEDHLsJ6iBMlgHL8FeoqokoA2j4CloRMmtwTmj7erHBXPgCWhG6a3JNXKdCiDl1cidVbXZkJoXQRi5t5BrxwoY71FzU8S4JuAIqFkJ2+BFSlEh525b/hr3+k/AklDkNsf6wTT4yv46KIMNpsy+iMdMc47HNWxbsgVcUn7FmLAzzoFAWDsBx+wVP6bUpp5ewI+DOeUx0Wd9D8F70BTGNjkWtqnhmT1JQAHcUgZd8Lo3rQb1LAT8eJVUfgGvHQigGp+V2Z0iAUUl8QH47kAA1XioxIo+bRN8OG8F/oBjwv+Z1nJgX5jpdzQDw0LCjsPmrcW7I/iHScCAEDj03FtD8A0EyuChHgg4KTlJQF3wZ7WELppnBX+dBFSVpJsOBWi1qiRgSwnOgoyD5hmuJdkWCVhTgnTvW3AgYIFrSbZGh0UW/Io5Vp+DQoK7o80pztWMemZbgxeNwCNwDbw1fIfgGZjhU6xPaJgBV8BdsMw5cbZoHsenwYFxkZzl83xTSKTiviCAfCsJLysH3POfC8m8NegyGAGfLP/VmGmfSChgXroR0RSWjEFv2J/nG84cuKFMf4sTCZqXuJd4KaXFVjEG3+tw4eXbNK/YC9oXXs3O8NY8y99L4BXY5cvLY/Bb2VZ58EOJVcB18DHJq9lRsKr8inyKGVjlmh29mtHs3AHfuhCwy1vXT/Nu2GKQt+UHsGdctyX6eQyNvc+5sfX9Dl7Pe2J/BRgAl2CpwmrsHR0AAAAASUVORK5CYII=");
-				}
-			}
-
-			@media (prefers-color-scheme: light) {
-				#cvs {
-					background: #EEE;
-				}
-
-				.github {
-					background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpFNTE3OEEyQTk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpFNTE3OEEyQjk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU1MTc4QTI4OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU1MTc4QTI5OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+m4QGuQAAAyRJREFUeNrEl21ojWEYx895TDPbMNlBK46IUiNmPvHBSUjaqc0H8pF5+aDUKPEBqU2NhRQpX5Rv5jWlDIWlMCv7MMSWsWwmb3tpXub4XXWdPHvc9/Gc41nu+nedc7/8r/99PffLdYdDPsvkwsgkTBwsA/PADJCnzX2gHTwBt8Hl7p537/3whn04XoDZDcpBlk+9P8AFcAghzRkJwPF4zGGw0Y9QS0mAM2AnQj77FqCzrtcwB1Hk81SYojHK4DyGuQ6mhIIrBWB9Xm7ug/6B/nZrBHBegrkFxoVGpnwBMSLR9EcEcC4qb8pP14BWcBcUgewMnF3T34VqhWMFkThLJAalwnENOAKiHpJq1FZgI2AT6HZtuxZwR9GidSHtI30jOrbawxlVX78/AbNfhHlomEUJJI89O2MqeE79T8/nk8nMBm/dK576hZgmA3cp/R4l9/UeSxiHLVIlNm4nFfT0bxyuIj7LHRTKai+zdJobwMKzcZSJb0ePV5PKN+BqAAKE47UlMnERELMM3EdYP/yrd+XYb2mOiYBiQ8OQnoRBlXrl9JZix7D1pHTazu4MoyBcnYamqAjIMTR8G4FT8LuhLsexXYYjICBiqhQBvYb6fLZIJCjPypVvaOoVAW2WcasCnL2Nq82xHJNSqlCeFcDshaPK0twkAhosjZL31QYw+1rlMpWGMArl23SBsZZO58F2tlJXmjOXS+s4WGvpMiBJT/I2PInZ6lIs9/hBsNS1hS6BG0DSqmYEDRlCXQrmy50P1oDRKTSegmNbUsA0zDMwRhPJXeCE3vWLPQMvan6X8AgIa1vcR4AkGZkDR4ejJ1UHpsaVI0g2LInpOsNFUud1rhxSV+fzC9Woz2EZkWQuja7/B+jUrgtIMpy9YCW4n4K41YfzRneW5E1KJTe4B2Zq1Q5EHEtj4U3AfEzR5SVY4l7QYQPJdN2as7RKBF0BPZqqH4VgMAMBL8Byxr7y8zCZiDlnOcEKIPmUpgB5Z2ww5RdOiiRiNajUmWda5IG6WbhsyY2fx6m8gLcoJDJFkH219M3We1+cnda93pfycZpIJEL/s/wSYADmOAwAQgdpBAAAAABJRU5ErkJggg==");
-				}
-
-				path {
-					stroke: '#DDD';
-				}
-
-				h1, h2, h3, time{
-					background-color: #FFF;
-					color: #000;
-				}
-
-				p {
-					color: #444;
-				}
-
-				article{
-					background-color: #FFF;
-				}
-
-				time {
-					color: #BBB;
-				}
-
-				h1 > a{
-					color: #000;
-				}
-
-				ol > li {
-					margin: 0;
-					padding: 0.25em;
-					float: left;
-				}
-
-				line {
-				  stroke: #DDD;
-				}
-
-				line:hover{
-				  stroke: #222;
-				}
-
-				.main-title, .tag-line{
-					color: #000;
-				}
-
-				.main-title:first-letter{
-					color: #000;
-				}
-			}
-
-			@media print {
-				*{
-					font-size: 10px;
-				}
-
-				header{
-					font-size: 18px;
-				}
-
-				h2{
-					font-size: 10px;
-				}
-
-				.name{
-					font-size: 18px;
-				}
-
-				.job-title {
-					font-size: 10px;
-				}
-			}
-
-			@page {
-				margin: 1cm;
-			}
-		</style>
-	</head>
-	<body>
-		<header>[<a class="name">KIRK</a>ROERIG] <!--<a href="https://github.com/mrpossoms" class="github"></a>--></header>
-		<address>
-			8712 Ranch Rd<br/>
-			Loveland, CO 80537<br/>
-			(616) 340-7000</br>
-			kirk@kirkroerig.com
-		</address>
-		<br/>
-		<article>
-			<h2><a>OBJECTIVE</a></h2>
-			<p>
-			<!--
-				To seek a challenging, meaningful, software
-				engineering position that utilizes a diverse technical skill
-				set, and will grant me the opportunity to grow as a problem
-				solver while helping my colleagues do the same.
-			-->
-			As a software engineer, I am driven by the pursuit of challenging, meaningful, and multidisciplinary
-			work. My interests include computer graphics, embedded systems, autonomy, and machine perception, particularly
-			when these domains are applied to robotic systems.
-			</p>
-
-			<!--
-			<h2><a>PERSONAL</a>PROJECTS</h2>
-			<ul>
-			<li><a href="http://www.kirkroerig.com/article/work_autonomous_car">www.kirkroerig.com/article/work_autonomous_car</a></li>
-			<li><a href="http://www.kirkroerig.com/article/work_lib_nn">www.kirkroerig.com/article/work_lib_nn</a></li>
-			<li><a href="http://www.kirkroerig.com/article/work_orbital_elements_calculator">www.kirkroerig.com/article/work_orbital_elements_calculator</a></li>
-			<li><a href="http://www.kirkroerig.com/article/work_projective">www.kirkroerig.com/article/work_projective</a></li>
-			<li><a href="http://www.kirkroerig.com/article/work_pwm_logger">www.kirkroerig.com/article/work_pwm_logger</a></li>
-			</ul>
-			-->
-
-			<h2><a>PROFESSIONAL</a>EXPERIENCE</h2>
-
-			<section class="job top-to-bottom">
-				<time>Jan 2024 - Present</time>
-				<b class="ind-20 job-title">AR/VR Software Engineer</b><br/>
-				<b class="ind-20">Apple</b></br>
-				<p class="ind-20">
-				Built and maintained various low-level system UI components within VisionOS and iOS.
-				</p>
-				<ul class="ind-40">
-					<li>Partnered in the design and implementation of a <b>C++</b> raytracer for the study and use of novel display systems.</li>
-					<li>Proposed and implemented compact ray packing datastructure, <b>reduced memory footprint</b> by 33%.</li>
-					<li>Built <b>Python</b> data collection pipeline for user-HID interaction, leveraged <b>fiducial tracking</b> for ground truth pose estimation</li>
-					<li>Added <b>HDR</b> and various color space support to system level image cache.</li>
-				</ul>
-			</section>
-			<section class="job top-to-bottom">
-				<time>Oct 2022 - Nov 2023</time>
-				<b class="ind-20 job-title">Software Engineer</b><br/>
-				<b class="ind-20">AIM Intelligent Machines</b></br>
-				<p class="ind-20">
-				Pushed to improve many aspects of the robotics stack for autonomous earth moving machines, from network architecture to firmware.
-				</p>
-				<ul class="ind-40">
-					<li>Refactored object detection system for concurrent execution of inference.</li>
-					<li>Drove process toward headless remote testing of autonomous systems via <b>SSH</b> and VPNs.</li>
-					<li>Developed cursory web-based UI in <b>Python</b> and <b>Flask</b> for machine control and orchestration.</li>
-					<li>Took ownership of <b>firmware</b>, spear-headed major refactoring effort.</li>
-					<li>Designed distributed geospatial <b>point-cloud</b> storage <b>Linux</b> service in <b>C++.</b></li>
-					<li>Redesigned <b>Protobuf</b> based machine representation and state protocols.</li>
-					<li>Designed <b>algorithms</b> using <b>PyTorch</b> to characterize machine events from operating data.</li>
-					<li><b>Interviewed</b> and evaluated SWE candidates.</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>May 2021 - Oct 2022</time>
-				<b class="ind-20 job-title">Perception Infrastructure Engineer</b><br/>
-				<b class="ind-20">Anduril Industries</b></br>
-				<p class="ind-20">
-				Supported the edge computing perception stack for Anduril's Sentry Towers.
-				</p>
-				<ul class="ind-40">
-					<li>Wrote <b>Linux</b> systems software in <b>C++</b> for autonomous systems.</li>
-					<li>Gained familiarity with <b>nixOS</b>, and <b>Halide</b>.</li>
-					<li>Used data and analysis based approaches to formulate solutions to problems.</li>
-					<li>Improved robustness & precision of geometric point containment and intersection testing code.</li>
-					<li>Created <b>LoG</b> based focus quality metric for MWIR imagery.</li>
-					<li>Implemented ML driven autofocus controller for fine tuning camera focus.</li>
-					<li>Improved IR contrast equalization algorithm (CLAHE) using temporal filtering.</li> 
-					<li><b>Interviewed</b> and evaluated SWE candidates.</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Feb 2020 - May 2021 (full time)</time><br/>
-				<time>May 2021 - Sept 2022 (contract)</time>
-				<b class="ind-20 job-title">Lead Software Engineer</b><br/>
-				<b class="ind-20">Advanced Space LLC</b></br>
-				<p class="ind-20">
-				Fostered an approach to implementation of flight software (FSW) applications from
-				a standpoint of modularity and reuse. Introduced test driven development and model-based
-				design as the default approach to building FSW systems for our NASA-funded SBIR projects.
-				</p>
-				<ul class="ind-40">
-					<li>Utilized NASA's <b>Core Flight System</b> (cFS) to implement spacecraft FSW systems.</li> 
-					<li>Designed and implemented a flexible FSW-friendly <b>spacecraft dynamics propagator</b>.</li>
-					<li>Influenced the design and implementation of proprietary astronomical data storage format (XB).</li>
-					<li>Used <b>UML</b> to generate detailed designs for various FSW projects.</li>
-					<li>Rearchitected FSW for the cis-lunar autonomous positioning system (<a href="https://techport.nasa.gov/projects/106820">CAPS</a>).</li>
-					<li>Created interview process and programming assessment.</li>
-					<li>Designed and implemented flight software library (<a href="https://techport.nasa.gov/projects/125674">NNEP</a>) which leverages optimal control theory and neural networks to compute fuel optimal tracjectory correction maneuvers for electric propulsion space craft</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Nov 2018 - Dec 2019</time>
-				<b class="ind-20 job-title">Lead Robotics Engineer</b><br/>
-				<b class="ind-20">ROV3R LLC</b></br>
-				<p class="ind-20">
-				Led software design and engineering effort for outdoor autonomous
-				platform in the lawn-care space.
-				</p>
-				<ul class="ind-40">
-					<li>Implemented <b>IMU</b> and <b>LiDAR</b> interface software</li>
-					<li>Defined dynamics model and implemented a representative <b>Kalman filter</b></li>
-					<li>Implemented and tuned <b>PID controls systems</b></li>
-					<li>Implemented <b>point cloud</b> analysis routines</li>
-					<li>Performed preparatory <b>VSLAM</b> implementation research.</li>
-					<li>Wrote <b>OpenGL</b> <b>telemetry</b> visualization software</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Nov 2018 - Mar 2019</time>
-				<b class="ind-20 job-title">Graphics Pipeline Engineer</b><br/>
-				<b class="ind-20">Mersive Technologies Inc.</b></br>
-				<p class="ind-20">
-				Worked on the rendering pipeline for Mersive's product 'Solstice' and across team boundaries on R&D projects.
-				</p>
-				<ul class="ind-40">
-					<li>Adapted existing <b>C++ 11</b>, <b>DirectX 10</b> and <b>OpenGL</b> based rendering engine to function across multiple displays</li>
-					<li>Optimized rendering and animation software</li>
-					<li>Collaborated with R&D to prototype an on-line, <b>machine-learning</b> system to ascertain coarse user location using ambient radio signals</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>May 2015 - April 2018</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<p class="ind-20">
-				Delivered software development solutions across industries, specializing in embedded systems, mobile applications, and graphical rendering.
-				</p>
-				<ul class="ind-40">
-					<li>Developed <b>Linux</b>-based systems and firmware for proprietary hardware, including embedded <b>C/C++</b>, <b>buildroot</b>, and <b>kernel module</b> development.</li>
-					<li>Built and enhanced multimedia control panels, integrating <b>CAN/RS-232</b> protocols and <b>cross-compiling</b> C++ for ARM-based devices.</li>
-					<li>Designed <b>iOS</b> mobile applications with advanced animations, custom keyboards, and BLE communication using <b>Objective-C</b>, <b>Swift</b>, and <b>CoreAnimation</b>.</li>
-					<li>Upgraded rendering engines and created multi-platform drawing systems using <b>OpenGL</b>, <b>Metal</b>, and iOS touch prediction.</li>
-					<li>Supported asset tracking systems with <b>MQTT</b> and <b>BLE</b>, and contributed to diagnostic tools with Bluetooth communication.</li>
-					<li>Utilized tools like GitLab for version control and <b>uBoot</b> for system bootloader configuration.</li>
-				</ul>
-			</section>
-
-<!--
-			<section class="job top-to-bottom">
-				<time>September 2017 - April 2018</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Code Blue Corporation</b></br>
-				<p class="ind-20">
-				Played an instrumental role in the development of Code Blue's VoIP push-for-help phone system.
-				</p>
-				<ul class="ind-40">
-					<li>Aided in development of EcOS, Linux distro for proprietary i.MX6 based hardware</li>
-					<li>Gained familiarity with <b>buildroot</b></li>
-					<li>Embedded Linux Systems programming in <b>C</b> and <b>C++</b></li>
-					<li><b>Linux kernel module</b> development</li>
-					<li>Issue tracking using <b>GitLab</b>, version control with <b>Git</b></li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>June 2016 - March 2017</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Open Systems Technologies - Firefly</b></br>
-				<p class="ind-20">
-				Aided in continued development of a multi-media control panel for recreational vehicles.
-				</p>
-				<ul class="ind-40">
-					<li>Integrated bus access (<b>CAN</b>, <b>RS-232</b>) into web-based platform</li>
-					<li><b>Cross-compiled C++ node.js</b> modules for ARM Cortex-A9</li>
-					<li>Gained familiarity working with <b>uBoot</b> and <b>Varasite i.MX6 SoM</b></li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Feb - Oct 2016</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Modustri LLC</b></br>
-				<p class="ind-20">
-				Contracted to assist with app polish and special R&D projects.
-				</p>
-				<ul class="ind-40">
-					<li>Used <b>CoreAnimation</b> and <b>Swift</b> to construct animations for existing iOS app</li>
-					<li>Developed firmware to evaluate the Nordic NRF51 for use as a <b>BLE</b> beacon</li>
-					<li>Co-led design and development of Linux system programs for an ARM based SBC used in a <b>Bluetooth</b> based asset tracking system</li>
-					<li>Implemented <b>MQTT</b> for data collection.</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>March - June 2016</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Adonit</b></br>
-				<p class="ind-20">
-				Contracted to update SDK rendering approach and demos.
-				</p>
-				<ul class="ind-40">
-					<li>Brought on to update the <b>OpenGL</b> rendering engine for the JotTouch SDK</li>
-					<li>Added capability to accommodate iOS's touch prediction</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Jan 2016 - Sep 2017</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Wimage LLC</b></br>
-				<p class="ind-20">
-				Contracted to maintain and add functionality to existing educational app for children.
-				</p>
-				<ul class="ind-40">
-					<li>Built a custom iOS keyboard</li>
-					<li>Influenced UI design</li>
-					<li>Continued support of Wimage app</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>Oct - Nov 2015</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Open Systems Technologies - LiftMaster</b></br>
-				<p class="ind-20">
-				Contracted to assist in the development of a diagnostic tool for service technicians of LiftMaster gate operators.
-				</p>
-				<ul class="ind-40">
-					<li>Native app written in <b>Objective-C</b></li>
-					<li>Developed <b>graphs</b> and <b>visualizations</b> for diagnostic data</li>
-					<li>Helped to design <b>Bluetooth</b> communication pattern around lower-level message structure</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>May - Oct 2015</time>
-				<b class="ind-20 job-title">Contract Software Engineer</b><br/>
-				<b class="ind-20">Co Interactive</b><br/>
-				<p class="ind-20">
-				Contracted to maintain existing software and aid in prototyping efforts of new products.
-				</p>
-				<ul class="ind-40">
-					<li>Helped to maintain the existing app <a href="http://www.adonit.net/forge/">Forge</a></li>
-					<li>Spear headed the design and development of a new <b>multi-platform</b> drawing engine</li>
-					<li>Began working with <b>Metal</b> graphics API</li>
-				</ul>
-		</section>
--->
-			<section class="job top-to-bottom">
-				<time>March - September 2015</time>
-				<b class="ind-20 job-title">Game Designer and Programmer</b><br/>
-				<b class="ind-20">Projective</b>
-				<p class="ind-20">Conceived, prototyped and designed <a href="http://www.projectivegame.com">Projective</a>, an <b>augmented reality</b> game for iOS</p>
-				<ul class="ind-40">
-					<li>Designed and wrote object oriented game engine</li>
-					<li>Wrote <b>GLSL</b> code and designed effects</li>
-					<li>Utilized device <b>IMU</b> and <b>quaternions</b> to produce high quality view transformations</li>
-					<li>Successfully released on the Apple App Store</li>
-				</ul>
-			</section>
-
-			<section class="job top-to-bottom">
-				<time>August 2014 - March 2015</time>
-				<b class="ind-20 job-title">Computer Graphics Engineer</b><br/>
-				<b class="ind-20">Adonit</b><br/>
-				<p class="ind-20">
-				Played a crucial role in the release of <a href="http://www.adonit.net/forge/">Forge</a>, a drawing app that earned editors choice on the app store.
-				</p>
-				<ul class="ind-40">
-					<li>Learned <b>Objective-C</b> and the <b>Cocoa Framework</b></li>
-					<li>Applied <b>linear algebra</b> and <b>matrix transformations</b></li>
-					<li>Wrote optimized application and <b>GLSL</b> shader code</li>
-				</ul>
-			</section>
-
-			<!--
-			<section class="job top-to-bottom">
-				<time>May 2013 - August 2014</time>
-				<b class="ind-20 job-title">Application Development Consultant</b><br/>
-				<b class="ind-20">Open Systems Technologies (OST)</b><br/>
-				<p class="ind-20">
-				Worked with enterprise customers directly to ascertain their needs
-				and implemented changes in new and existing software.
-				</p>
-				<ul class="ind-40">
-					<li>Planned and lead the development of a high visibility website</li>
-					<li>Wrote a <b>TCP</b> server to consume data from a client's time and attendance terminals</li>
-					<li>Created <b>data visualization</b> components using <b>SVG</b></li>
-					<li>Experience working through an <b>agile workflow</b></li>
-				</ul>
-			</section>
-			-->
-
-			<section>
-				<!--
-				<h2><a>SKILLS</a></h2>
-				<ul>
-					<li><b>Soldering</b></li>
-					<li><b>SolidWorks</b>, <b>FreeCAD</b> and <b>3D printing</b></li>
-					<li>Experience operating <b>bench-top equipment</b> trouble shooting circuits</li>
-					<li>Reading <b>schematics</b> and <b>data-sheets</b></li>
-					<li>Solid <b>3D mathematics</b> skills</li>
-				</ul>
-				-->
-
-				<h2><a>CERTIFICATIONS</a></h2>
-				<ul>
-					<li>Machine Learning by Stanford University on Coursera. Certificate earned on Saturday, July 8, 2017</li>
-					<li>Convolutional Neural Networks on Coursera. Certificate earned on Wednesday, May 30, 2018</li>
-					<li>Sequence Models on Coursera. Certificate earned on Sunday, July 1, 2018</li>
-					<li>Structuring Machine Learning Projects on Coursera. Certificate earned on Saturday, April 7, 2018</li>
-					<li>Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization  on Coursera. Certificate earned on Sunday, March 18, 2018</li>
-				</ul>
-
-				<h2><a>PATENTS</a></h2>
-				<ul>
-					<li>Systems and methods to determine room occupancy. United States Patent US20200348388A1</li>
-				</ul>
-
-				<h2><a>EDUCATION</a></h2>
-				<span>
-					<b>Michigan Technological University</b><br/>
-					<b>B.S. Computer Science</b></br>
-					Houghton, Michigan</b>
-					Graduated May 2013<br/>
-				</span>
-			</section>
-
-		</article>
-	</body>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            *{
+                font-family: Arial;
+                font-size: 14px;
+                /*color: #333;*/
+            }
+
+            body{
+                padding: 50px;
+            }
+            body:before{
+                position: absolute;
+                display: inline-block;
+                left: 50%;
+                -webkit-transform: rotate(45deg);
+                margin-left: -375px;
+                font-size: 750px;
+                color: #FEEBD3;
+                z-index: -1;
+                /*content: "[ ]";*/
+            }
+
+            a{
+                color: #F89A25;
+                /*font-weight: normal;*/
+            }
+
+            header{
+                font-size: 30px;
+            }
+
+            address, time{
+                float: right;
+                color: #999;
+            }
+
+            p{
+                max-width: 600px;
+                margin: 0 0 10px 0;
+            }
+
+            ul{
+                padding-left: 20px;
+                margin: 0;
+            }
+
+            section{
+                margin: 20px 0 10px 0;
+                break-inside: avoid;
+            }
+
+            h2{
+                margin: 20px 0 5px 0;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            h2:before{
+                margin: 0;
+                color: #333;
+                content: "[";
+            }
+            h2:after{
+                margin: 0;
+                color: #333;
+                content: "]";
+            }
+
+            .name{
+                font-size: 30px;
+            }
+
+            .job-title {
+                font-size: 16px;
+            }
+
+            .job {
+                border-left: 2px solid #ccc;
+                border-right: 0;
+            }
+
+            .top-to-bottom {
+                -webkit-border-image: -webkit-gradient(linear, 0, 100%, from(#FEEBD3), to(rgba(254, 235, 211, 0))) 1 100%;
+                -webkit-border-image:
+                  -webkit-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
+                -moz-border-image:
+                  -moz-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
+                -o-border-image:
+                  -o-linear-gradient(#FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
+                border-image:
+                  linear-gradient(to bottom, #FEEBD3, rgba(254, 235, 211, 0)) 1 100%;
+            }
+
+            .github {
+                width: 32px;
+                height: 32px;
+                position: absolute;
+                margin: 2px;
+            }
+
+            @media (min-width:800px) {
+                .ind-10{
+                    margin-left: 10px;
+                }
+
+                .ind-20{
+                    margin-left: 20px;
+                }
+
+                .ind-40{
+                    margin-left: 40px;
+                }
+            }
+            @media (max-width:799px) {
+                .ind-10{
+                    margin-left: 5px;
+                }
+
+                .ind-20{
+                    margin-left: 10px;
+                }
+
+                .ind-40{
+                    margin-left: 20px;
+                }
+            }
+
+            @media (min-width:800px) {
+                article{
+                    margin-left: 10%;
+                    width: 80%;
+                }
+            }
+            @media (max-width:799px) {
+                article{
+                    margin-left: auto;
+                    width: 100%;
+                }
+            }
+
+            @media (prefers-color-scheme: dark) {
+                #cvs {
+                    background: #111;
+                }
+
+                path {
+                    stroke: '#000';
+                }
+
+                h1, h2, h3, time{
+                    background-color: #333;
+                    color: #BBB;
+                }
+
+                li, p, footer {
+                    color: #BBB;
+                }
+
+                article, footer, body {
+                    background-color: #333;
+                    color: #BBB;
+                }
+
+                time {
+                    color: #666;
+                }
+
+                ol > li, span {
+                    background-color: #444;
+                    color: #BBB;
+                }
+
+                h1 > a{
+                    color: #BBB;
+                }
+
+                line {
+                  stroke: #000;
+                }
+
+                line:hover {
+                  stroke: #555;
+                }
+
+                h2:before, h2:after{
+                    color: #BBB;
+                }
+
+                b {
+                    color:  #EEE;
+                }
+
+                .github {
+                    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDIxIDc5LjE1NDkxMSwgMjAxMy8xMC8yOS0xMTo0NzoxNiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RERCMUIwOUY4NkNFMTFFM0FBNTJFRTMzNTJEMUJDNDYiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RERCMUIwOUU4NkNFMTFFM0FBNTJFRTMzNTJEMUJDNDYiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU1MTc4QTJBOTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU1MTc4QTJCOTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+jUqS1wAAApVJREFUeNq0l89rE1EQx3e3gVJoSPzZeNEWPKgHoa0HBak0iHiy/4C3WvDmoZ56qJ7txVsPQu8qlqqHIhRKJZceesmhioQEfxTEtsoSpdJg1u/ABJ7Pmc1m8zLwgWTmzcw3L+/te+tHUeQltONgCkyCi2AEDHLsJ6iBMlgHL8FeoqokoA2j4CloRMmtwTmj7erHBXPgCWhG6a3JNXKdCiDl1cidVbXZkJoXQRi5t5BrxwoY71FzU8S4JuAIqFkJ2+BFSlEh525b/hr3+k/AklDkNsf6wTT4yv46KIMNpsy+iMdMc47HNWxbsgVcUn7FmLAzzoFAWDsBx+wVP6bUpp5ewI+DOeUx0Wd9D8F70BTGNjkWtqnhmT1JQAHcUgZd8Lo3rQb1LAT8eJVUfgGvHQigGp+V2Z0iAUUl8QH47kAA1XioxIo+bRN8OG8F/oBjwv+Z1nJgX5jpdzQDw0LCjsPmrcW7I/iHScCAEDj03FtD8A0EyuChHgg4KTlJQF3wZ7WELppnBX+dBFSVpJsOBWi1qiRgSwnOgoyD5hmuJdkWCVhTgnTvW3AgYIFrSbZGh0UW/Io5Vp+DQoK7o80pztWMemZbgxeNwCNwDbw1fIfgGZjhU6xPaJgBV8BdsMw5cbZoHsenwYFxkZzl83xTSKTiviCAfCsJLysH3POfC8m8NegyGAGfLP/VmGmfSChgXroR0RSWjEFv2J/nG84cuKFMf4sTCZqXuJd4KaXFVjEG3+tw4eXbNK/YC9oXXs3O8NY8y99L4BXY5cvLY/Bb2VZ58EOJVcB18DHJq9lRsKr8inyKGVjlmh29mtHs3AHfuhCwy1vXT/Nu2GKQt+UHsGdctyX6eQyNvc+5sfX9Dl7Pe2J/BRgAl2CpwmrsHR0AAAAASUVORK5CYII=");
+                }
+            }
+
+            @media (prefers-color-scheme: light) {
+                #cvs {
+                    background: #EEE;
+                }
+
+                .github {
+                    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpFNTE3OEEyQTk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpFNTE3OEEyQjk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU1MTc4QTI4OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU1MTc4QTI5OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+m4QGuQAAAyRJREFUeNrEl21ojWEYx895TDPbMNlBK46IUiNmPvHBSUjaqc0H8pF5+aDUKPEBqU2NhRQpX5Rv5jWlDIWlMCv7MMSWsWwmb3tpXub4XXWdPHvc9/Gc41nu+nedc7/8r/99PffLdYdDPsvkwsgkTBwsA/PADJCnzX2gHTwBt8Hl7p537/3whn04XoDZDcpBlk+9P8AFcAghzRkJwPF4zGGw0Y9QS0mAM2AnQj77FqCzrtcwB1Hk81SYojHK4DyGuQ6mhIIrBWB9Xm7ug/6B/nZrBHBegrkFxoVGpnwBMSLR9EcEcC4qb8pP14BWcBcUgewMnF3T34VqhWMFkThLJAalwnENOAKiHpJq1FZgI2AT6HZtuxZwR9GidSHtI30jOrbawxlVX78/AbNfhHlomEUJJI89O2MqeE79T8/nk8nMBm/dK576hZgmA3cp/R4l9/UeSxiHLVIlNm4nFfT0bxyuIj7LHRTKai+zdJobwMKzcZSJb0ePV5PKN+BqAAKE47UlMnERELMM3EdYP/yrd+XYb2mOiYBiQ8OQnoRBlXrl9JZix7D1pHTazu4MoyBcnYamqAjIMTR8G4FT8LuhLsexXYYjICBiqhQBvYb6fLZIJCjPypVvaOoVAW2WcasCnL2Nq82xHJNSqlCeFcDshaPK0twkAhosjZL31QYw+1rlMpWGMArl23SBsZZO58F2tlJXmjOXS+s4WGvpMiBJT/I2PInZ6lIs9/hBsNS1hS6BG0DSqmYEDRlCXQrmy50P1oDRKTSegmNbUsA0zDMwRhPJXeCE3vWLPQMvan6X8AgIa1vcR4AkGZkDR4ejJ1UHpsaVI0g2LInpOsNFUud1rhxSV+fzC9Woz2EZkWQuja7/B+jUrgtIMpy9YCW4n4K41YfzRneW5E1KJTe4B2Zq1Q5EHEtj4U3AfEzR5SVY4l7QYQPJdN2as7RKBF0BPZqqH4VgMAMBL8Byxr7y8zCZiDlnOcEKIPmUpgB5Z2ww5RdOiiRiNajUmWda5IG6WbhsyY2fx6m8gLcoJDJFkH219M3We1+cnda93pfycZpIJEL/s/wSYADmOAwAQgdpBAAAAABJRU5ErkJggg==");
+                }
+
+                path {
+                    stroke: '#DDD';
+                }
+
+                h1, h2, h3, time, span{
+                    background-color: #FFF;
+                    color: #000;
+                }
+
+                p {
+                    color: #444;
+                }
+
+                article{
+                    background-color: #FFF;
+                }
+
+                time {
+                    color: #BBB;
+                }
+
+                h1 > a{
+                    color: #000;
+                }
+
+                ol > li {
+                    margin: 0;
+                    padding: 0.25em;
+                    float: left;
+                }
+
+                line {
+                  stroke: #DDD;
+                }
+
+                line:hover{
+                  stroke: #222;
+                }
+
+                .main-title, .tag-line{
+                    color: #000;
+                }
+
+                .main-title:first-letter{
+                    color: #000;
+                }
+            }
+
+            @media print {
+                *{
+                    font-size: 10px;
+                }
+
+                header{
+                    font-size: 18px;
+                }
+
+                h2{
+                    font-size: 10px;
+                }
+
+                .name{
+                    font-size: 18px;
+                }
+
+                .job-title {
+                    font-size: 10px;
+                }
+
+                .github {
+                    display: none;
+                }
+            }
+
+            @page {
+                margin: 1cm;
+            }
+        </style>
+    </head>
+    <body>
+        <header>[<a class="name">KIRK</a>ROERIG] <a href="https://github.com/mrpossoms" class="github"></a></header>
+        <address>
+            8712 Ranch Rd<br/>
+            Loveland, CO 80537<br/>
+            (616) 340-7000</br>
+            kirk@roerig.io
+        </address>
+        <br/>
+        <article>
+            <h2><a>OBJECTIVE</a></h2>
+            <p>
+                To seek a challenging, meaningful, software
+                engineering position that utilizes a diverse technical skill
+                set, and will grant me the opportunity to grow as a problem
+                solver while helping my colleagues do the same.
+            </p>
+
+            <h2><a>PATENTS</a></h2>
+            <ul>
+                <li>Almanac of neural network models. WO2025096598A1</li>
+                <li>Incremental neural network model inference. WO2025090614A1</li>
+                <li>Systems and methods to determine room occupancy. United States Patent US20200348388A1</li>
+            </ul>
+
+            <h2><a>PROFESSIONAL</a>EXPERIENCE</h2>
+
+
+            <section class="job top-to-bottom">
+                
+                <time>Jan 2024 - present</time>
+                
+                <b class="ind-20 job-title">AR/VR Software Engineer</b><br/>
+                <b class="ind-20">Apple</b></br>
+                <p class="ind-20">
+                
+                Member of an OS architecture team solving complex cross-platform systems problems
+involving graphics, simulation, hardware interaction, and performance optimization.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Designed and implemented a high-performance <b>C++</b> ray-tracing simulator used to model lenticular display optics.</li>
+                
+                    <li>Created a compact ray-packing data structure, <b>reducing memory usage by 33%</b>.</li>
+                
+                    <li>Built <b>Python</b> data-collection tooling and executed user studies contributing to a major visionOS interaction feature.</li>
+                
+                    <li>Added HDR and new rendering capabilities for macOS/iOS “Liquid Glass” UI redesign.</li>
+                
+                    <li>Contributed across large <b>C</b>, <b>C++</b>, <b>Objective-C</b> and <b>Swift</b> codebases focusing on performance, correctness, and systems-level reliability.</li>
+                
+                    <li>Built power/performance monitoring pipelines for upcoming interactive and productivity features.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>Oct 2022 - Sep 2023</time>
+                
+                <b class="ind-20 job-title">Software Engineer</b><br/>
+                <b class="ind-20">AIM Intelligent Machines</b></br>
+                <p class="ind-20">
+                
+                Improved core robotics systems for autonomous earth-moving platforms, including
+networking, firmware, telemetry, and distributed perception.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Led build-out of headless, remote testing workflows using <b>SSH</b>, VPNs, and automated telemetry.</li>
+                
+                    <li>Designed and implemented distributed telemetry & networking systems using <b>UDP</b>, <b>MQTT</b>, and <b>ZeroMQ</b>.</li>
+                
+                    <li>Owned major firmware refactoring effort in <b>C/C++</b> to improve reliability and modularity.</li>
+                
+                    <li>Built a <b>Linux</b> service for distributed geospatial <b>point-cloud</b> storage and retrieval.</li>
+                
+                    <li>Redesigned <b>Protobuf</b>-based machine-state models and messaging protocols.</li>
+                
+                    <li>Developed algorithms to detect anomalies and characterize operational events from machine data.</li>
+                
+                    <li>Interviewed and evaluated robotics/software engineering candidates.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>May 2021 - Sep 2022</time>
+                
+                <b class="ind-20 job-title">Perception Infrastructure Engineer</b><br/>
+                <b class="ind-20">Anduril Industries</b></br>
+                <p class="ind-20">
+                
+                Supported edge-compute perception systems for autonomous surveillance towers,
+improving robustness, geometry pipelines, and imaging algorithms.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Built <b>Linux</b> systems-level C++ software for autonomous perception on constrained hardware.</li>
+                
+                    <li>Improved geometric point-containment and intersection algorithms for higher-confidence detections.</li>
+                
+                    <li>Developed <b>LoG</b>-based focus-quality metrics for MWIR sensors.</li>
+                
+                    <li>Implemented ML-based autofocus controller for long-range imaging.</li>
+                
+                    <li>Enhanced IR CLAHE contrast equalization via temporal filtering.</li>
+                
+                    <li>Participated in hiring for perception and systems engineering roles.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>Feb 2020 - 2022</time>
+                
+                <b class="ind-20 job-title">Lead Flight Software Engineer</b><br/>
+                <b class="ind-20">Advanced Space LLC</b></br>
+                <p class="ind-20">
+                
+                Led the design of modular flight-software systems for NASA-funded missions,
+adopting model-based design and test-driven development for high-reliability embedded autonomy.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Developed spacecraft FSW modules in <b>C/C++</b> using NASA’s <b>cFS</b> architecture.</li>
+                
+                    <li>Designed and implemented a flexible <b>dynamics propagator</b> for embedded flight use.</li>
+                
+                    <li>Rearchitected FSW for the cis-lunar autonomous positioning system (<a href="https://www.sbir.gov/node/1561571">CAPS</a>) for the lunar orbiter <a href="https://www.nasa.gov/directorates/spacetech/small_spacecraft/capstone">CAPSTONE</a></li>
+                
+                    <li>Influenced a proprietary astronomical data format (XB) design.</li>
+                
+                    <li>Created interview processes and technical assessments for embedded autonomy roles.</li>
+                
+                    <li>Implemented <b>NNEP</b>, a library using optimal control & neural networks for fuel-optimal trajectory corrections.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>Nov 2018 - Dec 2020</time>
+                
+                <b class="ind-20 job-title">Lead Robotics Engineer</b><br/>
+                <b class="ind-20">ROV3R LLC</b></br>
+                <p class="ind-20">
+                
+                Led robotics software development for an outdoor autonomous lawn-care robot,
+covering state estimation, controls, perception, and system integration.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Implemented <b>C++</b> autonomy stack on embedded Linux.</li>
+                
+                    <li>Integrated <b>IMU</b> and <b>LiDAR</b> drivers and perception pipelines.</li>
+                
+                    <li>Designed system dynamics and implemented a Kalman filter for state estimation.</li>
+                
+                    <li>Built and tuned <b>PID control</b> loops for actuators.</li>
+                
+                    <li>Created point-cloud processing and preliminary VSLAM experimentation.</li>
+                
+                    <li>Built <b>OpenGL</b>-based telemetry visualization tools.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>Nov 2018 - Mar 2019</time>
+                
+                <b class="ind-20 job-title">Graphics Pipeline Engineer</b><br/>
+                <b class="ind-20">Mersive Technologies</b></br>
+                <p class="ind-20">
+                
+                Worked on rendering optimizations and cross-display graphics integration.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Extended C++/DirectX/OpenGL engine for multi-display rendering.</li>
+                
+                    <li>Optimized animation and rendering pipelines.</li>
+                
+                    <li>Prototyped ML-based coarse localization via ambient RF signals.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>2015 - 2018</time>
+                
+                <b class="ind-20 job-title">Contract Software Engineer</b><br/>
+                <b class="ind-20">Contract Engineering (Various Companies)</b></br>
+                <p class="ind-20">
+                
+                Contracted across multiple companies to build embedded systems, firmware, graphics software,
+sensor integrations, and early-stage robotics prototypes.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>Embedded Linux development (Buildroot, kernel modules, device integration).</li>
+                
+                    <li>Firmware and BLE development (Nordic NRF51, custom sensor nodes).</li>
+                
+                    <li>Implemented CAN/RS-232 integrations for vehicle control systems.</li>
+                
+                    <li>Built OpenGL/Metal rendering features and optimized mobile visualization pipelines.</li>
+                
+                    <li>Worked on early AR/graphics prototypes, sensor fusion routines, and UI/telemetry tools.</li>
+                
+                    <li>Developed MQTT and Bluetooth communication stacks for real-time data systems.</li>
+                
+                
+                </ul>
+            </section>
+
+            <section class="job top-to-bottom">
+                
+                <time>2013 - 2015</time>
+                
+                <b class="ind-20 job-title">Application Development Consultant / Early Engineering Roles</b><br/>
+                <b class="ind-20">Earlier Roles</b></br>
+                <p class="ind-20">
+                
+                Early professional work across graphics, web systems, mobile apps, and data visualization
+prior to specializing in robotics and autonomy.
+
+                
+                </p>
+                
+                <ul class="ind-40">
+                
+                    <li>C#</li>
+                
+                    <li>node.js</li>
+                
+                    <li>graphics</li>
+                
+                    <li>web applications</li>
+                
+                    <li>visualization</li>
+                
+                
+                </ul>
+            </section>
+
+
+
+            <section>
+                <h2><a>SKILLS</a></h2>
+                <ul>
+                    <li>SMD and through-hole soldering</b></li>
+                    <li><b>SolidWorks</b>, <b>FreeCAD</b> and <b>3D printing</b></li>
+                    <li>Experience operating <b>bench-top equipment</b> trouble shooting circuits</li>
+                    <li>Reading <b>schematics</b> and <b>data-sheets</b></li>
+                    <li>Solid <b>3D mathematics</b> skills</li>
+                    <li><b>Graphics</b> and rendering</li>
+                    <li>Robotics</li>
+                </ul>
+
+                <h2><a>CERTIFICATIONS</a></h2>
+                <ul>
+                    <li>Machine Learning by Stanford University on Coursera. Certificate earned on Saturday, July 8, 2017</li>
+                    <li>Convolutional Neural Networks on Coursera. Certificate earned on Wednesday, May 30, 2018</li>
+                    <li>Sequence Models on Coursera. Certificate earned on Sunday, July 1, 2018</li>
+                    <li>Structuring Machine Learning Projects on Coursera. Certificate earned on Saturday, April 7, 2018</li>
+                    <li>Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization on Coursera. Certificate earned on Sunday, March 18, 2018</li>
+                </ul>
+
+                <h2><a>EDUCATION<a></h2>
+                <span>
+                    <b>Michigan Technological University</b><br/>
+                    <b>B.S. Computer Science</b></br>
+                    Houghton, Michigan</b>
+                    Graduated May 2013<br/>
+                </span>
+            </section>
+
+        </article>
+    </body>
 </html>
+

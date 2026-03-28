@@ -129,6 +129,13 @@ def ld56():
     from pathlib import Path
     return render_template("ld56.html", files=os.listdir(Path(files('kirkroerig')) / 'content/ld56'))
 
+@app.route("/files")
+def files_dir():
+    from importlib.resources import files
+    from pathlib import Path
+    return render_template("files.html", files=os.listdir(Path(files('kirkroerig')) / 'content/files'))
+
+
 if __name__ == '__main__':
 	port = 8080
 	if 'PORT' in os.environ:
