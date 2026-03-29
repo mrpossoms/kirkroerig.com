@@ -1,5 +1,5 @@
 
-function policy_grad(pi_pr, theta, x, a, h)
+function policy_grad_findiff(pi_pr, theta, x, a, h)
 {
 	// TODO: make this operate on theta which is a tensor instead of a matrix
 	let G = zeros(rows(theta), cols(theta));
@@ -29,6 +29,34 @@ function policy_grad(pi_pr, theta, x, a, h)
 	return G;
 }
 
+function policy_grad_analytical(pi, theta, x, a_t_idx, h)
+{
+	let pr_a = pi(theta, x).pr;
+
+	// Kronecker delta for one hot actions
+	let a_k = zeros(rows(pr_a), cols(pr_a));
+	a_k[0][a_t_idx[0]] = 1;
+	a_k[1][a_t_idx[1]] = 1;
+
+	let a = matsub(a_k, pr_a);
+
+	let phi = puck.phi(x);
+
+	// Build gradient rows for each feature dimension (including bias at phi[2]=1)
+	let grad = [];
+	for (let i = 0; i < phi.length; i++) {
+		grad.push([
+			a[0][0] * phi[i],
+			a[0][1] * phi[i],
+			a[0][2] * phi[i],
+			a[1][0] * phi[i],
+			a[1][1] * phi[i],
+			a[1][2] * phi[i],
+		]);
+	}
+	return grad;
+}
+
 function optimize(pi, theta, T, params)
 {
 	params = params || {};	
@@ -43,18 +71,30 @@ function optimize(pi, theta, T, params)
 
 	let pi_pr = params.pi_pr || ((theta, x, a) => { return pi(theta, x).pr[a]; });
 
+	// Compute baseline: mean reward-to-go across all timesteps and trajectories
+	let baseline = 0;
+	let total_steps = 0;
+	for (let ti = 0; ti < T.length; ti++) {
+		for (let t = 0; t < T[ti].G.length; t++) {
+			baseline += T[ti].G[t];
+			total_steps++;
+		}
+	}
+	baseline = total_steps > 0 ? baseline / total_steps : 0;
+
 	for (let ti = 0; ti < T.length; ti++) {
 		const p = 1 / T[ti].X.length;
 
 		for (let t = 0; t < T[ti].X.length; t++) {
 			let x_t = T[ti].X[t];
 			let a_t = T[ti].A[t];
-			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, params.h), p);
-			G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
+			// let G_t = matscl(policy_grad_findiff(pi_pr, theta, x_t, a_t, params.h), p);
+			let G_t = matscl(policy_grad_analytical(pi, theta, x_t, a_t, params.h), p);
+			G = matadd(G, matscl(G_t, T[ti].G[t] - baseline/* * Math.pow(params.gamma, t)*/));
 		}
-
-		G = matscl(G, 1 / T.length);
 	}
+
+	G = matscl(G, 1 / T.length);
 
 	return matadd(theta, matscl(G, params.alpha));
 }
@@ -188,14 +228,19 @@ let basic = {
 let puck = {
 	w: 100,
 	h: 100,
-	pi: function(theta, x) {
-		// 1x2 * 2x6 -> 1x6
+	phi: function(x) {
 		let dx = x[2] - x[0];
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
-		let _x = [dx/mag, dy/mag];
+		let s = 1;
+		return [s * dx/mag, s * dy/mag, 1];
+		// return [dx * 0.1, dy * 0.1, 1];
+	},
+	pi: function(theta, x) {
+		// 1x2 * 2x6 -> 1x6
+		let phi = puck.phi(x)
 
-		let z = matmul([_x], theta)[0];
+		let z = matmul([phi], theta)[0];
 		let z_x = z.slice(0, 3);
 		let z_y = z.slice(3, 6);
 		let pr_x = softmax(z_x);
@@ -232,7 +277,6 @@ let puck = {
 
 		let T = { X: [], A_pr: [], A: [], R: [], G: []};
 
-		let cumulative_reward = 0;
 		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
@@ -240,14 +284,14 @@ let puck = {
 				break;
 			}
 			x_t = T.X[t];
-			cumulative_reward += r_t;
 		}
 
-		// compute the reward-to-go
-		let cumulative_reward_norm = 1;
-		for (let t = 0; t < T.R.length; t++) {
-			T.G.push(cumulative_reward_norm);
-			cumulative_reward_norm -= T.R[t] / cumulative_reward;
+		// compute the reward-to-go via backward accumulation
+		T.G = new Array(T.R.length);
+		let G_t = 0;
+		for (let t = T.R.length - 1; t >= 0; t--) {
+			G_t += T.R[t];
+			T.G[t] = G_t;
 		}
 
 		return T;

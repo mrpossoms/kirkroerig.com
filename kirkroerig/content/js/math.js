@@ -72,6 +72,24 @@ function matadd(A, B)
 	return C;
 }
 
+function matsub(A, B)
+{
+	matNanCheck(A);
+	matNanCheck(B);
+	if (rows(A) != rows(B) || cols(A) != B[0].length) { throw "Matrix dimensions do not match"; }
+
+	let C = [];
+	for (let i = 0; i < rows(A); i++)
+	{
+		C.push([]);
+		for (let j = 0; j < cols(A); j++)
+		{
+			C[i].push(A[i][j] - B[i][j]);
+		}
+	}
+	return C;
+}
+
 function matscl(A, s)
 {
 	matNanCheck(A);
