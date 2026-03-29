@@ -14,8 +14,8 @@ function policy_grad(pi_pr, theta, x, a, h)
 				return i == r && j == c ? val - h : val;
 			}));
 
-			let pi_plus = pi_pr(theta_plus, x, a);
-			let pi_minus = pi_pr(theta_minus, x, a);
+			let pi_plus = Math.log(pi_pr(theta_plus, x, a));
+			let pi_minus = Math.log(pi_pr(theta_minus, x, a));
 
 			let grad = (pi_plus - pi_minus)  / (2 * h);
 			
@@ -45,8 +45,10 @@ function optimize(pi, theta, T, params)
 		const p = 1 / T[ti].X.length;
 
 		for (let t = 0; t < T[ti].X.length; t++) {
-			let G_t = matscl(policy_grad(pi_pr, theta, T[ti].X[t], T[ti].A[t], 0.001), p);
-			G = matadd(G, matscl(G_t, T[ti].R[t]/* * Math.pow(params.gamma, t)*/));
+			let x_t = T[ti].X[t];
+			let a_t = T[ti].A[t];
+			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, 0.01), p);
+			G = matadd(G, matscl(G_t, -T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
 		}
 
 		G = matscl(G, 1 / T.length);
@@ -226,8 +228,9 @@ let puck = {
 	sample_trajectory: function(theta, left_top, right_bottom, randomize_target) {
 		let x_t = puck.initial_state(left_top, right_bottom, randomize_target);
 
-		let T = { X: [], A_pr: [], A: [], R: []};
+		let T = { X: [], A_pr: [], A: [], R: [], G: []};
 
+		let cumulative_reward = 0;
 		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
@@ -235,7 +238,14 @@ let puck = {
 				break;
 			}
 			x_t = T.X[t];
+			cumulative_reward += r_t;
+		}
 
+		// compute the reward-to-go
+		let cumulative_reward_norm = 1;
+		for (let t = 0; t < T.R.length; t++) {
+			T.G.push(cumulative_reward_norm);
+			cumulative_reward_norm -= T.R[t] / cumulative_reward;
 		}
 
 		return T;
@@ -244,6 +254,11 @@ let puck = {
 	{
 		let d0 = puck.dist_to_target(x_t);
 		let d1 = puck.dist_to_target(x_t1);
+		
+		if (d1 < 10) {
+			return 10;
+		} 
+
 		return d0 - d1;
 	},
 	step: function(T, x_t, a_t, gamma)
