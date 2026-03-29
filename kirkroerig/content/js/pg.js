@@ -33,7 +33,9 @@ function optimize(pi, theta, T, params)
 {
 	params = params || {};	
 	params.alpha = params.alpha == undefined ? 0.1 : params.alpha;
+	params.h = params.h || 0.001;
 	params.gamma = params.gamma || 0.99;
+
 
 	if (!(T instanceof Array)) { T = [T]; }
 
@@ -47,8 +49,8 @@ function optimize(pi, theta, T, params)
 		for (let t = 0; t < T[ti].X.length; t++) {
 			let x_t = T[ti].X[t];
 			let a_t = T[ti].A[t];
-			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, 0.01), p);
-			G = matadd(G, matscl(G_t, -T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
+			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, params.h), p);
+			G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
 		}
 
 		G = matscl(G, 1 / T.length);
@@ -255,10 +257,6 @@ let puck = {
 		let d0 = puck.dist_to_target(x_t);
 		let d1 = puck.dist_to_target(x_t1);
 		
-		if (d1 < 10) {
-			return 10;
-		} 
-
 		return d0 - d1;
 	},
 	step: function(T, x_t, a_t, gamma)

@@ -18,8 +18,23 @@ let zeros = (r, c) => {
 	return z;
 };
 
+function matNanCheck(A)
+{
+	for (let r = 0; r < rows(A); r++)
+	{
+		for (let c = 0; c < cols(A); c++)
+		{
+			if (isNaN(A[r][c])) {
+				throw `element ${r},${c} is NaN`; 
+			}
+		}
+	}
+}
+
 function matmul(A, B)
 {
+	matNanCheck(A);
+	matNanCheck(B);
 	if (cols(A) != rows(B)) { throw "Matrix dimensions do not match"; }
 
 	let C = [];
@@ -41,6 +56,8 @@ function matmul(A, B)
 
 function matadd(A, B)
 {
+	matNanCheck(A);
+	matNanCheck(B);
 	if (rows(A) != rows(B) || cols(A) != B[0].length) { throw "Matrix dimensions do not match"; }
 
 	let C = [];
@@ -57,6 +74,8 @@ function matadd(A, B)
 
 function matscl(A, s)
 {
+	matNanCheck(A);
+	if (isNaN(s)) { throw "Scalar s is NaN"; }
 	let B = [];
 	for (let i = 0; i < rows(A); i++)
 	{
