@@ -1,5 +1,5 @@
 
-function policy_grad(pi_pr, theta, x, a, h)
+function policy_grad_findiff(pi_pr, theta, x, a, h)
 {
 	// TODO: make this operate on theta which is a tensor instead of a matrix
 	let G = zeros(rows(theta), cols(theta));
@@ -29,6 +29,40 @@ function policy_grad(pi_pr, theta, x, a, h)
 	return G;
 }
 
+function policy_grad_analytical(pi, theta, x, a_t_idx, h)
+{
+	let pr_a = pi(theta, x).pr;
+
+	// Kronecker delta for one hot actions
+	let a_k = zeros(rows(pr_a), cols(pr_a));
+	a_k[0][a_t_idx[0]] = 1;
+	a_k[1][a_t_idx[1]] = 1;
+
+	let a = matsub(a_k, pr_a);
+
+	// let phi = [dx/mag, dy/mag];
+	let phi = puck.phi(x);
+
+	return [
+		[
+			a[0][0] * phi[0],
+			a[0][1] * phi[0],
+			a[0][2] * phi[0],
+			a[1][0] * phi[0],
+			a[1][1] * phi[0],
+			a[1][2] * phi[0],
+		],
+		[
+			a[0][0] * phi[1],
+			a[0][1] * phi[1],
+			a[0][2] * phi[1],
+			a[1][0] * phi[1],
+			a[1][1] * phi[1],
+			a[1][2] * phi[1],
+		]
+	];
+}
+
 function optimize(pi, theta, T, params)
 {
 	params = params || {};	
@@ -49,8 +83,10 @@ function optimize(pi, theta, T, params)
 		for (let t = 0; t < T[ti].X.length; t++) {
 			let x_t = T[ti].X[t];
 			let a_t = T[ti].A[t];
-			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, params.h), p);
-			G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
+			// let G_t = matscl(policy_grad_findiff(pi_pr, theta, x_t, a_t, params.h), p);
+			let G_t = matscl(policy_grad_analytical(pi, theta, x_t, a_t, params.h), p);
+			// G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
+			G = matadd(G, matscl(G_t, T[ti].R[t]/* * Math.pow(params.gamma, t)*/));
 		}
 	}
 
@@ -188,14 +224,19 @@ let basic = {
 let puck = {
 	w: 100,
 	h: 100,
-	pi: function(theta, x) {
-		// 1x2 * 2x6 -> 1x6
+	phi: function(x) {
 		let dx = x[2] - x[0];
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
-		let _x = [dx/mag, dy/mag];
+		let s = 1;
+		return [s * dx/mag, s * dy/mag];
+		// return [dx * 0.1, dy * 0.1];
+	},
+	pi: function(theta, x) {
+		// 1x2 * 2x6 -> 1x6
+		let phi = puck.phi(x)
 
-		let z = matmul([_x], theta)[0];
+		let z = matmul([phi], theta)[0];
 		let z_x = z.slice(0, 3);
 		let z_y = z.slice(3, 6);
 		let pr_x = softmax(z_x);

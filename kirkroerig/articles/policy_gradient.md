@@ -989,11 +989,11 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     if (t >= T.X.length) {
         t = 0;
         let avg_ret = 0;
-        const epochs = 12 * 100;
+        const epochs = 12 * 10;
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
             puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.01,
+                alpha: 0.001 * Math.pow(1, R.length),
                 pi_pr: (theta, x, a) => {
                     let y = puck.pi(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
