@@ -77,6 +77,17 @@ function optimize(pi, theta, T, params)
 
 	let pi_pr = params.pi_pr || ((theta, x, a) => { return pi(theta, x).pr[a]; });
 
+	// Compute baseline: mean reward-to-go across all timesteps and trajectories
+	let baseline = 0;
+	let total_steps = 0;
+	for (let ti = 0; ti < T.length; ti++) {
+		for (let t = 0; t < T[ti].G.length; t++) {
+			baseline += T[ti].G[t];
+			total_steps++;
+		}
+	}
+	baseline = total_steps > 0 ? baseline / total_steps : 0;
+
 	for (let ti = 0; ti < T.length; ti++) {
 		const p = 1 / T[ti].X.length;
 
@@ -85,8 +96,7 @@ function optimize(pi, theta, T, params)
 			let a_t = T[ti].A[t];
 			// let G_t = matscl(policy_grad_findiff(pi_pr, theta, x_t, a_t, params.h), p);
 			let G_t = matscl(policy_grad_analytical(pi, theta, x_t, a_t, params.h), p);
-			// G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
-			G = matadd(G, matscl(G_t, T[ti].R[t]/* * Math.pow(params.gamma, t)*/));
+			G = matadd(G, matscl(G_t, T[ti].G[t] - baseline/* * Math.pow(params.gamma, t)*/));
 		}
 	}
 
