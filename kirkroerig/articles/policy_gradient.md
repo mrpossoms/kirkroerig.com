@@ -973,7 +973,8 @@ let puck_theta = [
     0.2915076462546815,
     0.046673970000944864,
     -0.17635189577351218
-  ]
+  ],
+  [0, 0, 0, 0, 0, 0]
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
 let ele = document.getElementById("policy_gradient_ex2");

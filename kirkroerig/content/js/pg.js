@@ -40,27 +40,21 @@ function policy_grad_analytical(pi, theta, x, a_t_idx, h)
 
 	let a = matsub(a_k, pr_a);
 
-	// let phi = [dx/mag, dy/mag];
 	let phi = puck.phi(x);
 
-	return [
-		[
-			a[0][0] * phi[0],
-			a[0][1] * phi[0],
-			a[0][2] * phi[0],
-			a[1][0] * phi[0],
-			a[1][1] * phi[0],
-			a[1][2] * phi[0],
-		],
-		[
-			a[0][0] * phi[1],
-			a[0][1] * phi[1],
-			a[0][2] * phi[1],
-			a[1][0] * phi[1],
-			a[1][1] * phi[1],
-			a[1][2] * phi[1],
-		]
-	];
+	// Build gradient rows for each feature dimension (including bias at phi[2]=1)
+	let grad = [];
+	for (let i = 0; i < phi.length; i++) {
+		grad.push([
+			a[0][0] * phi[i],
+			a[0][1] * phi[i],
+			a[0][2] * phi[i],
+			a[1][0] * phi[i],
+			a[1][1] * phi[i],
+			a[1][2] * phi[i],
+		]);
+	}
+	return grad;
 }
 
 function optimize(pi, theta, T, params)
@@ -239,8 +233,8 @@ let puck = {
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
 		let s = 1;
-		return [s * dx/mag, s * dy/mag];
-		// return [dx * 0.1, dy * 0.1];
+		return [s * dx/mag, s * dy/mag, 1];
+		// return [dx * 0.1, dy * 0.1, 1];
 	},
 	pi: function(theta, x) {
 		// 1x2 * 2x6 -> 1x6
