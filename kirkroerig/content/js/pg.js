@@ -52,9 +52,9 @@ function optimize(pi, theta, T, params)
 			let G_t = matscl(policy_grad(pi_pr, theta, x_t, a_t, params.h), p);
 			G = matadd(G, matscl(G_t, T[ti].G[t]/* * Math.pow(params.gamma, t)*/));
 		}
-
-		G = matscl(G, 1 / T.length);
 	}
+
+	G = matscl(G, 1 / T.length);
 
 	return matadd(theta, matscl(G, params.alpha));
 }
@@ -232,7 +232,6 @@ let puck = {
 
 		let T = { X: [], A_pr: [], A: [], R: [], G: []};
 
-		let cumulative_reward = 0;
 		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi(theta, x_t);
 			let r_t = puck.step(T, x_t, a_t, 0.99);
@@ -240,14 +239,14 @@ let puck = {
 				break;
 			}
 			x_t = T.X[t];
-			cumulative_reward += r_t;
 		}
 
-		// compute the reward-to-go
-		let cumulative_reward_norm = 1;
-		for (let t = 0; t < T.R.length; t++) {
-			T.G.push(cumulative_reward_norm);
-			cumulative_reward_norm -= T.R[t] / cumulative_reward;
+		// compute the reward-to-go via backward accumulation
+		T.G = new Array(T.R.length);
+		let G_t = 0;
+		for (let t = T.R.length - 1; t >= 0; t--) {
+			G_t += T.R[t];
+			T.G[t] = G_t;
 		}
 
 		return T;
