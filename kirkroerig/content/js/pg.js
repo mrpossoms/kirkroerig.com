@@ -36,7 +36,7 @@ function policy_grad_analytical(pi, theta, x, a_t_idx, h)
 	// Kronecker delta for one hot actions
 	let a_k = zeros(rows(pr_a), cols(pr_a));
 	a_k[0][a_t_idx[0]] = 1;
-	a_k[1][a_t_idx[1]] = 1;
+	// a_k[1][a_t_idx[1]] = 1;
 
 	let a = matsub(a_k, pr_a);
 
@@ -49,9 +49,11 @@ function policy_grad_analytical(pi, theta, x, a_t_idx, h)
 			a[0][0] * phi[i],
 			a[0][1] * phi[i],
 			a[0][2] * phi[i],
-			a[1][0] * phi[i],
-			a[1][1] * phi[i],
-			a[1][2] * phi[i],
+			a[0][3] * phi[i],
+			a[0][4] * phi[i],
+			a[0][5] * phi[i],
+			a[0][6] * phi[i],
+			a[0][7] * phi[i],
 		]);
 	}
 	return grad;
@@ -232,8 +234,9 @@ let puck = {
 		let dx = x[2] - x[0];
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
-		let s = 1;
-		return [s * dx/mag, s * dy/mag, 1];
+		let s = 1/mag;
+		// let nx = dx/mag, ny = dy/mag;
+		return [dx * s, dy * s, 1]; //, 1 - Math.abs(nx), 1 - Math.abs(ny)];
 		// return [dx * 0.1, dy * 0.1, 1];
 	},
 	pi: function(theta, x) {
@@ -249,6 +252,16 @@ let puck = {
 		let a_y_idx = sample_multinomial(pr_y);
 
 		return { pr: [pr_x, pr_y], idx: [a_x_idx, a_y_idx] };
+	},
+	pi2: function(theta, x) {
+		// 1x2 * 2x6 -> 1x6
+		let phi = puck.phi(x)
+
+		let z = matmul([phi], theta)[0];
+		let pr = softmax(z);
+		let a_idx = sample_multinomial(pr);
+	
+		return { pr: [pr], idx: [a_idx] };
 	},
 	dist_to_target: function(x) {
 		return dist([x[0],x[1]], [x[2], x[3]]);
@@ -278,8 +291,8 @@ let puck = {
 		let T = { X: [], A_pr: [], A: [], R: [], G: []};
 
 		for (let t = 0; t < 5 * 60; t++) {
-			let a_t = puck.pi(theta, x_t);
-			let r_t = puck.step(T, x_t, a_t, 0.99);
+			let a_t = puck.pi2(theta, x_t);
+			let r_t = puck.step2(T, x_t, a_t, 0.99);
 			if (r_t == null) {
 				break;
 			}
@@ -323,12 +336,45 @@ let puck = {
 		T.A.push(a_t.idx);
 		return r_t;
 	},
+	step2: function(T, x_t, a_t, gamma)
+	{
+		let x_t1 = zeros(4, 1);
+
+		let d = 1/Math.sqrt(2);
+		let deltas = [
+			[ 0, -1],
+			[ d, -d],
+			[ 1,  0],
+			[ d,  d],
+			[ 0,  1],
+			[-d,  d],
+			[-1,  0],
+			[-d, -d],
+		];
+
+		x_t1[0] = x_t[0] + deltas[a_t.idx[0]][0];
+		x_t1[1] = x_t[1] + deltas[a_t.idx[0]][1];
+		x_t1[2] = x_t[2];
+		x_t1[3] = x_t[3];
+
+		let d1 = puck.dist_to_target(x_t1);
+
+		let r_t = puck.reward(x_t, x_t1);
+		if (d1 < 5) { return null; }
+
+		T.X.push(x_t1);
+		T.R.push(r_t);
+		T.A_pr.push(a_t.pr);
+		T.A.push(a_t.idx);
+		return r_t;
+	},
 	draw: function(cvsId, time, trajectory, left_top, right_bottom)
 	{
 		const e = document.getElementById(cvsId);
 		const ctx = ctx_cache(e);
 		const dpr = window.devicePixelRatio || 1;
-
+		time = Math.min(time, trajectory.X.length-1);
+		
 		let state = trajectory.X[time];
 
 		if (!left_top) { left_top = [0, 0]; }

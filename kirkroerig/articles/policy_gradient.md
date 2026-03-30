@@ -33,8 +33,38 @@ fieldset {
 <canvas id="pg-hook"></canvas>
 <script>
 let trained_theta = [
-  [ -5.2411426220896615, 0.08240532417772563, 5.443433754517182, 0.05314562935127422, -0.7515561637990559, -0.0528628026362152 ],
-  [ -0.018673344825325455, 0.06288750088051466, -0.020646319339298745, -5.251316470695126, 0.018008655116941566, 5.395137537266251]
+ [
+    -0.06344286448017344,
+    -0.013060742152890104,
+    0.3612000714595811,
+    -0.265469954891274,
+    -0.25405646928285,
+    -0.2317468792603885
+  ],
+  [
+    -0.32516165515685724,
+    -0.03432296246933131,
+    0.383052435694907,
+    0.2915076462546815,
+    0.046673970000944864,
+    -0.17635189577351218
+  ],
+  [
+    -0.06344286448017344,
+    -0.013060742152890104,
+    0.3612000714595811,
+    -0.265469954891274,
+    -0.25405646928285,
+    -0.2317468792603885
+  ],
+  [
+    -0.32516165515685724,
+    -0.03432296246933131,
+    0.383052435694907,
+    0.2915076462546815,
+    0.046673970000944864,
+    -0.17635189577351218
+  ]
 ];
 when_visible("pg-hook", (visible) => {
     let cvs = document.getElementById("pg-hook");
@@ -881,7 +911,7 @@ Here things are a little different from the "Hello, World!" example. In that exa
 
 <canvas id="policy_gradient_montecarlo"></canvas>
 <script>
-let rand_theta = randmat(2, 6);
+let rand_theta = randmat(3, 6);
 let mc_trajectories = [];
 let mc_t = 0;
 let mc_cvs = document.getElementById("policy_gradient_montecarlo");
@@ -964,6 +994,8 @@ let puck_theta = [
     0.3612000714595811,
     -0.265469954891274,
     -0.25405646928285,
+    -0.265469954891274,
+    -0.25405646928285,
     -0.2317468792603885
   ],
   [
@@ -972,9 +1004,20 @@ let puck_theta = [
     0.383052435694907,
     0.2915076462546815,
     0.046673970000944864,
+    0.2915076462546815,
+    0.046673970000944864,
     -0.17635189577351218
   ],
-  [0, 0, 0, 0, 0, 0]
+  [
+    -0.32516165515685724,
+    -0.03432296246933131,
+    0.383052435694907,
+    0.2915076462546815,
+    0.046673970000944864,
+    0.2915076462546815,
+    0.046673970000944864,
+    -0.17635189577351218
+  ]
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
 let ele = document.getElementById("policy_gradient_ex2");
@@ -983,20 +1026,17 @@ let R = []
 draw_reward_plot("policy_gradient_ex2_reward", R);
 
 animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
-    clear("policy_gradient_ex2");
-    puck.draw("policy_gradient_ex2", t, T);
     t++;
 
     if (t >= T.X.length) {
-        t = 0;
         let avg_ret = 0;
         const epochs = 12 * 10;
         for (let e = 0; e < epochs; e++) {
             T = puck.sample_trajectory(puck_theta);
-            puck_theta = optimize(puck.pi, puck_theta, T, {
-                alpha: 0.001 * Math.pow(1, R.length),
+            puck_theta = optimize(puck.pi2, puck_theta, T, {
+                alpha: 0.05 * Math.pow(0.92, R.length),
                 pi_pr: (theta, x, a) => {
-                    let y = puck.pi(theta, x);
+                    let y = puck.pi2(theta, x);
                     return y.pr[0][a[0]] * y.pr[1][a[1]];
                 }
             });
@@ -1004,12 +1044,19 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
         }
         console.log(avg_ret / epochs);
         R.push(avg_ret / epochs);
-        // Generate the next visualization traj
-        T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
+        
+        if (R.length % 20 == 0) {
+            // Generate the next visualization traj
+            t = 0;
+            T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);            
+        }
 
         clear("policy_gradient_ex2_reward");
         draw_reward_plot("policy_gradient_ex2_reward", R);
-    }    
+    } else {
+        clear("policy_gradient_ex2");
+        puck.draw("policy_gradient_ex2", t, T);
+    }
 })
 </script>
 
