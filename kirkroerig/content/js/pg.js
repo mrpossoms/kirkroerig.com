@@ -340,15 +340,16 @@ let puck = {
 	{
 		let x_t1 = zeros(4, 1);
 
-		let d = 1/Math.sqrt(2);
+		let s = 2;
+		let d = s/Math.sqrt(s*s+s*s);
 		let deltas = [
-			[ 0, -1],
+			[ 0, -s],
 			[ d, -d],
-			[ 1,  0],
+			[ s,  0],
 			[ d,  d],
-			[ 0,  1],
+			[ 0,  s],
 			[-d,  d],
-			[-1,  0],
+			[-s,  0],
 			[-d, -d],
 		];
 
@@ -374,7 +375,7 @@ let puck = {
 		const ctx = ctx_cache(e);
 		const dpr = window.devicePixelRatio || 1;
 		time = Math.min(time, trajectory.X.length-1);
-		
+
 		let state = trajectory.X[time];
 
 		if (!left_top) { left_top = [0, 0]; }
