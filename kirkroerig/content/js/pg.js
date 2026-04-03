@@ -336,25 +336,23 @@ let puck = {
 		T.A.push(a_t.idx);
 		return r_t;
 	},
+	deltas: null,
 	step2: function(T, x_t, a_t, gamma)
 	{
 		let x_t1 = zeros(4, 1);
 
 		let s = 2;
-		let d = s/Math.sqrt(s*s+s*s);
-		let deltas = [
-			[ 0, -s],
-			[ d, -d],
-			[ s,  0],
-			[ d,  d],
-			[ 0,  s],
-			[-d,  d],
-			[-s,  0],
-			[-d, -d],
-		];
+		
+		if (!puck.deltas) {
+			puck.deltas = [];
+			for (let i = 0; i < 8; i++) {
+				let t = (i / 8) * Math.PI*2;
+				puck.deltas.push([Math.cos(t) * s, Math.sin(t) * s]);
+			}
+		}
 
-		x_t1[0] = x_t[0] + deltas[a_t.idx[0]][0];
-		x_t1[1] = x_t[1] + deltas[a_t.idx[0]][1];
+		x_t1[0] = x_t[0] + puck.deltas[a_t.idx[0]][0];
+		x_t1[1] = x_t[1] + puck.deltas[a_t.idx[0]][1];
 		x_t1[2] = x_t[2];
 		x_t1[3] = x_t[3];
 
