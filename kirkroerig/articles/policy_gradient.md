@@ -1007,17 +1007,18 @@ let puck_theta = [
     0.2915076462546815,
     0.046673970000944864,
     -0.17635189577351218
-  ],
-  [
-    -0.32516165515685724,
-    -0.03432296246933131,
-    0.383052435694907,
-    0.2915076462546815,
-    0.046673970000944864,
-    0.2915076462546815,
-    0.046673970000944864,
-    -0.17635189577351218
   ]
+  // ,
+  // [
+  //   0,
+  //   0,
+  //   0,
+  //   0,
+  //   0,
+  //   0,
+  //   0,
+  //   0
+  // ]
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
 let ele = document.getElementById("policy_gradient_ex2");
@@ -1030,18 +1031,32 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
 
     if (t >= T.X.length) {
         let avg_ret = 0;
-        const epochs = 12 * 10;
+        const epochs = 100;
+
+        let grad_log_pi = null;
         for (let e = 0; e < epochs; e++) {
-            T = puck.sample_trajectory(puck_theta);
-            puck_theta = optimize(puck.pi2, puck_theta, T, {
-                alpha: 0.001, // * Math.pow(0.92, R.length),
-                pi_pr: (theta, x, a) => {
-                    let y = puck.pi2(theta, x);
-                    return y.pr[0][a[0]] * y.pr[1][a[1]];
-                }
-            });
-            avg_ret += T.R.reduce((acc, val) => acc + val, 0);
+            traj = puck.sample_trajectory(puck_theta);
+
+            let grad = policy_grad(puck.pi2, puck_theta, traj, {});
+            if (!grad_log_pi) {
+                grad_log_pi = grad;
+            } else {
+                grad_log_pi = matadd(grad_log_pi, grad);
+            }
+
+            // puck_theta = optimize(puck.pi2, puck_theta, T, {
+            //     alpha: 0.001, // * Math.pow(0.92, R.length),
+            //     pi_pr: (theta, x, a) => {
+            //         let y = puck.pi2(theta, x);
+            //         return y.pr[0][a[0]] * y.pr[1][a[1]];
+            //     }
+            // });
+            avg_ret += traj.R.reduce((acc, val) => acc + val, 0);
         }
+        const alpha = 0.001; // * Math.pow(0.95, R.length);
+        grad_log_pi = matscl(grad_log_pi, alpha * (1/epochs));
+        puck_theta = matadd(puck_theta, grad_log_pi);
+
         console.log(avg_ret / epochs);
         R.push(avg_ret / epochs);
         

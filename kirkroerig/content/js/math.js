@@ -127,6 +127,22 @@ function vecscl(a, s)
 	return b;
 }
 
+function vecdot(a, b)
+{
+	if (a.length != b.length) { throw "Vector dimensions do not match"; }
+
+	let d = 0;
+	for (let i = 0; i < a.length; i++) {
+		d += a[i] * b[i];
+	}
+	return d;
+}
+
+function vecmag(a)
+{
+	return Math.sqrt(vecdot(a, a));
+}
+
 function randmat(rows, cols)
 {
 	let A = [];

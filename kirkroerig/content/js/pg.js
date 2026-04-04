@@ -59,6 +59,40 @@ function policy_grad_analytical(pi, theta, x, a_t_idx, h)
 	return grad;
 }
 
+function policy_grad(pi, theta, traj, params)
+{
+	params = params || {};	
+	params.alpha = params.alpha == undefined ? 0.1 : params.alpha;
+	params.h = params.h || 0.001;
+	params.gamma = params.gamma || 0.99;
+
+	let grad_log_pi = zeros(rows(theta), cols(theta));
+
+	// Compute baseline: mean reward-to-go across all timesteps and trajectories
+	let baseline = 0;
+	let total_steps = 0;
+	for (let t = 0; t < traj.G.length; t++) {
+		baseline += traj.G[t];
+		total_steps++;
+	}
+	baseline = total_steps > 0 ? baseline / total_steps : 0;
+
+	for (let t = 0; t < traj.X.length; t++) {
+		let x_t = traj.X[t];
+		let a_t = traj.A[t];
+		let grad_log_pi_t = policy_grad_analytical(pi, theta, x_t, a_t, params.h);
+
+		let G_t = 0;
+		for (let k = t; k < traj.X.length; k++) {
+			G_t += Math.pow(0.9, k - t) * traj.R[k];
+		}
+
+		grad_log_pi = matadd(grad_log_pi, matscl(grad_log_pi_t, G_t - baseline));
+	}
+
+	return grad_log_pi;	
+}
+
 function optimize(pi, theta, T, params)
 {
 	params = params || {};	
@@ -69,7 +103,7 @@ function optimize(pi, theta, T, params)
 
 	if (!(T instanceof Array)) { T = [T]; }
 
-	let G = zeros(rows(theta), cols(theta));//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
+	let grad_log_pi = zeros(rows(theta), cols(theta));//theta.map(theta_i => zeros(theta_i.rows(), theta_i.cols()));
 
 	let pi_pr = params.pi_pr || ((theta, x, a) => { return pi(theta, x).pr[a]; });
 
@@ -91,14 +125,14 @@ function optimize(pi, theta, T, params)
 			let x_t = T[ti].X[t];
 			let a_t = T[ti].A[t];
 			// let G_t = matscl(policy_grad_findiff(pi_pr, theta, x_t, a_t, params.h), p);
-			let G_t = matscl(policy_grad_analytical(pi, theta, x_t, a_t, params.h), p);
-			G = matadd(G, matscl(G_t, T[ti].G[t] - baseline/* * Math.pow(params.gamma, t)*/));
+			let grad_log_pi_t = matscl(policy_grad_analytical(pi, theta, x_t, a_t, params.h), p);
+			grad_log_pi = matadd(grad_log_pi, matscl(grad_log_pi_t, T[ti].G[t] - baseline));
 		}
 	}
 
-	G = matscl(G, 1 / T.length);
+	grad_log_pi = matscl(grad_log_pi, 1 / T.length);
 
-	return matadd(theta, matscl(G, params.alpha));
+	return matadd(theta, matscl(grad_log_pi, params.alpha));
 }
 
 
@@ -231,12 +265,16 @@ let puck = {
 	w: 100,
 	h: 100,
 	phi: function(x) {
+		if (!x) {
+			console.log('huh');
+		}
+
 		let dx = x[2] - x[0];
 		let dy = x[3] - x[1];
 		let mag = Math.sqrt(dx * dx + dy * dy) + 0.1;
 		let s = 1/mag;
 		// let nx = dx/mag, ny = dy/mag;
-		return [dx * s, dy * s, 1]; //, 1 - Math.abs(nx), 1 - Math.abs(ny)];
+		return [dx * s, dy * s];//, 5/mag]; //, 1 - Math.abs(nx), 1 - Math.abs(ny)];
 		// return [dx * 0.1, dy * 0.1, 1];
 	},
 	pi: function(theta, x) {
@@ -311,10 +349,20 @@ let puck = {
 	},
 	reward: function(x_t, x_t1)
 	{
+		var move = [x_t1[0]-x_t[0], x_t1[1]-x_t[1]];
+		let move_mag = vecmag(move);
+		move = vecscl(move, 1/move_mag);
+
+		var to_target = [x_t1[2]-x_t1[0], x_t1[3]-x_t1[1]];
+		let to_target_mag = vecmag(to_target);
+		to_target = vecscl(to_target, 1/(Math.max(to_target_mag,0.001)));
+
+		let alignment = Math.pow(vecdot(move, to_target), 2);
+
 		let d0 = puck.dist_to_target(x_t);
 		let d1 = puck.dist_to_target(x_t1);
 		
-		return d0 - d1;
+		return (d0 - d1) * alignment;
 	},
 	step: function(T, x_t, a_t, gamma)
 	{
@@ -328,7 +376,7 @@ let puck = {
 		let d1 = puck.dist_to_target(x_t1);
 
 		let r_t = puck.reward(x_t, x_t1);
-		if (d1 < 5) { return null; }
+		if (d1 < 5) { return 10; }
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
@@ -359,12 +407,12 @@ let puck = {
 		let d1 = puck.dist_to_target(x_t1);
 
 		let r_t = puck.reward(x_t, x_t1);
-		if (d1 < 5) { return null; }
 
 		T.X.push(x_t1);
 		T.R.push(r_t);
 		T.A_pr.push(a_t.pr);
 		T.A.push(a_t.idx);
+		if (d1 < 5) { return null; }
 		return r_t;
 	},
 	draw: function(cvsId, time, trajectory, left_top, right_bottom)
