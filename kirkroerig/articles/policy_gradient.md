@@ -985,6 +985,8 @@ If you'd like to study this example in isolation, please take a look at this [Co
 <canvas id="policy_gradient_ex2"></canvas>
 Average Reward per 10 Epochs
 <canvas id="policy_gradient_ex2_reward"></canvas>
+<textarea id="pi_theta">
+</textarea>
 <script>
 let t = 0;
 let puck_theta = [
@@ -1046,6 +1048,7 @@ let grad_log_pi = {
         this.avg_ret = 0;
     }
 };
+let best_policy_perf = 0;
 draw_reward_plot("policy_gradient_ex2_reward", R);
 
 animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
@@ -1073,12 +1076,18 @@ animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     
     // Update policy once enough have been collected
     if (grad_log_pi.samples >= 2000) {
+        // Only update the policy if it improved
         const alpha = 0.0001; // * Math.pow(0.95, R.length);
         let grad = matscl(grad_log_pi.accumulator, alpha);
         puck_theta = matadd(puck_theta, grad);
 
         console.log(`µ ret: ${grad_log_pi.avg_ret / grad_log_pi.samples}, epochs/fr: ${grad_log_pi.epochs}`);
-        R.push(grad_log_pi.avg_ret / grad_log_pi.samples);
+        let avg_ret = grad_log_pi.avg_ret / grad_log_pi.samples;
+        if (avg_ret > best_policy_perf) {
+            document.getElementById('pi_theta').value = `[[${puck_theta[0].toString()}],[${puck_theta[1].toString()}]]`;
+            best_policy_perf = avg_ret;
+        }
+        R.push(avg_ret);
         grad_log_pi.reset();          
     }
 

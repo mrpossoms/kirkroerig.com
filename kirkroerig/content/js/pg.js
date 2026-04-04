@@ -314,10 +314,16 @@ let puck = {
 		// in the background, trajectories could be sampled this way so there isn't an axial bias built into
 		// the optimized policy. But for visualization purposes, the puck and targets could be spawned anywhere
 		let targ_x = randomize_target ? r() * w : w / 2;
-		let targ_y = randomize_target ? r() * h : h / 2; 
+		let targ_y = randomize_target ? r() * h : h / 2;
 		let x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 
-		while(puck.dist_to_target(x_0) <= 10) {
+		if (!randomize_target) {
+			let rad = 10 + r() * 100;
+			let t = r() * 2 * Math.PI;
+			x_0 = [o_x + targ_x + Math.cos(t) * rad, o_y + targ_y + Math.sin(t) * rad, o_x + targ_x, o_y + targ_y];
+		}
+
+		for(let i = 0; i < 10 && puck.dist_to_target(x_0) <= 10; i++) {
 			x_0 = [o_x + r() * w, o_y + r() * h, o_x + targ_x, o_y + targ_y];
 		}
 
@@ -330,7 +336,7 @@ let puck = {
 
 		for (let t = 0; t < 5 * 60; t++) {
 			let a_t = puck.pi2(theta, x_t);
-			let r_t = puck.step2(T, x_t, a_t, 0.99);
+			let r_t = puck.step2(T, x_t, a_t);
 			if (r_t == null) {
 				break;
 			}
@@ -357,7 +363,7 @@ let puck = {
 		let to_target_mag = vecmag(to_target);
 		to_target = vecscl(to_target, 1/(Math.max(to_target_mag,0.001)));
 
-		let alignment = Math.pow(vecdot(move, to_target), 32);
+		let alignment = Math.pow(vecdot(move, to_target), 64);
 
 		let d0 = puck.dist_to_target(x_t);
 		let d1 = puck.dist_to_target(x_t1);
@@ -385,7 +391,7 @@ let puck = {
 		return r_t;
 	},
 	deltas: null,
-	step2: function(T, x_t, a_t, gamma)
+	step2: function(T, x_t, a_t)
 	{
 		let x_t1 = zeros(4, 1);
 
