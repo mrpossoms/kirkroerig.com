@@ -357,7 +357,7 @@ let puck = {
 		let to_target_mag = vecmag(to_target);
 		to_target = vecscl(to_target, 1/(Math.max(to_target_mag,0.001)));
 
-		let alignment = Math.pow(vecdot(move, to_target), 2);
+		let alignment = Math.pow(vecdot(move, to_target), 32);
 
 		let d0 = puck.dist_to_target(x_t);
 		let d1 = puck.dist_to_target(x_t1);

@@ -1021,57 +1021,77 @@ let puck_theta = [
   // ]
 ]; // since rng seeding isn't possible, we start intentionally with a bad policy
 
+let timers = {
+    grad: {
+        start_ms: 0,
+        estimated_duration_ms: 0
+    },
+    draw: {
+        start_ms: 0,
+        estimated_duration_ms: 0
+    }
+};
+
 let ele = document.getElementById("policy_gradient_ex2");
 let T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);
 let R = []
+let grad_log_pi = {
+    epochs: 10,
+    accumulator: null,
+    avg_ret: 0,
+    samples: 0,
+    reset: function() {
+        this.accumulator = null;
+        this.samples = 0;
+        this.avg_ret = 0;
+    }
+};
 draw_reward_plot("policy_gradient_ex2_reward", R);
 
 animate_when_visible({id: "policy_gradient_ex2", fps: 60}, () => {
     t++;
 
-    if (t >= T.X.length) {
-        let avg_ret = 0;
-        const epochs = 100;
+    // Take some traj samples, few enough to preserve frame-rate
+    let start = performance.now();
+    for (let e = 0; e < grad_log_pi.epochs; e++) {
+        traj = puck.sample_trajectory(puck_theta);
 
-        let grad_log_pi = null;
-        for (let e = 0; e < epochs; e++) {
-            traj = puck.sample_trajectory(puck_theta);
-
-            let grad = policy_grad(puck.pi2, puck_theta, traj, {});
-            if (!grad_log_pi) {
-                grad_log_pi = grad;
-            } else {
-                grad_log_pi = matadd(grad_log_pi, grad);
-            }
-
-            // puck_theta = optimize(puck.pi2, puck_theta, T, {
-            //     alpha: 0.001, // * Math.pow(0.92, R.length),
-            //     pi_pr: (theta, x, a) => {
-            //         let y = puck.pi2(theta, x);
-            //         return y.pr[0][a[0]] * y.pr[1][a[1]];
-            //     }
-            // });
-            avg_ret += traj.R.reduce((acc, val) => acc + val, 0);
+        let grad = policy_grad(puck.pi2, puck_theta, traj, {});
+        if (!grad_log_pi.accumulator) {
+            grad_log_pi.accumulator = grad;
+            grad_log_pi.samples = 1;
+        } else {
+            grad_log_pi.accumulator = matadd(grad_log_pi.accumulator, grad);
+            grad_log_pi.samples += 1;
         }
-        const alpha = 0.001; // * Math.pow(0.95, R.length);
-        grad_log_pi = matscl(grad_log_pi, alpha * (1/epochs));
-        puck_theta = matadd(puck_theta, grad_log_pi);
-
-        console.log(avg_ret / epochs);
-        R.push(avg_ret / epochs);
-        
-        if (R.length % 20 == 0) {
-            // Generate the next visualization traj
-            t = 0;
-            T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);            
-        }
-
-        clear("policy_gradient_ex2_reward");
-        draw_reward_plot("policy_gradient_ex2_reward", R);
-    } else {
-        clear("policy_gradient_ex2");
-        puck.draw("policy_gradient_ex2", t, T);
+        grad_log_pi.avg_ret += traj.R.reduce((acc, val) => acc + val, 0);
     }
+    let grad_time_ms = performance.now() - start;
+    const target_ms = 8;
+    let time_per_traj_ms = grad_time_ms / grad_log_pi.epochs;
+    grad_log_pi.epochs = Math.max(1, parseInt(target_ms / time_per_traj_ms));
+    
+    // Update policy once enough have been collected
+    if (grad_log_pi.samples >= 2000) {
+        const alpha = 0.0001; // * Math.pow(0.95, R.length);
+        let grad = matscl(grad_log_pi.accumulator, alpha);
+        puck_theta = matadd(puck_theta, grad);
+
+        console.log(`µ ret: ${grad_log_pi.avg_ret / grad_log_pi.samples}, epochs/fr: ${grad_log_pi.epochs}`);
+        R.push(grad_log_pi.avg_ret / grad_log_pi.samples);
+        grad_log_pi.reset();          
+    }
+
+    if (t >= T.X.length) {
+        // Generate the next visualization traj
+        t = 0;
+        T = puck.sample_trajectory(puck_theta, [0,0], [ele.clientWidth, ele.clientHeight], true);            
+    }
+
+    clear("policy_gradient_ex2_reward");
+    draw_reward_plot("policy_gradient_ex2_reward", R);
+    clear("policy_gradient_ex2");
+    puck.draw("policy_gradient_ex2", t, T);
 })
 </script>
 
